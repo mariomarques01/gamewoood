@@ -1,18 +1,24 @@
 # PROJECT: DEADLIGHT
 
-Original mobile twin-stick shooter prototype built with Godot 4 (GDScript).
+Original cartoon 3D twin-stick shooter, Godot **4.3 stable**, GDScript,
+Compatibility renderer (WebGL 2). Captain Tranco defends a coastal military base.
 
-## Concept
-A clumsy mercenary fights a comedic alien invasion. Target platforms: Android and iOS.
+Play: https://mariomarques01.github.io/gamewoood/
 
-## Getting started
-Open this repository as a project in Godot 4. Use the Mobile renderer. Run `scenes/main.tscn` once the prototype scenes are added.
+Open `project.godot` with Godot 4.3 and run the configured `scenes/main.tscn`.
+Desktop: WASD/arrows, hold left mouse to aim/fire, Escape to pause.
+Mobile: drag the left stick to move and the right stick to aim/fire simultaneously.
+A 24-round magazine reloads automatically. Stand near the current green objective
+for three seconds while no alien is within five metres. Complete arsenal,
+helipad and communications to win. Restart is available after victory/defeat.
 
-## Roadmap
-1. Character movement and elevated camera
-2. Aiming, projectiles and damage
-3. Alien AI and waves
-4. Mobile virtual joysticks
-5. Missions, progression and device testing
+## Validation and publication
 
-All characters, artwork and code should be original.
+See [recovery diagnosis](docs/RECOVERY.md) and [architecture/status](docs/ARCHITECTURE.md).
+Run `tools/validate.sh --export` with official Godot 4.3, an OpenGL display or Xvfb,
+then `python3 tests/web_smoke.py --directory build/web` with Playwright installed.
+PRs run the same checks. A single workflow `.github/workflows/deploy-web.yml`
+deploys main only after runtime, export and browser checks pass.
+
+This is a playable procedural prototype. Real iPhone/Safari and Android device
+validation, native signing/exports, profiling and production art remain necessary.

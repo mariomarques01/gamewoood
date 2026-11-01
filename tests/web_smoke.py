@@ -39,11 +39,33 @@ try:
             assert response.ok, response.status
             # A printed sentinel originates in the executed GDScript, not the HTML shell.
             for _ in range(120):
-                if any('DEADLIGHT_READY district=1 version=0.2.2' in line for line in messages):
+                if any('DEADLIGHT_READY district=1 version=0.3.0' in line for line in messages):
                     break
                 page.wait_for_timeout(500)
-            assert any('DEADLIGHT_READY district=1 version=0.2.2' in line for line in messages), messages
-            page.wait_for_timeout(2000)
+            assert any('DEADLIGHT_READY district=1 version=0.3.0' in line for line in messages), messages
+            page.wait_for_timeout(1000)
+            bounds = page.locator('canvas').bounding_box()
+            if mobile:
+                session = context.new_cdp_session(page)
+                x, y, width, height = (bounds[key] for key in ('x', 'y', 'width', 'height'))
+                points = [{'id': 0, 'x': x + 105, 'y': y + height - 100},
+                          {'id': 1, 'x': x + width - 105, 'y': y + height - 100}]
+                session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': points})
+                points[0]['x'] += 35
+                points[1]['y'] -= 35
+                session.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': points})
+                page.wait_for_timeout(700)
+                session.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+                assert any('DEADLIGHT_CONTROLS simultaneous' in line for line in messages), messages
+            else:
+                page.keyboard.down('d')
+                page.mouse.move(bounds['x'] + bounds['width'] * 0.75, bounds['y'] + bounds['height'] * 0.6)
+                page.mouse.down()
+                page.wait_for_timeout(700)
+                page.keyboard.up('d')
+                page.mouse.up()
+            assert any('DEADLIGHT_MOVE' in line for line in messages), messages
+            assert any('DEADLIGHT_FIRE' in line for line in messages), messages
             page.screenshot(path=f'build/logs/{name}.png')
             errors += [line for line in messages if 'SCRIPT ERROR:' in line or line.startswith('ERROR:')]
             Path(f'build/logs/{name}-console.json').write_text(json.dumps(messages, indent=2))
