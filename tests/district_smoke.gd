@@ -110,6 +110,27 @@ func _run() -> void:
     await process_frame
     for shot in get_nodes_in_group("projectiles"):
         shot.queue_free()
+    # Exercise mixed AI under the configured simultaneous-enemy ceiling.
+    player.health.invulnerability = 10.0
+    for index in range(10):
+        var stress_enemy = preload("res://scripts/enemy_controller.gd").new()
+        stress_enemy.player = player
+        stress_enemy.ranged = index % 3 == 0
+        district.add_child(stress_enemy)
+        stress_enemy.position = Vector3(-20 + index * 4, 0, 12)
+    district.spawner.active = true
+    district.spawner.timer = 0.0
+    for frame in range(120):
+        await physics_frame
+        assert(get_nodes_in_group("enemies").size() <= 10, "Spawner exceeded enemy limit")
+    assert(get_nodes_in_group("enemies").size() == 10, "Mixed-AI stress population changed unexpectedly")
+    district.spawner.active = false
+    for stress_enemy in get_nodes_in_group("enemies"):
+        stress_enemy.queue_free()
+    for shot in get_nodes_in_group("projectiles"):
+        shot.queue_free()
+    await process_frame
+    print("DEADLIGHT_STRESS_OK 10 mixed enemies for 120 physics frames")
     district._pause()
     assert(paused and district.hud.overlay.visible, "Pause failed")
     district._pause()

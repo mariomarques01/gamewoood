@@ -37,7 +37,9 @@ limits. The helicopter is parked geometry; flight is not implemented.
 
 `district_smoke.gd` instantiates the actual scene and exercises startup, spawning,
 simultaneous input, movement, follow camera, automatic firing, projectile damage,
-wall blocking, player damage interval, proximity/progress on all missions,
+wall blocking, player damage interval, reload, plasma attack, a 120-physics-frame
+stress run with ten mixed enemies and enforcement of the spawn ceiling,
+proximity/progress on all missions,
 victory/defeat, pause and restart. Browser smoke launches the exported release
 with desktop/mobile viewport sizes, checks the GDScript version sentinel, rejects
 script/browser errors, and captures evidence. Browser emulation is not a physical
