@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1"]
+[ext_resource type="Script" path="res://scripts/district_one.gd" id="2"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_1"]
 size = Vector3(30, 1, 30)
@@ -12,6 +13,7 @@ size = Vector3(30, 1, 30)
 albedo_color = Color(0.25, 0.35, 0.4, 1)
 
 [node name="Main" type="Node3D"]
+script = ExtResource("2")
 
 [node name="Ground" type="StaticBody3D" parent="."]
 position = Vector3(0, -0.5, 0)
