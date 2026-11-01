@@ -1,63 +1,62 @@
-name: Deploy Godot Web to GitHub Pages
-
+name: Validate and deploy Godot Web
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
 concurrency:
-  group: github-pages
+  group: deadlight-web-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: barichello/godot-ci:4.3
     steps:
       - uses: actions/checkout@v4
-      - name: Check Godot version and Web templates
-        shell: bash
+      - name: Install Godot 4.3 and Web templates
         run: |
           set -euo pipefail
-          apt-get update
-          apt-get install -y --no-install-recommends curl ca-certificates python3
-          godot --version
-          VERSION=$(godot --version | sed -E 's/^([0-9]+\.[0-9]+\.[^.]*)\..*/\1/')
-          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/$VERSION"
-          echo "Template directory: $TEMPLATE_DIR"
-          if [ ! -f "$TEMPLATE_DIR/web_release.zip" ]; then
-            mkdir -p "$TEMPLATE_DIR"
-            curl -fL --retry 3 -o /tmp/godot_templates.tpz "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz"
-            python3 -c 'import zipfile; z=zipfile.ZipFile("/tmp/godot_templates.tpz"); z.extractall("/tmp/godot_templates")'
-            cp /tmp/godot_templates/templates/* "$TEMPLATE_DIR/"
-          fi
-          test -f "$TEMPLATE_DIR/web_release.zip"
-      - name: Import Godot resources
-        run: godot --headless --editor --path . --quit
-      - name: Export Web
-        shell: bash
+          curl -fL --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          sudo install /tmp/godot/Godot_v4.3-stable_linux.x86_64 /usr/local/bin/godot
+          curl -fL --retry 3 -o /tmp/templates.tpz https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
+          python3 - <<'PY'
+          import os, zipfile
+          target = os.path.expanduser('~/.local/share/godot/export_templates/4.3.stable')
+          os.makedirs(target, exist_ok=True)
+          with zipfile.ZipFile('/tmp/templates.tpz') as archive:
+              for name in ('web_release.zip', 'web_debug.zip', 'web_nothreads_release.zip', 'web_nothreads_debug.zip', 'version.txt'):
+                  with open(os.path.join(target, name), 'wb') as output:
+                      output.write(archive.read('templates/' + name))
+          PY
+      - name: Validate runtime and export
+        run: tools/validate.sh --export
+      - name: Install browser test tools
         run: |
-          set -euo pipefail
-          mkdir -p build/web
-          godot --headless --path . --export-release "Web" build/web/index.html
-          test -s build/web/index.html
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+          python3 -m pip install playwright==1.58.0
+          python3 -m playwright install --with-deps chromium
+      - name: Test exported game in browser
+        run: python3 tests/web_smoke.py --directory build/web
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: validation-evidence
+          path: build/logs
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         with:
           path: build/web
   deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     steps:
-      - name: Deploy Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
