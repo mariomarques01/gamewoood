@@ -28,7 +28,7 @@ var spawn_timer := 0.0
 var score := 0
 
 func _ready() -> void:
-    player.position = Vector3(0, 0, 13)
+    player.position = Vector3(0, 0, 5)
     _create_map()
     _create_hud()
     _update_hud()
@@ -147,7 +147,7 @@ func _update_hud() -> void:
     for done in completed:
         if done:
             count += 1
-    hud.text = "DEADLIGHT  |  BASE DO CAPITAO\nVIDA: %d   ALIENS: %d   MISSOES: %d/3" % [hp, score, count]
+    hud.text = "BAIRRO 1 v0.2.1  |  BASE DO CAPITAO\nVIDA: %d   ALIENS: %d   MISSOES: %d/3" % [hp, score, count]
     if count == 3:
         message.text = "BAIRRO 1 CONCLUIDO! BASE PROTEGIDA!"
     else:
