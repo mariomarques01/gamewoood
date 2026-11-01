@@ -25,6 +25,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          apt-get update
+          apt-get install -y --no-install-recommends curl ca-certificates python3
           godot --version
           VERSION=$(godot --version | sed -E 's/^([0-9]+\.[0-9]+\.[^.]*)\..*/\1/')
           TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/$VERSION"
