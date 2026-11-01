@@ -21,10 +21,27 @@ jobs:
       image: barichello/godot-ci:4.3
     steps:
       - uses: actions/checkout@v4
+      - name: Check Godot version and Web templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --version
+          VERSION=$(godot --version | sed -E 's/^([0-9]+\.[0-9]+\.[^.]*)\..*/\1/')
+          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/$VERSION"
+          echo "Template directory: $TEMPLATE_DIR"
+          if [ ! -f "$TEMPLATE_DIR/web_release.zip" ]; then
+            mkdir -p "$TEMPLATE_DIR"
+            curl -fL --retry 3 -o /tmp/godot_templates.tpz "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz"
+            python3 -c 'import zipfile; z=zipfile.ZipFile("/tmp/godot_templates.tpz"); z.extractall("/tmp/godot_templates")'
+            cp /tmp/godot_templates/templates/* "$TEMPLATE_DIR/"
+          fi
+          test -f "$TEMPLATE_DIR/web_release.zip"
       - name: Import Godot resources
         run: godot --headless --editor --path . --quit
       - name: Export Web
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p build/web
           godot --headless --path . --export-release "Web" build/web/index.html
           test -s build/web/index.html
