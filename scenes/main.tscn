@@ -1,29 +1,10 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/district_one.gd" id="2"]
 
-[sub_resource type="BoxMesh" id="BoxMesh_1"]
-size = Vector3(30, 1, 30)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
-size = Vector3(30, 1, 30)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
-albedo_color = Color(0.25, 0.35, 0.4, 1)
-
 [node name="Main" type="Node3D"]
 script = ExtResource("2")
-
-[node name="Ground" type="StaticBody3D" parent="."]
-position = Vector3(0, -0.5, 0)
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
-mesh = SubResource("BoxMesh_1")
-surface_material_override/0 = SubResource("StandardMaterial3D_1")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
-shape = SubResource("BoxShape3D_1")
 
 [node name="Player" parent="." instance=ExtResource("1")]
 
