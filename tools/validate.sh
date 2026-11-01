@@ -17,6 +17,8 @@ DISPLAY_RUNNER=()
 if [[ -z "${DISPLAY:-}" ]]; then DISPLAY_RUNNER=(xvfb-run -a); fi
 run_checked build/logs/smoke.log timeout 45 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/district_smoke.gd
 grep -q 'DEADLIGHT_SMOKE_OK' build/logs/smoke.log
+run_checked build/logs/navigation.log timeout 90 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/navigation_smoke.gd
+grep -q 'DEADLIGHT_NAVIGATION_OK' build/logs/navigation.log
 if [[ "${1:-}" == '--export' ]]; then
   mkdir -p build/web
   run_checked build/logs/export.log "$GODOT_BIN" --headless --path . --export-release Web build/web/index.html

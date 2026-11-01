@@ -41,8 +41,10 @@ wall blocking, player damage interval, proximity/progress on all missions,
 victory/defeat, pause and restart. Browser smoke launches the exported release
 with desktop/mobile viewport sizes, checks the GDScript version sentinel, rejects
 script/browser errors, and captures evidence. Browser emulation is not a physical
-multitouch or Safari certification. Automated mission tests use controlled positions
-and time steps; they do not prove a human can finish every run under enemy pressure.
+multitouch or Safari certification. The combat smoke uses controlled positions and time steps. A separate navigation
+smoke physically walks a collision-respecting route to all three markers, with
+enemy spawning disabled, proving objective accessibility. These tests do not prove
+a human can finish every run under enemy pressure.
 
 Outstanding release gates: physical iPhone/Safari and Android tests, browser safe
 area checks on real notches/toolbars, native Android/iOS presets/signing, sustained
