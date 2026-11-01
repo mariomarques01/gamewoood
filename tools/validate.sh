@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+GODOT_BIN="${GODOT_BIN:-godot}"
+mkdir -p build/logs
+run_checked() {
+  local log="$1"
+  shift
+  "$@" 2>&1 | tee "$log"
+  if grep -Eq 'SCRIPT ERROR:|(^|[[:space:]])ERROR:' "$log"; then
+    echo "Godot reported errors despite its exit status" >&2
+    exit 1
+  fi
+}
+"$GODOT_BIN" --version | grep -q '^4\.3\.stable\.'
+run_checked build/logs/import.log "$GODOT_BIN" --headless --editor --path . --quit
+DISPLAY_RUNNER=()
+if [[ -z "${DISPLAY:-}" ]]; then DISPLAY_RUNNER=(xvfb-run -a); fi
+run_checked build/logs/smoke.log timeout 45 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/district_smoke.gd
+grep -q 'DEADLIGHT_SMOKE_OK' build/logs/smoke.log
+if [[ "${1:-}" == '--export' ]]; then
+  mkdir -p build/web
+  run_checked build/logs/export.log "$GODOT_BIN" --headless --path . --export-release Web build/web/index.html
+  test -s build/web/index.html
+  test -s build/web/index.pck
+  test -s build/web/index.wasm
+  touch build/web/.nojekyll
+fi

@@ -32,6 +32,7 @@ func _ready() -> void:
     _create_map()
     _create_hud()
     _update_hud()
+    print("DEADLIGHT_READY district=1 version=0.2.2 objects=%d" % get_child_count())
 
 func _material(color: Color, glow: bool = false) -> StandardMaterial3D:
     var mat := StandardMaterial3D.new()
@@ -147,7 +148,7 @@ func _update_hud() -> void:
     for done in completed:
         if done:
             count += 1
-    hud.text = "BAIRRO 1 v0.2.1  |  BASE DO CAPITAO\nVIDA: %d   ALIENS: %d   MISSOES: %d/3" % [hp, score, count]
+    hud.text = "BAIRRO 1 v0.2.2  |  BASE DO CAPITAO\nVIDA: %d   ALIENS: %d   MISSOES: %d/3" % [hp, score, count]
     if count == 3:
         message.text = "BAIRRO 1 CONCLUIDO! BASE PROTEGIDA!"
     else:
@@ -202,7 +203,7 @@ func _process(delta: float) -> void:
         if not is_instance_valid(alien):
             enemies.erase(alien)
             continue
-        var chase := player.global_position - alien.global_position
+        var chase: Vector3 = player.global_position - alien.global_position
         chase.y = 0
         if chase.length() > 1.2:
             alien.velocity = chase.normalized() * 2.4
