@@ -15,7 +15,7 @@ helipad and communications to win. Restart is available after victory/defeat.
 
 ## Validation and publication
 
-See [landscape combat](docs/LANDSCAPE_COMBAT.md), [compact HUD and research](docs/COMPACT_HUD_RESEARCH.md), [cartoon polish](docs/CARTOON_POLISH.md), [HUD and jump changes](docs/HUD_AND_JUMP.md), [recovery diagnosis](docs/RECOVERY.md) and [architecture/status](docs/ARCHITECTURE.md).
+See [audio and credits](docs/AUDIO.md), [landscape combat](docs/LANDSCAPE_COMBAT.md), [compact HUD and research](docs/COMPACT_HUD_RESEARCH.md), [cartoon polish](docs/CARTOON_POLISH.md), [HUD and jump changes](docs/HUD_AND_JUMP.md), [recovery diagnosis](docs/RECOVERY.md) and [architecture/status](docs/ARCHITECTURE.md).
 Run `tools/validate.sh --export` with official Godot 4.3, an OpenGL display or Xvfb,
 then `python3 tests/web_smoke.py --directory build/web` with Playwright installed.
 PRs run the same checks. A single workflow `.github/workflows/deploy-web.yml`
@@ -30,3 +30,6 @@ TRANCO TOTAL boost. Pause to see the complete objective list and elimination cou
 Play in landscape. Portrait pauses the game and asks you to rotate the device.
 Enemy defeats burst into fragments and alien blood. Collect credit tokens and
 complete the optional 12-alien bonus objective; credits are recorded after a run.
+
+Audio: quiet ambient music plus curated combat/interaction effects. The first touch
+or key activates browser audio. Adjust MUSICA/EFEITOS or mute in pause; settings persist.

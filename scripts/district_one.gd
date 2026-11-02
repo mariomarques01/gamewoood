@@ -1,4 +1,5 @@
 extends Node3D
+@onready var audio: Node = get_node("/root/GameAudio")
 const DistrictMap = preload("res://scripts/district_map.gd")
 const Spawner = preload("res://scripts/enemy_spawner.gd")
 const Missions = preload("res://scripts/mission_manager.gd")
@@ -55,13 +56,14 @@ func _ready() -> void:
     player.health.changed.connect(func(_current, _maximum):
         if _current < last_hp:
             hud.flash()
+            audio.play("hurt")
         last_hp = _current
         _update_hud())
     player.health.died.connect(func(): _finish(false))
     player.weapon.ammo_changed.connect(func(_ammo, _reloading): _update_hud())
     _update_hud()
     _orientation_changed(hud.portrait_mode)
-    print("DEADLIGHT_READY district=1 version=0.7.0 objects=%d" % district_map.get_child_count())
+    print("DEADLIGHT_READY district=1 version=0.8.0 objects=%d" % district_map.get_child_count())
 
 func _update_hud() -> void:
     if not is_instance_valid(hud):
@@ -76,6 +78,8 @@ func _finish(won: bool) -> void:
     if ended:
         return
     ended = true
+    audio.set_game_state(false, false)
+    audio.play("victory" if won else "defeat")
     player.active = false
     spawner.active = false
     missions.active = false
@@ -88,6 +92,7 @@ func _finish(won: bool) -> void:
 func _pause() -> void:
     if ended:
         return
+    audio.play("ui")
     manually_paused = not manually_paused
     _sync_pause()
     print("DEADLIGHT_PAUSE %s" % manually_paused)
@@ -103,6 +108,7 @@ func _orientation_changed(portrait: bool) -> void:
 
 func _sync_pause() -> void:
     get_tree().paused = orientation_blocked or manually_paused
+    audio.set_game_state(not ended, get_tree().paused, orientation_blocked)
 
 func _restart() -> void:
     get_tree().paused = false

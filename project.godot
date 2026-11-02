@@ -1,5 +1,8 @@
 config_version=5
 
+[autoload]
+GameAudio="*res://scripts/audio_director.gd"
+
 [application]
 config/name="PROJECT DEADLIGHT"
 run/main_scene="res://scenes/main.tscn"

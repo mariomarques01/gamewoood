@@ -43,7 +43,7 @@ func _run() -> void:
     await process_frame
     assert(district.get_script() != null and district.district_map.get_child_count() >= 100, "Base geometry missing")
     assert(district.district_map.objective_markers.size() == 3, "Mission markers missing")
-    assert(district.hud.status.text.contains("v0.7.0"), "Version missing")
+    assert(district.hud.status.text.contains("v0.8.0"), "Version missing")
     assert(district.hud.jump_button.text.is_empty(), "Jump action should use an icon")
     assert(district.hud.art.mission_rect.end.y <= 110, "HUD still occupies too much of the upper screen")
     assert(district.hud.art.health_rect.size.y <= 48, "Health HUD is oversized")
@@ -239,4 +239,6 @@ func _run() -> void:
     print("DEADLIGHT_SMOKE_OK map input movement camera weapon collision damage missions victory defeat restart pause")
     district.queue_free()
     await process_frame
+    root.get_node("GameAudio").shutdown()
+    await create_timer(0.4).timeout
     quit(0)

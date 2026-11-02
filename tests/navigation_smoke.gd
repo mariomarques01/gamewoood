@@ -43,4 +43,6 @@ func _run() -> void:
     print("DEADLIGHT_NAVIGATION_OK collision-respecting route to all three objectives")
     district.queue_free()
     await process_frame
+    root.get_node("GameAudio").shutdown()
+    await create_timer(0.4).timeout
     quit(0)

@@ -80,4 +80,6 @@ func _run() -> void:
     print("DEADLIGHT_ARCADE_OK health ammo sequence boost expiry checkpoint")
     district.queue_free()
     await process_frame
+    root.get_node("GameAudio").shutdown()
+    await create_timer(0.4).timeout
     quit(0)

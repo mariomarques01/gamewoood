@@ -1,4 +1,5 @@
 extends Node3D
+const Audio = preload("res://scripts/audio_api.gd")
 var direction := Vector3.FORWARD
 var speed := 24.0
 var damage := 25.0
@@ -28,6 +29,7 @@ func _physics_process(delta: float) -> void:
         query.exclude = [shooter.get_rid()]
     var hit := get_world_3d().direct_space_state.intersect_ray(query)
     if not hit.is_empty():
+        Audio.play(self, "impact", hit.position)
         var target: Object = hit.collider
         if target.has_method("receive_damage"):
             target.receive_damage(damage)

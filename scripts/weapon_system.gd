@@ -1,4 +1,5 @@
 extends Node
+const Audio = preload("res://scripts/audio_api.gd")
 signal ammo_changed(remaining: int, reloading: bool)
 const Projectile = preload("res://scripts/projectile.gd")
 var cooldown := 0.0
@@ -39,10 +40,12 @@ func _physics_process(delta: float) -> void:
     owner_body.get_parent().add_child(shot)
     shot.global_position = owner_body.global_position + Vector3.UP * 1.05 + shot.direction * 0.75
     owner_body.actor.fire()
+    Audio.play(self, "shot", owner_body.global_position)
     cooldown = 0.12 if overdrive_time > 0 else 0.16
     ammo -= 1
     if ammo == 0:
         reload_time = 1.2
+        Audio.play(self, "reload", owner_body.global_position)
     ammo_changed.emit(ammo, reload_time > 0.0)
 
 func resupply() -> void:

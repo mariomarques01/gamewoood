@@ -8,6 +8,49 @@ from pathlib import Path
 import threading
 from playwright.sync_api import sync_playwright
 
+AUDIO_PROBE_JS = r"""
+(() => {
+  window.__deadlightAudio = [];
+  const Base = window.AudioContext || window.webkitAudioContext;
+  if (!Base) return;
+  const Wrapped = new Proxy(Base, {construct(target, args) {
+    const ctx = Reflect.construct(target, args);
+    window.__deadlightAudio.push(ctx);
+    return ctx;
+  }});
+  window.AudioContext = Wrapped;
+  if (window.webkitAudioContext) window.webkitAudioContext = Wrapped;
+  const connect = AudioNode.prototype.connect;
+  AudioNode.prototype.connect = function(target, ...args) {
+    if (target instanceof AudioDestinationNode) {
+      const ctx = this.context;
+      if (!ctx.__deadlightAnalyser) {
+        ctx.__deadlightAnalyser = ctx.createAnalyser();
+        ctx.__deadlightAnalyser.fftSize = 2048;
+        connect.call(ctx.__deadlightAnalyser, target);
+      }
+      return connect.call(this, ctx.__deadlightAnalyser, ...args);
+    }
+    return connect.call(this, target, ...args);
+  };
+})();
+"""
+ENERGY_JS = r"""async () => {
+  let peak = 0;
+  for (let i = 0; i < 12; i++) {
+    for (const ctx of (window.__deadlightAudio || [])) {
+      if (!ctx.__deadlightAnalyser) continue;
+      const values = new Float32Array(2048);
+      ctx.__deadlightAnalyser.getFloatTimeDomainData(values);
+      let sum = 0;
+      for (const value of values) sum += value * value;
+      peak = Math.max(peak, Math.sqrt(sum / values.length));
+    }
+    await new Promise(resolve => setTimeout(resolve, 25));
+  }
+  return peak;
+}"""
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory')
 parser.add_argument('--url')
@@ -32,6 +75,7 @@ try:
                                    ('mobile', {'width': 844, 'height': 390}, True),
                                    ('portrait', {'width': 390, 'height': 844}, True)]:
             context = browser.new_context(viewport=size, is_mobile=mobile, has_touch=mobile)
+            context.add_init_script(AUDIO_PROBE_JS)
             page = context.new_page()
             messages, errors = [], []
             page.on('console', lambda msg: messages.append(msg.text))
@@ -47,10 +91,10 @@ try:
             assert response.ok, response.status
             # A printed sentinel originates in the executed GDScript, not the HTML shell.
             for _ in range(120):
-                if any('DEADLIGHT_READY district=1 version=0.7.0' in line for line in messages):
+                if any('DEADLIGHT_READY district=1 version=0.8.0' in line for line in messages):
                     break
                 page.wait_for_timeout(500)
-            assert any('DEADLIGHT_READY district=1 version=0.7.0' in line for line in messages), messages
+            assert any('DEADLIGHT_READY district=1 version=0.8.0' in line for line in messages), messages
             page.wait_for_timeout(1000)
             if name == 'portrait':
                 expect_log('DEADLIGHT_ORIENTATION portrait')
@@ -82,18 +126,56 @@ try:
                 page.keyboard.press('Space')
                 page.mouse.move(bounds['x'] + bounds['width'] * 0.75, bounds['y'] + bounds['height'] * 0.6)
                 page.mouse.down()
-                page.wait_for_timeout(700)
+                expect_log('DEADLIGHT_FIRE')
+                page.wait_for_timeout(300)
                 page.keyboard.up('d')
                 page.mouse.up()
+            expect_log('DEADLIGHT_AUDIO_UNLOCKED')
+            expect_log('DEADLIGHT_MUSIC_STARTED')
+            # The context resumes asynchronously; allow the worklet and music fade
+            # to produce real samples after the first gesture, including rotation.
+            energy = 0
+            for _ in range(16):
+                energy = page.evaluate(ENERGY_JS)
+                if energy > 1e-6:
+                    break
+            assert energy > 1e-6, ('Audio graph was silent after gesture', energy, page.evaluate('window.__deadlightAudio.map(ctx => ({state: ctx.state, rate: ctx.sampleRate}))'), messages)
             assert any('DEADLIGHT_JUMP' in line for line in messages), messages
             assert any('DEADLIGHT_MOVE' in line for line in messages), messages
-            assert any('DEADLIGHT_FIRE' in line for line in messages), messages
+            expect_log('DEADLIGHT_FIRE')
             if mobile:
                 page.touchscreen.tap(bounds['x'] + 48 * scale, bounds['y'] + 50 * scale)
             else:
                 page.keyboard.press('Escape', delay=120)
             page.wait_for_timeout(200)
             expect_log('DEADLIGHT_PAUSE true')
+            expect_log('DEADLIGHT_AUDIO_CONTROLS ')
+            page.screenshot(path=f'build/logs/{name}-audio-menu.png')
+            controls = json.loads(next(line.split('DEADLIGHT_AUDIO_CONTROLS ', 1)[1] for line in reversed(messages) if 'DEADLIGHT_AUDIO_CONTROLS ' in line))
+            def tap_audio_control(point):
+                px = bounds['x'] + point[0] * bounds['width']
+                py = bounds['y'] + point[1] * bounds['height']
+                if mobile:
+                    page.touchscreen.tap(px, py)
+                else:
+                    page.mouse.click(px, py)
+            tap_audio_control(controls['mute'])
+            expect_log('DEADLIGHT_AUDIO_MUTED true')
+            page.wait_for_timeout(300)
+            silent = 1
+            for _ in range(16):
+                silent = page.evaluate(ENERGY_JS)
+                if silent < 1e-6:
+                    break
+            assert silent < 1e-6, ('Mute left audible audio', silent, messages)
+            tap_audio_control(controls['mute'])
+            expect_log('DEADLIGHT_AUDIO_MUTED false')
+            music_rect = controls['music']
+            tap_audio_control([music_rect[0] + music_rect[2] * .25, music_rect[1] + music_rect[3] * .5])
+            effects_rect = controls['effects']
+            tap_audio_control([effects_rect[0] + effects_rect[2] * .65, effects_rect[1] + effects_rect[3] * .5])
+            Path(f'build/logs/{name}-audio.json').write_text(json.dumps({'output_rms': energy, 'muted_rms': silent, 'controls': controls}, indent=2))
+            print(f'WEB_AUDIO_OK {name} signal={energy:.7f} mute={silent:.7f}')
             page.screenshot(path=f'build/logs/{name}-paused.png')
             if mobile:
                 page.touchscreen.tap(bounds['x'] + 48 * scale, bounds['y'] + 50 * scale)
