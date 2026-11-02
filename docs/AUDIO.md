@@ -35,7 +35,12 @@ playback references before quitting; Godot error logs are not suppressed.
 Combat cues cover blaster, plasma, impact, alien burst/splatter, hurt, reload,
 jump/steps, pickups, mission, victory/defeat and pause UI. Healing does not trigger
 the damage cue. Audio is activated by an actual input gesture on Web; blocked sounds
-are discarded rather than queued to burst later. Music/effects sliders and mute
+are discarded rather than queued to burst later. The Web export installs a tiny
+DOM capture listener that resumes its AudioContexts directly inside trusted
+pointer/touch/key gestures. This covers drag-first twin-stick play: processing the
+same input later in GDScript can miss the browser's transient activation window.
+The browser test deliberately starts with simultaneous joystick drags, without
+an artificial preliminary click. Music/effects sliders and mute
 are in pause, with explicit native touch routing. Preferences save separately to
 user://deadlight_audio.cfg so progress saves cannot overwrite them.
 

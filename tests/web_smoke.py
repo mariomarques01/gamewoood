@@ -133,7 +133,7 @@ try:
             expect_log('DEADLIGHT_AUDIO_UNLOCKED')
             expect_log('DEADLIGHT_MUSIC_STARTED')
             energy = page.evaluate(ENERGY_JS)
-            assert energy > 1e-6, ('Audio graph was silent after gesture', energy, messages)
+            assert energy > 1e-6, ('Audio graph was silent after gesture', energy, page.evaluate('window.__deadlightAudio.map(ctx => ({state: ctx.state, rate: ctx.sampleRate}))'), messages)
             assert any('DEADLIGHT_JUMP' in line for line in messages), messages
             assert any('DEADLIGHT_MOVE' in line for line in messages), messages
             expect_log('DEADLIGHT_FIRE')
