@@ -440,7 +440,7 @@ func _report_combat_target(area: Vector2) -> void:
             continue
         var screen := camera.unproject_position(point)
         var normalized := screen / area
-        if normalized.x > 0.16 and normalized.x < 0.84 and normalized.y > 0.22 and normalized.y < 0.74:
+        if normalized.x > 0.06 and normalized.x < 0.94 and normalized.y > 0.22 and normalized.y < 0.74:
             if not jump_button.get_global_rect().has_point(screen):
                 print("DEADLIGHT_COMBAT_TARGET " + JSON.stringify([normalized.x, normalized.y]))
                 return
