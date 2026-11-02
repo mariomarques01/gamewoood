@@ -10,6 +10,7 @@ var positions: Array[Vector3] = []
 var velocities: Array[Vector3] = []
 
 static func burst(parent: Node3D, point: Vector3, ranged: bool) -> Node3D:
+    preload("res://scripts/blood_stain.gd").spread(parent, point, ranged)
     var active := parent.get_tree().get_nodes_in_group("combat_fx")
     if active.size() >= MAX_EFFECTS:
         active[0].free()
@@ -27,11 +28,16 @@ func _ready() -> void:
     var batch := MultiMesh.new()
     batch.transform_format = MultiMesh.TRANSFORM_3D
     batch.mesh = Kit.bevel(Vector3(0.17, 0.16, 0.24))
+    batch.use_colors = true
     batch.instance_count = 18
     fragments.multimesh = batch
-    fragments.material_override = Kit.material(alien_color.lightened(0.18))
+    var spray_material := StandardMaterial3D.new()
+    spray_material.vertex_color_use_as_albedo = true
+    spray_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+    fragments.material_override = spray_material
     add_child(fragments)
     for index in range(18):
+        batch.set_instance_color(index, Color(0.6, 0.025, 0.055) if index < 12 else alien_color.lightened(0.18))
         positions.append(Vector3(0, 0.8, 0))
         var angle := random.randf() * TAU
         velocities.append(Vector3(cos(angle) * random.randf_range(2, 5), random.randf_range(2, 5), sin(angle) * random.randf_range(2, 5)))
@@ -52,7 +58,7 @@ func _ready() -> void:
     var points: Array[Vector3] = []
     for index in range(18):
         var angle := TAU * index / 18
-        var radius := random.randf_range(0.35, 0.9)
+        var radius := random.randf_range(0.15, 0.4)
         points.append(Vector3(cos(angle) * radius, 0.035, sin(angle) * radius))
     for index in range(18):
         for point in [Vector3(0, 0.035, 0), points[index], points[(index + 1) % 18]]:
@@ -60,7 +66,7 @@ func _ready() -> void:
             tool.add_vertex(point)
     stain.mesh = tool.commit()
     var blood := StandardMaterial3D.new()
-    blood.albedo_color = alien_color.darkened(0.25)
+    blood.albedo_color = Color(0.3, 0.025, 0.045)
     blood.roughness = 1
     blood.cull_mode = BaseMaterial3D.CULL_DISABLED
     stain.material_override = blood

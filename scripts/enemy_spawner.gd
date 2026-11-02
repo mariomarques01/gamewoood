@@ -3,17 +3,20 @@ signal eliminated
 const Enemy = preload("res://scripts/enemy_controller.gd")
 var player: CharacterBody3D
 var active := true
-var timer := 5.0
+const MAX_ENEMIES := 24
+var timer := 1.5
 var sequence := 0
 var last_elimination_position := Vector3.ZERO
 var points := [Vector3(-22, 0, -4), Vector3(22, 0, 5), Vector3(-9, 0, 15), Vector3(10, 0, 16), Vector3(0, 0, -22)]
 
 func _physics_process(delta: float) -> void:
     timer -= delta
-    if not active or timer > 0.0 or get_tree().get_nodes_in_group("enemies").size() >= 10:
+    if not active or timer > 0.0 or get_tree().get_nodes_in_group("enemies").size() >= MAX_ENEMIES:
         return
-    timer = maxf(3.0, 4.8 - sequence * 0.08)
-    spawn()
+    timer = maxf(2.0, 3.2 - sequence * 0.025)
+    for index in range(mini(4, 2 + sequence / 16)):
+        if get_tree().get_nodes_in_group("enemies").size() < MAX_ENEMIES:
+            spawn()
 
 func spawn() -> CharacterBody3D:
     for offset in range(points.size()):
@@ -30,7 +33,8 @@ func spawn() -> CharacterBody3D:
             continue
         var enemy = Enemy.new()
         enemy.player = player
-        enemy.ranged = sequence % 3 == 2
+        enemy.ranged = sequence % 4 == 2
+        enemy.archetype = "brute" if sequence % 8 == 7 else ("runner" if sequence % 4 == 1 else "grunt")
         get_parent().add_child(enemy)
         enemy.global_position = point
         enemy.eliminated.connect(func():

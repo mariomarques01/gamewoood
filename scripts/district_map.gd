@@ -3,7 +3,7 @@ const Kit = preload("res://scripts/visual_kit.gd")
 
 const SIZE := 58.0
 const BLUE := Color(0.12, 0.35, 0.62)
-const ASPHALT := Color(0.17, 0.20, 0.25)
+const ASPHALT := Color(0.27, 0.31, 0.34)
 const CONCRETE := Color(0.47, 0.51, 0.56)
 const GOLD := Color(1.0, 0.68, 0.12)
 const GREEN := Color(0.18, 0.86, 0.36)
@@ -11,6 +11,7 @@ const objectives := [Vector3(-17, 0, -7), Vector3(17, 0, -9), Vector3(0, 0, -18)
 var materials: Dictionary = {}
 var rock_mesh: SphereMesh
 var objective_markers: Array[Node3D] = []
+var ground_surfaces: Array[Dictionary] = []
 
 func _material(color: Color, glow: bool = false) -> StandardMaterial3D:
     if materials.has(color):
@@ -26,6 +27,8 @@ func _material(color: Color, glow: bool = false) -> StandardMaterial3D:
             for x in range(32):
                 var grain := random.randf_range(0.9, 1.1)
                 image.set_pixel(x, y, Color(grain, grain, grain, 1))
+        image.generate_mipmaps()
+        mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
         mat.albedo_texture = ImageTexture.create_from_image(image)
         mat.uv1_scale = Vector3(16, 16, 1)
     if glow:
@@ -48,6 +51,9 @@ func _box(parent: Node3D, pos: Vector3, size: Vector3, color: Color, solid: bool
     visual.mesh = mesh
     visual.material_override = _material(color)
     root.add_child(visual)
+    if size.y <= 0.25 and pos.y >= -0.1 and pos.y <= 0.2:
+        var center := root.global_position
+        ground_surfaces.append({"rect": Rect2(Vector2(center.x - size.x * 0.5, center.z - size.z * 0.5), Vector2(size.x, size.z)), "height": center.y + size.y * 0.5})
     if solid:
         var shape := CollisionShape3D.new()
         var box := BoxShape3D.new()
@@ -117,6 +123,7 @@ func build() -> void:
     _reference_pass()
     _architecture_pass()
     preload("res://scripts/base_set_dressing.gd").build(self)
+    preload("res://scripts/street_detail.gd").build(self)
     _batch_static_meshes()
     # Dynamic/destructible objects are added after static batching.
     for point in [Vector3(-9, 0, 10), Vector3(10, 0, 9), Vector3(-21, 0, -3), Vector3(21, 0, -3), Vector3(7, 0, -12), Vector3(-8, 0, -11)]:
@@ -128,13 +135,7 @@ func _details() -> void:
     var sea := Color(0.04, 0.27, 0.38)
     _box(self, Vector3(0, -4.5, 0), Vector3(180, 0.5, 180), sea)
     _box(self, Vector3(0, -2.1, 0), Vector3(61, 3.2, 61), Color(0.27, 0.25, 0.29))
-    # Road paint and walkable pavement, with no overlapping physics floors.
-    for z in range(9, 26, 4):
-        _box(self, Vector3(0, 0.03, z), Vector3(0.18, 0.04, 1.7), GOLD)
-    for x in [-7.0, 7.0]:
-        _box(self, Vector3(x, 0.06, 11), Vector3(1.4, 0.15, 17), CONCRETE)
-    for x in range(-4, 5):
-        _box(self, Vector3(x, 0.04, 18), Vector3(0.55, 0.04, 2.3), Color(0.88, 0.87, 0.77))
+    # Road paint, sidewalks and the single crossing are built by street_detail.gd.
     # Headquarters facade: orange windows, blue entrance and cyan strip lights.
     for x in [-4.4, -2.8, 2.8, 4.4]:
         for y in [2.0, 4.5]:
@@ -197,7 +198,9 @@ func _sphere(pos: Vector3, dimensions: Vector3, color: Color) -> void:
 func _sign(text: String, pos: Vector3, pixel_size: float) -> void:
     var sign := Label3D.new()
     sign.text = text
-    sign.font_size = 32
+    sign.font = preload("res://assets/fonts/LilitaOne-Regular.ttf")
+    sign.font_size = 40
+    sign.outline_size = 6
     sign.pixel_size = pixel_size
     sign.position = pos
     sign.no_depth_test = false
@@ -359,3 +362,10 @@ func _batch_static_meshes() -> void:
             instances.set_instance_transform(index, global_transform.affine_inverse() * group[index].global_transform)
             group[index].hide()
             group[index].queue_free()
+
+func blood_surface_height(point: Vector3, fallback: float) -> float:
+    var height := fallback
+    for surface in ground_surfaces:
+        if surface.rect.has_point(Vector2(point.x, point.z)):
+            height = maxf(height, surface.height)
+    return height

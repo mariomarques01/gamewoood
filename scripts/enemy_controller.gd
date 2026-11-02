@@ -7,6 +7,7 @@ const Health = preload("res://scripts/health_component.gd")
 const Projectile = preload("res://scripts/projectile.gd")
 var player: CharacterBody3D
 var ranged := false
+var archetype := "grunt"
 var health: Node
 var attack_timer := 0.0
 var hurt_timer := 0.0
@@ -28,7 +29,8 @@ func _ready() -> void:
     collision_layer = 2
     collision_mask = 1 | 4
     health = Health.new()
-    health.maximum = 50.0 if ranged else 35.0
+    health.maximum = 50.0 if ranged else (100.0 if archetype == "brute" else (25.0 if archetype == "runner" else 35.0))
+    speed = 1.7 if archetype == "brute" else (3.6 if archetype == "runner" else 2.5)
     health.current = health.maximum
     add_child(health)
     health.died.connect(_die)
@@ -41,6 +43,7 @@ func _ready() -> void:
     add_child(collision)
     visual = AlienVisual.new()
     visual.ranged = ranged
+    visual.archetype = archetype
     add_child(visual)
     body_material = visual.skin
     warning_ring = MeshInstance3D.new()
@@ -103,9 +106,18 @@ func _physics_process(delta: float) -> void:
             if ranged and distance < 14:
                 _shoot(toward.normalized())
             elif not ranged and distance < 1.7 and absf(player.global_position.y - global_position.y) < 1:
-                player.receive_damage(8.0)
+                player.receive_damage(14.0 if archetype == "brute" else 8.0)
         return
     var desired := toward.normalized()
+    var separation := Vector3.ZERO
+    for other in get_tree().get_nodes_in_group("enemies"):
+        if other == self:
+            continue
+        var offset: Vector3 = global_position - other.global_position
+        offset.y = 0
+        if offset.length_squared() > 0.01 and offset.length_squared() < 1.3:
+            separation += offset.normalized() * (1.15 - offset.length())
+    desired = (desired + separation * 1.2).normalized()
     if distance > (8.0 if ranged else 1.15):
         # Local obstacle avoidance: evaluate both sides of a blocked heading.
         # At prototype scale this avoids baking and runtime navigation overhead.

@@ -31,6 +31,7 @@ func _ready() -> void:
     add_child(health)
     weapon = Weapon.new()
     add_child(weapon)
+    weapon.power_activated.connect(_power_activated)
     visual = $Visual
     $Visual/MeshInstance3D.hide()
     actor = CaptainVisual.new()
@@ -55,7 +56,10 @@ func _physics_process(delta: float) -> void:
         weapon.active = false
         return
     get_node("/root/GameAudio").listener_position = global_position
-    boost_aura.visible = weapon.overdrive_time > 0
+    boost_aura.visible = weapon.overdrive_time > 0 or weapon.frenzy_time > 0
+    boost_aura.material_override = preload("res://scripts/visual_kit.gd").material(Color(1, 0.64, 0.07) if weapon.frenzy_time > 0 else Color(0.1, 0.85, 1), true)
+    actor.weapon_models[weapon.selected].scale = Vector3.ONE * (1.3 if weapon.frenzy_time > 0 else 1.0)
+    actor.weapon_models[1 - weapon.selected].scale = Vector3.ONE
     boost_aura.scale = Vector3.ONE * (1 + sin(weapon.overdrive_time * 12) * 0.1)
     var direction := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
     if is_instance_valid(controls):
@@ -63,7 +67,7 @@ func _physics_process(delta: float) -> void:
     if mobile_direction.length() > 0.05:
         direction = mobile_direction.limit_length()
     var world_move := screen_to_world(direction)
-    var target := world_move * move_speed
+    var target := world_move * move_speed * (1.5 if weapon.frenzy_time > 0 else 1.0)
     velocity.x = move_toward(velocity.x, target.x, acceleration * delta)
     velocity.z = move_toward(velocity.z, target.z, acceleration * delta)
     jump_lock = maxf(0.0, jump_lock - delta)
@@ -163,3 +167,12 @@ func screen_to_world(direction: Vector2) -> Vector3:
     var right := Vector3(basis.x.x, 0, basis.x.z).normalized()
     var back := Vector3(basis.z.x, 0, basis.z.z).normalized()
     return right * direction.x + back * direction.y
+
+func _power_activated(_duration: float, major: bool) -> void:
+    for child in get_children():
+        if child.is_in_group("power_surges"):
+            child.queue_free()
+    var effect = preload("res://scripts/power_surge.gd").new()
+    effect.major = major
+    add_child(effect)
+    Audio.play(self, "mission")

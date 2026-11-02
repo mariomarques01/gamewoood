@@ -45,6 +45,7 @@ func _ready() -> void:
     hud = HUD.new()
     add_child(hud)
     hud.player = player
+    player.weapon.power_activated.connect(hud.show_power_activation)
     hud.mission = missions
     player.controls = hud.controls
     arcade = Arcade.new()

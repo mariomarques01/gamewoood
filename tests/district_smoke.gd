@@ -55,7 +55,7 @@ func _run() -> void:
     district.spawner.timer = 0.0
     await physics_frame
     await physics_frame
-    assert(get_nodes_in_group("enemies").size() == 1, "Spawner did not execute")
+    assert(get_nodes_in_group("enemies").size() == 2, "Spawner did not execute opening wave")
     district.spawner.active = false
     for enemy in get_nodes_in_group("enemies"):
         enemy.queue_free()
@@ -168,25 +168,25 @@ func _run() -> void:
         shot.queue_free()
     # Exercise mixed AI under the configured simultaneous-enemy ceiling.
     player.health.invulnerability = 10.0
-    for index in range(10):
+    for index in range(district.spawner.MAX_ENEMIES):
         var stress_enemy = preload("res://scripts/enemy_controller.gd").new()
         stress_enemy.player = player
         stress_enemy.ranged = index % 3 == 0
         district.add_child(stress_enemy)
-        stress_enemy.position = Vector3(-20 + index * 4, 0, 12)
+        stress_enemy.position = Vector3(-20 + (index % 8) * 5, 0, 10 + (index / 8) * 2)
     district.spawner.active = true
     district.spawner.timer = 0.0
     for frame in range(120):
         await physics_frame
-        assert(get_nodes_in_group("enemies").size() <= 10, "Spawner exceeded enemy limit")
-    assert(get_nodes_in_group("enemies").size() == 10, "Mixed-AI stress population changed unexpectedly")
+        assert(get_nodes_in_group("enemies").size() <= district.spawner.MAX_ENEMIES, "Spawner exceeded enemy limit")
+    assert(get_nodes_in_group("enemies").size() == district.spawner.MAX_ENEMIES, "Mixed-AI stress population changed unexpectedly")
     district.spawner.active = false
     for stress_enemy in get_nodes_in_group("enemies"):
         stress_enemy.queue_free()
     for shot in get_nodes_in_group("projectiles"):
         shot.queue_free()
     await process_frame
-    print("DEADLIGHT_STRESS_OK 10 mixed enemies for 120 physics frames")
+    print("DEADLIGHT_STRESS_OK 24 mixed enemies for 120 physics frames")
     pause_key()
     assert(paused and district.hud.overlay.visible, "Pause failed")
     pause_key()
