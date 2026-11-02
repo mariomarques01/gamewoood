@@ -34,6 +34,7 @@ if [[ "${1:-}" == '--export' ]]; then
   test -s build/web/index.html
   test -s build/web/index.pck
   test -s build/web/index.wasm
+  python3 tools/prepare_pwa.py build/web
   touch build/web/.nojekyll
   GODOT_BIN="$GODOT_BIN" python3 tools/export_finale_fixture.py
 fi

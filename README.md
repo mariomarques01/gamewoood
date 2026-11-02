@@ -43,3 +43,27 @@ aura. Hit aliens briefly show health, and supply attraction respects walls.
 Completing all three objectives celebrates the Captain and opens a saved results
 report with time, eliminations, medals and completion credits. Replay starts a new
 run; a finished run never grants its reward twice.
+
+## Instalar como aplicativo (PWA)
+
+Depois da publicação, abra https://mariomarques01.github.io/gamewoood/:
+
+- **Android / Chrome:** menu → **Instalar aplicativo** ou **Adicionar à tela inicial**.
+- **iPhone / iPad / Safari:** Compartilhar → **Adicionar à Tela de Início**.
+- **Computador / Chrome ou Edge:** use o ícone de instalação na barra de endereço.
+
+O aplicativo abre em modo independente e solicita orientação horizontal quando
+suportada pelo sistema. No iOS, gire o dispositivo manualmente, se necessário.
+A primeira abertura exige internet: aguarde o jogo carregar e o cache terminar.
+Depois, o jogo pode iniciar sem conexão. O navegador pode remover o cache quando
+falta espaço ou os dados do site são apagados; nesse caso, abra novamente online.
+
+O preset Web ativa o PWA nativo do Godot. `tools/validate.sh --export` também
+executa `tools/prepare_pwa.py build/web`, que completa o manifesto e prepara o
+cache integral do jogo, incluindo a abertura pelo subdiretório do GitHub Pages.
+Para exportações manuais, execute esse comando depois do export do Godot.
+HTTPS é obrigatório em produção; localhost funciona para desenvolvimento.
+
+`python3 tests/web_pwa.py --directory build/web` verifica os metadados de
+instalação no Chromium e executa o jogo com a rede desativada, tanto no endereço
+do diretório quanto em `index.html`. Esse teste também roda no CI antes do deploy.
