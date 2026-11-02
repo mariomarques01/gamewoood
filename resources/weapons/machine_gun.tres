@@ -1,0 +1,12 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+[ext_resource type="Script" path="res://scripts/weapon_definition.gd" id="1"]
+[resource]
+script = ExtResource("1")
+display_name = "METRALHADORA"
+capacity = 24
+damage = 25.0
+interval = 0.12
+reload_seconds = 1.2
+spread = 0.018
+sound = "machine_shot"
+tracer_color = Color(0.15, 0.9, 1, 1)

@@ -18,6 +18,8 @@ var arcade: Node
 var last_hp := 100.0
 var orientation_blocked := false
 var manually_paused := false
+var run_seconds := 0.0
+var last_result: Dictionary = {}
 
 func _ready() -> void:
     player.position = Vector3(0, 0, 7)
@@ -64,10 +66,16 @@ func _ready() -> void:
         _update_hud())
     player.health.died.connect(func(): _finish(false))
     player.weapon.ammo_changed.connect(func(_ammo, _reloading): _update_hud())
+    player.weapon.weapon_changed.connect(func(index: int): hud.show_weapon(index))
+    hud.show_weapon(player.weapon.selected)
     _update_hud()
     _orientation_changed(hud.portrait_mode)
     hud.notify("RECIPIENTES LARANJA: ATIRE E AFASTE-SE")
-    print("DEADLIGHT_READY district=1 version=0.9.0 objects=%d" % district_map.get_child_count())
+    print("DEADLIGHT_READY district=1 version=0.10.0 objects=%d" % district_map.get_child_count())
+
+func _physics_process(delta: float) -> void:
+    if not ended:
+        run_seconds += delta
 
 func _update_hud() -> void:
     if not is_instance_valid(hud):
@@ -85,14 +93,21 @@ func _finish(won: bool) -> void:
     audio.set_game_state(false, false)
     audio.play("victory" if won else "defeat")
     player.active = false
+    player.weapon.stop()
     spawner.active = false
     missions.active = false
     for canister in get_tree().get_nodes_in_group("explosives"):
         canister.deactivate()
     for shot in get_tree().get_nodes_in_group("projectiles"):
         shot.queue_free()
-    save.record(score, won, arcade.credits)
-    hud.show_overlay("BASE PROTEGIDA!\n3 MISSOES CONCLUIDAS" if won else "BASE INVADIDA!\nO CAPITAO VOLTA JA...")
+    last_result = preload("res://scripts/run_result.gd").calculate(won, score, run_seconds, player.health.current, arcade.credits, missions.current)
+    save.record(score, won, last_result.earned, last_result.stars)
+    hud.show_result(last_result)
+    if won:
+        player.get_node("Camera3D").finale = true
+        var celebration = preload("res://scripts/stage_finale.gd").new()
+        celebration.player = player
+        add_child(celebration)
     print("DEADLIGHT_RESULT victory=%s kills=%d" % [won, score])
 
 func _pause() -> void:

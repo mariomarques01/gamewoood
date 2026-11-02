@@ -4,6 +4,7 @@ var offset := Vector3(10, 18, 15)
 var follow_position := Vector3.ZERO
 var impact_time := 0.0
 var impact_strength := 0.0
+var finale := false
 
 func _ready() -> void:
     target = get_parent()
@@ -17,11 +18,16 @@ func _process(delta: float) -> void:
     if is_instance_valid(target):
         var aspect := get_viewport().get_visible_rect().size.aspect()
         # A narrow display keeps a useful combat view instead of extending it toward the sea.
-        fov = 48.0 if aspect < 1.0 else 68.0
-        follow_position = follow_position.lerp(Vector3(target.global_position.x, 0, target.global_position.z) + offset, 1.0 - exp(-8.0 * delta))
+        var desired_fov := 48.0 if finale or aspect < 1.0 else 68.0
+        fov = lerpf(fov, desired_fov, minf(1, delta * 4)) if finale else desired_fov
+        var focus := Vector3(target.global_position.x, 0, target.global_position.z)
+        var destination := focus + offset * (0.52 if finale else 1.0)
+        follow_position = follow_position.lerp(destination, 1.0 - exp(-(3.0 if finale else 8.0) * delta))
         impact_time = maxf(0, impact_time - delta)
         var shake := Vector3(sin(impact_time * 85), 0, cos(impact_time * 73)) * impact_strength * impact_time / 0.24
         global_position = follow_position + shake
+        if finale:
+            look_at(focus + Vector3.UP * 0.9 + global_basis.x * 2.2)
 
 func impact(point: Vector3) -> void:
     if not is_instance_valid(target):

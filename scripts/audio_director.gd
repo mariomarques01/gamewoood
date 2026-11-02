@@ -5,6 +5,7 @@ const SETTINGS := "user://deadlight_audio.cfg"
 const MUSIC_PATH := "res://assets/audio/music/coastal_patrol.ogg"
 const CLIP_PATHS := {
     "shot": ["res://assets/audio/sfx/shot_a.wav", "res://assets/audio/sfx/shot_b.wav", "res://assets/audio/sfx/shot_c.wav"],
+    "machine_shot": ["res://assets/audio/sfx/shot_c.wav", "res://assets/audio/sfx/shot_b.wav", "res://assets/audio/sfx/shot_a.wav"],
     "plasma": ["res://assets/audio/sfx/plasma.wav"],
     "impact": ["res://assets/audio/sfx/impact.wav"],
     "explosion": ["res://assets/audio/sfx/explosion.wav"],
@@ -19,8 +20,8 @@ const CLIP_PATHS := {
     "victory": ["res://assets/audio/sfx/victory.wav"],
     "defeat": ["res://assets/audio/sfx/defeat.wav"],
 }
-const GAINS := {"shot": -7.0, "plasma": -11.0, "impact": -13.0, "explosion": -8.0, "splatter": -16.0, "reload": -12.0, "jump": -17.0, "step": -22.0, "hurt": -13.0, "pickup": -13.0, "ui": -16.0, "mission": -10.0, "victory": -8.0, "defeat": -12.0}
-const INTERVALS := {"shot": 0.065, "plasma": 0.12, "impact": 0.065, "explosion": 0.09, "splatter": 0.09, "step": 0.18, "pickup": 0.08, "ui": 0.1}
+const GAINS := {"machine_shot": -10.0, "shot": -7.0, "plasma": -11.0, "impact": -13.0, "explosion": -8.0, "splatter": -16.0, "reload": -12.0, "jump": -17.0, "step": -22.0, "hurt": -13.0, "pickup": -13.0, "ui": -16.0, "mission": -10.0, "victory": -8.0, "defeat": -12.0}
+const INTERVALS := {"machine_shot": 0.065, "shot": 0.065, "plasma": 0.12, "impact": 0.065, "explosion": 0.09, "splatter": 0.09, "step": 0.18, "pickup": 0.08, "ui": 0.1}
 var clips: Dictionary = {}
 var music_volume := 0.22
 var effects_volume := 0.7
@@ -177,7 +178,7 @@ func play(cue: String, position: Vector3 = Vector3.INF) -> bool:
     voice.stream = clips[cue][choice % clips[cue].size()]
     voice.bus = "DeadlightUI" if is_ui else "DeadlightEffects"
     voice.volume_db = float(GAINS[cue]) + distance_gain
-    voice.pitch_scale = 1.0 + sin(float(choice) * 2.3) * (0.025 if cue != "step" else 0.045)
+    voice.pitch_scale = (0.93 if cue == "machine_shot" else 1.0) + sin(float(choice) * 2.3) * (0.025 if cue != "step" else 0.045)
     priorities[slot] = priority
     started[slot] = now
     voice.play()

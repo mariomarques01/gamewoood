@@ -7,15 +7,29 @@ var hostile := false
 var life := 1.8
 var shooter: CollisionObject3D
 var material: Material
+static var tracer_mesh: BoxMesh
+static var point_mesh: SphereMesh
 
 func _ready() -> void:
     var visual := MeshInstance3D.new()
-    var mesh := SphereMesh.new()
-    mesh.radius = 0.16
-    mesh.height = 0.32
-    visual.mesh = mesh
+    if point_mesh == null:
+        point_mesh = SphereMesh.new()
+        point_mesh.radius = 0.1
+        point_mesh.height = 0.2
+        point_mesh.radial_segments = 8
+        point_mesh.rings = 4
+        tracer_mesh = BoxMesh.new()
+        tracer_mesh.size = Vector3(0.055, 0.055, 0.65)
+    visual.mesh = point_mesh
     visual.material_override = material
+    visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
     add_child(visual)
+    var trail := MeshInstance3D.new()
+    trail.mesh = tracer_mesh
+    trail.material_override = material
+    trail.rotation.y = atan2(-direction.x, -direction.z)
+    trail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+    add_child(trail)
     add_to_group("projectiles")
 
 func _physics_process(delta: float) -> void:
@@ -31,6 +45,8 @@ func _physics_process(delta: float) -> void:
     if not hit.is_empty():
         Audio.play(self, "impact", hit.position)
         var target: Object = hit.collider
+        var alien: bool = target.is_in_group("enemies")
+        preload("res://scripts/hit_spark.gd").spawn(get_parent(), hit.position, hit.normal, alien, target.ranged if alien else false)
         if target.has_method("receive_damage"):
             target.receive_damage(damage)
         queue_free()

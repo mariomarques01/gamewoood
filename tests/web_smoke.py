@@ -92,10 +92,10 @@ try:
             assert response.ok, response.status
             # A printed sentinel originates in the executed GDScript, not the HTML shell.
             for _ in range(120):
-                if any('DEADLIGHT_READY district=1 version=0.9.0' in line for line in messages):
+                if any('DEADLIGHT_READY district=1 version=0.10.0' in line for line in messages):
                     break
                 page.wait_for_timeout(500)
-            assert any('DEADLIGHT_READY district=1 version=0.9.0' in line for line in messages), messages
+            assert any('DEADLIGHT_READY district=1 version=0.10.0' in line for line in messages), messages
             page.wait_for_timeout(1000)
             if name == 'portrait':
                 expect_log('DEADLIGHT_ORIENTATION portrait')
@@ -142,7 +142,18 @@ try:
                 session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': points + [jump_point]})
                 page.wait_for_timeout(250)
                 expect_log('DEADLIGHT_JUMP')
-                session.send('Input.dispatchTouchEvent', {'type': 'touchEnd' , 'touchPoints': []})
+                session.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+                # CDP touchEnd releases the full gesture. Re-acquire both sticks
+                # for each third-finger selection instead of faking partial ends.
+                base_points = [{'id': 0, 'x': x + 105, 'y': y + height - 100},
+                               {'id': 1, 'x': x + width - 105, 'y': y + height - 100}]
+                for logical_x, token in [(58, 'pistol'), (140, 'machine')]:
+                    session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': base_points})
+                    session.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': points})
+                    selector = {'id': 3, 'x': x + logical_x * scale, 'y': y + height - 230 * scale}
+                    session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': points + [selector]})
+                    expect_log('DEADLIGHT_WEAPON ' + token)
+                    session.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
                 assert any('DEADLIGHT_CONTROLS simultaneous' in line for line in messages), messages
             else:
                 page.keyboard.down('d')
@@ -151,11 +162,15 @@ try:
                 # keep walking across the entire arena while mouse calls settle.
                 page.keyboard.up('d')
                 page.keyboard.press('Space')
+                page.keyboard.press('1')
+                expect_log('DEADLIGHT_WEAPON pistol')
                 page.mouse.move(bounds['x'] + bounds['width'] * 0.75, bounds['y'] + bounds['height'] * 0.6)
                 page.mouse.down()
                 expect_log('DEADLIGHT_FIRE')
                 page.wait_for_timeout(300)
                 page.mouse.up()
+                page.keyboard.press('2')
+                expect_log('DEADLIGHT_WEAPON machine')
             expect_log('DEADLIGHT_AUDIO_UNLOCKED')
             expect_log('DEADLIGHT_MUSIC_STARTED')
             assert any('DEADLIGHT_JUMP' in line for line in messages), messages

@@ -46,6 +46,10 @@ var combo_meter: ProgressBar
 var details: Label
 var toast: Label
 var toast_time := 0.0
+var weapon_buttons: Array[Button] = []
+var ammo_icon: Control
+var reload_meter: ProgressBar
+var results: Control
 
 func _style(color: Color, border: Color) -> StyleBoxFlat:
     var style := StyleBoxFlat.new()
@@ -117,6 +121,32 @@ func _ready() -> void:
     jump_button.pressed.connect(_request_jump)
     controls.jump_button = jump_button
     controls.jump_requested.connect(_request_jump)
+    for index in range(2):
+        var button := _button("")
+        button.tooltip_text = "Pistola (1)" if index == 0 else "Metralhadora (2)"
+        button.pressed.connect(_request_weapon.bind(index))
+        var icon = preload("res://scripts/weapon_icon.gd").new()
+        icon.weapon_index = index
+        icon.position = Vector2(8, 5)
+        icon.size = Vector2(56, 32)
+        button.add_child(icon)
+        var label := Label.new()
+        label.text = "PISTOLA" if index == 0 else "METRALH."
+        label.add_theme_font_size_override("font_size", 11)
+        label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        label.position = Vector2(0, 43)
+        label.size = Vector2(72, 18)
+        label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        button.add_child(label)
+        weapon_buttons.append(button)
+    controls.weapon_buttons = weapon_buttons
+    ammo_icon = preload("res://scripts/weapon_icon.gd").new()
+    root.add_child(ammo_icon)
+    reload_meter = ProgressBar.new()
+    reload_meter.max_value = 1
+    reload_meter.show_percentage = false
+    reload_meter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    root.add_child(reload_meter)
     damage_flash = ColorRect.new()
     root.add_child(damage_flash)
     damage_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -208,6 +238,9 @@ func _ready() -> void:
         meter_style.set_corner_radius_all(3)
         combo_meter.add_theme_stylebox_override(entry[0], meter_style)
     root.add_child(combo_meter)
+    results = preload("res://scripts/stage_results.gd").new()
+    root.add_child(results)
+    results.replay_requested.connect(func(): restart_requested.emit())
     rotation_panel = Panel.new()
     root.add_child(rotation_panel)
     rotation_panel.add_theme_stylebox_override("panel", _style(Color(0.025, 0.065, 0.1, 0.99), Color(0.1, 0.5, 0.65)))
@@ -244,6 +277,13 @@ func _layout() -> void:
     life.position = art.health_rect.position + Vector2(98, 7)
     life.add_theme_font_size_override("font_size", 19)
     life.add_theme_color_override("font_color", Color.WHITE)
+    ammo_icon.position = art.ammo_rect.position + Vector2(9, 6)
+    ammo_icon.size = Vector2(43, 28)
+    reload_meter.position = art.ammo_rect.position + Vector2(9, 38)
+    reload_meter.size = Vector2(art.ammo_rect.size.x - 18, 4)
+    for index in range(weapon_buttons.size()):
+        weapon_buttons[index].position = Vector2(22 + index * 82, area.y - 264)
+        weapon_buttons[index].size = Vector2(72, 68)
     ammo_text.position = art.ammo_rect.position + Vector2(60, 6)
     ammo_text.add_theme_font_size_override("font_size", 24)
     credit_text.position = art.credit_rect.position + Vector2(37, 5)
@@ -269,10 +309,12 @@ func _layout() -> void:
     rotation_label.size = Vector2(area.x - 32, 250)
     fullscreen_button.position = Vector2(area.x * 0.5 - 120, area.y * 0.5 + 100)
     fullscreen_button.size = Vector2(240, 68)
-    controls.enabled = not portrait_mode and not overlay.visible
+    controls.enabled = not portrait_mode and not overlay.visible and not results.visible
     if portrait_mode:
         controls.reset()
     orientation_changed.emit(portrait_mode)
+    if results.visible:
+        _hide_game_ui()
     art.queue_redraw()
     controls.queue_redraw()
 
@@ -281,6 +323,11 @@ func _request_jump() -> void:
         player.request_jump()
 
 func _process(delta: float) -> void:
+    if results.visible:
+        return
+    if is_instance_valid(player):
+        reload_meter.visible = player.weapon.reload_time > 0 and not overlay.visible
+        reload_meter.value = 1 - player.weapon.reload_time / player.weapon.WEAPONS[player.weapon.selected].reload_seconds
     kill_time = maxf(0, kill_time - delta)
     var boosted: bool = is_instance_valid(player) and player.weapon.overdrive_time > 0
     if is_instance_valid(arcade) and (arcade.chain >= 2 or boosted):
@@ -312,11 +359,11 @@ func _process(delta: float) -> void:
     navigation.text = "%dm" % int(player.global_position.distance_to(target))
 
 func update_status(hp: float, ammo: int, reload_active: bool, kills: int, current_mission: Node) -> void:
-    status.text = "BAIRRO 1 v0.9.0  |  BASE DO CAPITAO"
+    status.text = "BAIRRO 1 v0.10.0  |  BASE DO CAPITAO"
     life.text = "%d" % int(ceil(hp))
     art.health_ratio = hp / 100.0
     art.queue_redraw()
-    ammo_text.text = "REC..." if reload_active else "%02d/24" % ammo
+    ammo_text.text = "REC..." if reload_active else "%02d/%d" % [ammo, player.weapon.capacity]
     kills_text.text = "ALIENS  %d" % kills
     mission_title.text = "ALIENS  %d/12" % mini(kills, 12)
     var short_titles := ["ARSENAL", "HELIPONTO", "COMUNICACAO"]
@@ -342,12 +389,16 @@ func show_overlay(text: String, paused: bool = false) -> void:
     resume.visible = paused
     overlay.show()
     jump_button.hide()
+    for button in weapon_buttons:
+        button.hide()
     controls.enabled = false
     controls.reset()
 
 func hide_overlay() -> void:
     overlay.hide()
     jump_button.show()
+    for button in weapon_buttons:
+        button.show()
     controls.enabled = not portrait_mode
 
 func flash() -> void:
@@ -357,6 +408,10 @@ func flash() -> void:
 func _input(event: InputEvent) -> void:
     if (event is InputEventScreenTouch and event.pressed) or (event is InputEventMouseButton and event.pressed) or (event is InputEventKey and event.pressed):
         audio.activate()
+    if results.visible and event.is_action_pressed("ui_accept") and not event.is_echo():
+        restart_requested.emit()
+        get_viewport().set_input_as_handled()
+        return
     # Handle Escape before GUI focus can consume it, including while paused.
     if event.is_action_pressed("ui_cancel"):
         pause_requested.emit()
@@ -386,16 +441,18 @@ func _input(event: InputEvent) -> void:
     if not event is InputEventScreenTouch:
         return
     if event.pressed:
-        for button in [fullscreen_button] if portrait_mode else [pause_button, resume, restart_button, mute_button]:
+        for button in [fullscreen_button] if portrait_mode else [pause_button, resume, restart_button, mute_button, results.replay_button] + weapon_buttons:
             if is_instance_valid(button) and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
                 touch_buttons[event.index] = button
+                if button in weapon_buttons:
+                    _request_weapon(weapon_buttons.find(button))
                 get_viewport().set_input_as_handled()
                 return
     elif touch_buttons.has(event.index):
         var button: Button = touch_buttons[event.index]
         touch_buttons.erase(event.index)
         get_viewport().set_input_as_handled()
-        if is_instance_valid(button) and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
+        if is_instance_valid(button) and button not in weapon_buttons and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
             button.pressed.emit()
 
 func show_kills(chain: int) -> void:
@@ -445,3 +502,29 @@ func _report_combat_target(area: Vector2) -> void:
                 print("DEADLIGHT_COMBAT_TARGET " + JSON.stringify([normalized.x, normalized.y]))
                 return
     print("DEADLIGHT_COMBAT_NO_TARGET player=%s" % player.global_position)
+
+func _request_weapon(index: int) -> void:
+    if is_instance_valid(player) and not overlay.visible and not results.visible and not portrait_mode:
+        player.weapon.select_weapon(index)
+
+func show_weapon(index: int) -> void:
+    ammo_icon.weapon_index = index
+    ammo_icon.queue_redraw()
+    for slot in range(weapon_buttons.size()):
+        var selected := slot == index
+        var style := _style(Color(0.07, 0.17, 0.22, 0.95), Color(0.15, 0.85, 1) if selected else Color(0.35, 0.46, 0.53))
+        style.set_content_margin_all(2)
+        weapon_buttons[slot].add_theme_stylebox_override("normal", style)
+        weapon_buttons[slot].modulate.a = 1 if selected else 0.65
+
+func _hide_game_ui() -> void:
+    for node in [art, captain, life, ammo_text, kills_text, mission_title, objective, progress, pause_button, jump_button, navigation, credit_text, kill_popup, combo_meter, toast, ammo_icon, reload_meter, controls] + weapon_buttons:
+        node.hide()
+    controls.enabled = false
+    controls.reset()
+
+func show_result(summary: Dictionary) -> void:
+    outcome.text = "BASE PROTEGIDA!" if summary.won else "BASE INVADIDA!"
+    overlay.hide()
+    _hide_game_ui()
+    results.present(summary)

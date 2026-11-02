@@ -61,4 +61,4 @@ func mission_completed(current: int) -> void:
     notice.emit(names[mini(current - 1, 2)])
     if current < 3:
         player.health.heal(15)
-        player.weapon.resupply()
+        player.weapon.resupply(true)
