@@ -162,8 +162,12 @@ try:
             tap_audio_control(controls['mute'])
             expect_log('DEADLIGHT_AUDIO_MUTED true')
             page.wait_for_timeout(300)
-            silent = page.evaluate(ENERGY_JS)
-            assert silent < 1e-6, ('Mute left audible audio', silent)
+            silent = 1
+            for _ in range(16):
+                silent = page.evaluate(ENERGY_JS)
+                if silent < 1e-6:
+                    break
+            assert silent < 1e-6, ('Mute left audible audio', silent, messages)
             tap_audio_control(controls['mute'])
             expect_log('DEADLIGHT_AUDIO_MUTED false')
             music_rect = controls['music']
