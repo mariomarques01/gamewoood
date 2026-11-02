@@ -71,7 +71,8 @@ try:
         browser = playwright.chromium.launch(
             executable_path=executable,
             args=['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
-        for name, size, mobile in [('desktop', {'width': 1280, 'height': 720}, False),
+        for name, size, mobile in [('impact', {'width': 1280, 'height': 720}, False),
+                                   ('desktop', {'width': 1280, 'height': 720}, False),
                                    ('mobile', {'width': 844, 'height': 390}, True),
                                    ('portrait', {'width': 390, 'height': 844}, True)]:
             context = browser.new_context(viewport=size, is_mobile=mobile, has_touch=mobile)
@@ -103,6 +104,26 @@ try:
                 expect_log('DEADLIGHT_ORIENTATION landscape')
                 page.wait_for_timeout(500)
             bounds = page.locator('canvas').bounding_box()
+            if name == 'impact':
+                # Start grounded and stationary: a projection captured before a
+                # jump/moving follow-camera settles is not a stable aiming target.
+                page.keyboard.press('Escape', delay=120)
+                expect_log('DEADLIGHT_COMBAT_TARGET ')
+                target = json.loads(next(line.split('DEADLIGHT_COMBAT_TARGET ', 1)[1] for line in reversed(messages) if 'DEADLIGHT_COMBAT_TARGET ' in line))
+                page.keyboard.press('Escape', delay=120)
+                expect_log('DEADLIGHT_PAUSE false')
+                page.mouse.move(bounds['x'] + target[0] * bounds['width'], bounds['y'] + target[1] * bounds['height'])
+                page.mouse.down()
+                expect_log('DEADLIGHT_CANISTER_ARMED')
+                page.mouse.up()
+                expect_log('DEADLIGHT_CANISTER_EXPLODED')
+                page.screenshot(path='build/logs/web-energy-combat.png')
+                errors += [line for line in messages if 'SCRIPT ERROR:' in line or line.startswith('ERROR:')]
+                Path('build/logs/impact-console.json').write_text(json.dumps(messages, indent=2))
+                assert not errors, errors
+                print(f'WEB_IMPACT_OK mouse projectiles fuse explosion {url}')
+                context.close()
+                continue
             if mobile:
                 session = context.new_cdp_session(page)
                 x, y, width, height = (bounds[key] for key in ('x', 'y', 'width', 'height'))
@@ -186,15 +207,6 @@ try:
                 page.keyboard.press('Escape', delay=120)
             page.wait_for_timeout(200)
             expect_log('DEADLIGHT_PAUSE false')
-            if not mobile:
-                expect_log('DEADLIGHT_COMBAT_TARGET ')
-                target = json.loads(next(line.split('DEADLIGHT_COMBAT_TARGET ', 1)[1] for line in reversed(messages) if 'DEADLIGHT_COMBAT_TARGET ' in line))
-                page.mouse.move(bounds['x'] + target[0] * bounds['width'], bounds['y'] + target[1] * bounds['height'])
-                page.mouse.down()
-                expect_log('DEADLIGHT_CANISTER_ARMED')
-                page.mouse.up()
-                expect_log('DEADLIGHT_CANISTER_EXPLODED')
-                print('WEB_IMPACT_OK desktop mouse projectiles fuse explosion')
             page.screenshot(path=f'build/logs/{name}.png')
             errors += [line for line in messages if 'SCRIPT ERROR:' in line or line.startswith('ERROR:')]
             Path(f'build/logs/{name}-console.json').write_text(json.dumps(messages, indent=2))
