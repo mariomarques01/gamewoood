@@ -123,12 +123,15 @@ try:
                 assert any('DEADLIGHT_CONTROLS simultaneous' in line for line in messages), messages
             else:
                 page.keyboard.down('d')
+                expect_log('DEADLIGHT_MOVE')
+                # Release once movement executes; slow software rendering must not
+                # keep walking across the entire arena while mouse calls settle.
+                page.keyboard.up('d')
                 page.keyboard.press('Space')
                 page.mouse.move(bounds['x'] + bounds['width'] * 0.75, bounds['y'] + bounds['height'] * 0.6)
                 page.mouse.down()
                 expect_log('DEADLIGHT_FIRE')
                 page.wait_for_timeout(300)
-                page.keyboard.up('d')
                 page.mouse.up()
             expect_log('DEADLIGHT_AUDIO_UNLOCKED')
             expect_log('DEADLIGHT_MUSIC_STARTED')

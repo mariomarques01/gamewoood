@@ -444,3 +444,4 @@ func _report_combat_target(area: Vector2) -> void:
             if not jump_button.get_global_rect().has_point(screen):
                 print("DEADLIGHT_COMBAT_TARGET " + JSON.stringify([normalized.x, normalized.y]))
                 return
+    print("DEADLIGHT_COMBAT_NO_TARGET player=%s" % player.global_position)
