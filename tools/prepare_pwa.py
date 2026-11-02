@@ -34,6 +34,12 @@ for constant in ('CACHED_FILES', 'CACHABLE_FILES'):
 worker = worker.replace('cache.addAll(CACHED_FILES)',
     "cache.addAll(FULL_CACHE.concat(['index.manifest.json', 'index.192x192.png', "
     "'index.144x144.png', 'index.180x180.png', 'index.512x512.png']))")
+# Navigation preload is optional; failure must not reject SW activation.
+worker = worker.replace('self.registration.navigationPreload.enable()',
+                        'self.registration.navigationPreload.enable().catch(() => {})')
+worker = worker.replace(
+    "return ('navigationPreload' in self.registration) ? self.registration.navigationPreload.enable().catch(() => {}) : Promise.resolve();",
+    "return (('navigationPreload' in self.registration) ? self.registration.navigationPreload.enable().catch(() => {}) : Promise.resolve()).then(() => self.clients.claim());")
 # GitHub Pages launches /gamewoood/; Godot only caches index.html by default.
 worker = worker.replace('let cached = await cache.match(event.request);',
     'let cached = await cache.match(event.request);\n'
