@@ -35,6 +35,7 @@ func _physics_process(delta: float) -> void:
     shot.material = shot_material
     owner_body.get_parent().add_child(shot)
     shot.global_position = owner_body.global_position + Vector3.UP * 1.05 + shot.direction * 0.75
+    owner_body.actor.fire()
     cooldown = 0.16
     ammo -= 1
     if ammo == 0:

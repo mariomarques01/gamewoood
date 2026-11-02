@@ -1,5 +1,6 @@
 extends CharacterBody3D
 const Health = preload("res://scripts/health_component.gd")
+const CaptainVisual = preload("res://scripts/captain_visual.gd")
 const Weapon = preload("res://scripts/weapon_system.gd")
 @export var move_speed: float = 6.0
 @export var acceleration: float = 20.0
@@ -16,6 +17,8 @@ var jump_lock := 0.0
 var safe_position := Vector3(0, 0, 7)
 var visual: Node3D
 var body_material: StandardMaterial3D
+var actor: Node3D
+var damage_push := Vector3.ZERO
 
 func _ready() -> void:
     collision_layer = 4
@@ -26,31 +29,9 @@ func _ready() -> void:
     add_child(weapon)
     visual = $Visual
     $Visual/MeshInstance3D.hide()
-    body_material = _material(Color(1, 0.36, 0.08))
-    _part(Vector3(0, 1.0, 0), Vector3(0.75, 0.72, 0.45), body_material)
-    var blue := _material(Color(0.08, 0.24, 0.55))
-    _part(Vector3(0, 0.6, 0), Vector3(0.5, 0.35, 0.4), blue)
-    for x in [-0.24, 0.24]:
-        _part(Vector3(x, 0.22, -0.05), Vector3(0.35, 0.4, 0.6), _material(Color(0.07, 0.1, 0.16)))
-        _part(Vector3(x * 2, 1.0, 0), Vector3(0.23, 0.55, 0.28), blue)
-    _part(Vector3(0, 1.57, 0), Vector3(0.48, 0.45, 0.46), _material(Color(0.9, 0.65, 0.42)))
-    _part(Vector3(0, 1.64, -0.25), Vector3(0.5, 0.14, 0.06), _material(Color(0.05, 0.85, 1)))
-    _part(Vector3(0.35, 1.05, -0.6), Vector3(0.25, 0.28, 1.0), _material(Color(0.16, 0.2, 0.28)))
-    _part(Vector3(0.35, 1.05, -1.1), Vector3(0.21, 0.18, 0.16), _material(Color(0.05, 0.9, 1)))
-
-func _material(color: Color) -> StandardMaterial3D:
-    var material := StandardMaterial3D.new()
-    material.albedo_color = color
-    return material
-
-func _part(pos: Vector3, dimensions: Vector3, material: Material) -> void:
-    var mesh := BoxMesh.new()
-    mesh.size = dimensions
-    var part := MeshInstance3D.new()
-    part.mesh = mesh
-    part.material_override = material
-    part.position = pos
-    visual.add_child(part)
+    actor = CaptainVisual.new()
+    visual.add_child(actor)
+    body_material = actor.chest.material_override
 
 func _physics_process(delta: float) -> void:
     if not active:
@@ -62,7 +43,8 @@ func _physics_process(delta: float) -> void:
         mobile_direction = controls.movement
     if mobile_direction.length() > 0.05:
         direction = mobile_direction.limit_length()
-    var target := Vector3(direction.x, 0.0, direction.y) * move_speed
+    var world_move := screen_to_world(direction)
+    var target := world_move * move_speed
     velocity.x = move_toward(velocity.x, target.x, acceleration * delta)
     velocity.z = move_toward(velocity.z, target.z, acceleration * delta)
     jump_lock = maxf(0.0, jump_lock - delta)
@@ -80,17 +62,22 @@ func _physics_process(delta: float) -> void:
             print("DEADLIGHT_JUMP")
     else:
         velocity.y -= GRAVITY * delta
+    velocity.x = clampf(velocity.x + damage_push.x * delta * 8, -9, 9)
+    velocity.z = clampf(velocity.z + damage_push.z * delta * 8, -9, 9)
+    damage_push = damage_push.move_toward(Vector3.ZERO, 18 * delta)
     move_and_slide()
+    actor.animate(delta, Vector2(velocity.x, velocity.z).length(), not is_on_floor(), weapon.active)
     if position.y < -6.0:
         position = safe_position + Vector3.UP * 0.2
         velocity = Vector3.ZERO
         receive_damage(15.0)
-    if velocity.length_squared() > 1 and not reported_movement:
+    if Vector2(velocity.x, velocity.z).length_squared() > 1 and not reported_movement:
         reported_movement = true
         print("DEADLIGHT_MOVE")
     var aim := Vector3.ZERO
     if is_instance_valid(controls) and controls.aiming:
-        aim = Vector3(controls.aim.x, 0, controls.aim.y)
+        aim = screen_to_world(controls.aim)
+        aim = _assist_aim(aim)
     elif Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and get_viewport().gui_get_hovered_control() == null:
         var camera := get_viewport().get_camera_3d()
         var mouse := get_viewport().get_mouse_position()
@@ -104,13 +91,24 @@ func _physics_process(delta: float) -> void:
     if weapon.active:
         visual.rotation.y = atan2(-aim.x, -aim.z)
     elif direction.length() > 0.1:
-        visual.rotation.y = lerp_angle(visual.rotation.y, atan2(-direction.x, -direction.y), delta * 12)
+        visual.rotation.y = lerp_angle(visual.rotation.y, atan2(-world_move.x, -world_move.z), delta * 12)
     body_material.emission_enabled = health.invulnerability > 0.0
     body_material.emission = Color(0.5, 0.12, 0.02)
 
 func receive_damage(amount: float) -> void:
     if active:
-        health.damage(amount, 0.5)
+        var before: float = health.current
+        health.damage(amount, 0.8)
+        if health.current < before:
+            var nearest: Node3D
+            var distance := 2.6
+            for enemy in get_tree().get_nodes_in_group("enemies"):
+                var candidate: float = enemy.global_position.distance_to(global_position)
+                if candidate < distance:
+                    distance = candidate
+                    nearest = enemy
+            if is_instance_valid(nearest):
+                damage_push = (global_position - nearest.global_position).normalized() * 3.5
 
 func set_mobile_direction(direction: Vector2) -> void:
     mobile_direction = direction
@@ -118,3 +116,26 @@ func set_mobile_direction(direction: Vector2) -> void:
 func request_jump() -> void:
     if active and jump_lock <= 0.0:
         jump_buffer = 0.12
+
+func _assist_aim(direction: Vector3) -> Vector3:
+    var best := 0.94
+    var result := direction
+    for enemy in get_tree().get_nodes_in_group("enemies"):
+        var offset: Vector3 = enemy.global_position - global_position
+        offset.y = 0
+        if offset.length_squared() > 196 or offset.length_squared() < 0.1:
+            continue
+        var candidate := offset.normalized()
+        var alignment := direction.dot(candidate)
+        if alignment > best:
+            var ray := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP, enemy.global_position + Vector3.UP, 1)
+            if get_world_3d().direct_space_state.intersect_ray(ray).is_empty():
+                best = alignment
+                result = candidate
+    return direction.lerp(result, 0.65).normalized()
+
+func screen_to_world(direction: Vector2) -> Vector3:
+    var basis := get_viewport().get_camera_3d().global_basis
+    var right := Vector3(basis.x.x, 0, basis.x.z).normalized()
+    var back := Vector3(basis.z.x, 0, basis.z.z).normalized()
+    return right * direction.x + back * direction.y

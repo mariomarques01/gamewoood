@@ -12,7 +12,7 @@ func _walk(destination: Vector3) -> void:
         if offset.length() < 0.6:
             district.hud.controls.movement = Vector2.ZERO
             return
-        district.hud.controls.movement = Vector2(offset.x, offset.z).normalized()
+        district.hud.controls.movement = Vector2(offset.dot(player.screen_to_world(Vector2.RIGHT)), offset.dot(player.screen_to_world(Vector2.DOWN))).normalized()
         await physics_frame
     push_error("Unreachable waypoint %s from %s" % [destination, player.position])
     quit(1)
