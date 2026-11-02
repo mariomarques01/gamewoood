@@ -100,6 +100,9 @@ func _run() -> void:
     assert(district.hud.power_banner.title.size.x <= 288 and district.hud.power_banner.title.size.y <= 32, "Activation badge is oversized")
     assert(not district.hud.kill_popup.visible and not district.hud.frenzy_text.visible, "Redundant ability text obscures combat")
     assert(get_nodes_in_group("tree_grass").size() == 6, "Tree lawns missing")
+    assert(get_nodes_in_group("tree_fences").size() == 6, "Each tree needs a fenced bed")
+    for lawn in get_nodes_in_group("tree_grass"):
+        assert(lawn.mesh.get_aabb().size.x <= 2.5 and lawn.mesh.get_aabb().size.z <= 2.5, "Grass extends beyond the small bed")
     district.hud.power_banner.remaining = 0
     district.hud.power_banner.hide()
     player.position = Vector3(18, 0, 6)

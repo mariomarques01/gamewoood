@@ -56,5 +56,6 @@ variantes e orçamento/duração de sangue. O teste de estresse existente exerci
 A aparência e o desempenho em aparelhos físicos ainda precisam de validação.
 
 As ruas usam asfalto escuro uniforme, sem a textura que criava listras. Áreas
-livres usam terra, com jardins verdes e tufos baixos ao redor das seis árvores.
+livres são calçadas, sem terra exposta. As seis árvores recebem canteiros pequenos
+de grama, com cercas baixas e tufos confinados à área cercada.
 As calçadas continuam pavimentadas e o heliponto permanece asfaltado.

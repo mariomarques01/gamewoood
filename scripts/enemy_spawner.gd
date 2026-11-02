@@ -7,7 +7,7 @@ const MAX_ENEMIES := 24
 var timer := 1.5
 var sequence := 0
 var last_elimination_position := Vector3.ZERO
-var points := [Vector3(-22, 0, -4), Vector3(22, 0, 5), Vector3(-9, 0, 15), Vector3(10, 0, 16), Vector3(0, 0, -22)]
+var points := [Vector3(-19, 0, -3), Vector3(22, 0, 5), Vector3(-9, 0, 15), Vector3(10, 0, 16), Vector3(0, 0, -22)]
 
 func _physics_process(delta: float) -> void:
     timer -= delta
