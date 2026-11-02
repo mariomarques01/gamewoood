@@ -136,7 +136,9 @@ func _run() -> void:
     player.set_physics_process(true)
     await physics_frame
     await process_frame
-    assert(player.boost_aura.visible and district.hud.combo_meter.visible, "Boost aura/countdown missing")
+    # process_frame resumes before all HUD callbacks on some CI runners.
+    district.hud._process(0)
+    assert(player.boost_aura.visible and district.hud.xp_meter.visible and district.hud.xp_text.text.contains("TRANCO TOTAL"), "Boost aura/countdown missing")
     await RenderingServer.frame_post_draw
     root.get_texture().get_image().save_png("res://build/logs/boost-feedback.png")
     player.weapon.overdrive_time = 0

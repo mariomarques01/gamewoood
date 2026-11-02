@@ -7,7 +7,7 @@ interface continuam sendo próprios do PROJECT DEADLIGHT.
 ## Progressão durante a partida
 
 Cada alienígena eliminado concede **10 XP**, inclusive em explosões. A primeira
-**Fúria Tranco** exige **100 XP** e ativa automaticamente por **10 segundos**:
+**Fúria Tranco** exige **180 XP** e ativa automaticamente por **10 segundos**:
 
 - dano dos projéteis multiplicado por **3**;
 - intervalo de disparo reduzido para **45%** do normal;
@@ -16,11 +16,13 @@ Cada alienígena eliminado concede **10 XP**, inclusive em explosões. A primeir
 - arma ampliada, projéteis dourados, aura e contagem regressiva no HUD;
 - faixa animada ao ativar, onda de energia, partículas e sinal sonoro.
 
-A exigência aumenta em 40 XP por ativação, até o limite de 300 XP. XP ganho durante
-a habilidade carrega a próxima ativação, até o limite atual. A pausa congela a
+A exigência aumenta em 80 XP por ativação, até o limite de 500 XP. Eliminações
+durante a Fúria não carregam a próxima ativação. A pausa congela a
 duração. A habilidade termina com a partida, e XP/nível recomeçam ao reiniciar.
-O bônus anterior de cinco eliminações rápidas (Tranco Total, quatro segundos)
-continua disponível e não substitui o aviso da habilidade maior.
+Tranco Total exige dez eliminações rápidas e tem intervalo mínimo de 25 segundos
+entre ativações, inclusive por itens. Itens de boost caem a cada 24 eliminações.
+O aviso dura 1,2 segundo em uma faixa compacta no topo; a barra de XP exibe
+a duração ativa, sem textos grandes repetidos sobre o combate.
 
 ## Inimigos e custo de renderização
 
@@ -52,3 +54,7 @@ nos alienígenas e filtragem com mipmaps no asfalto.
 variantes e orçamento/duração de sangue. O teste de estresse existente exercita
 24 inimigos. Os testes web existentes verificam controles desktop/mobile e PWA.
 A aparência e o desempenho em aparelhos físicos ainda precisam de validação.
+
+As ruas usam asfalto escuro uniforme, sem a textura que criava listras. Áreas
+livres usam terra, com jardins verdes e tufos baixos ao redor das seis árvores.
+As calçadas continuam pavimentadas e o heliponto permanece asfaltado.

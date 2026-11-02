@@ -375,17 +375,17 @@ func _process(delta: float) -> void:
         xp_meter.visible = show_xp
         xp_text.visible = show_xp
         xp_meter.get_theme_stylebox("fill").bg_color = Color(1, 0.68, 0.12) if furious else Color(0.18, 0.84, 0.95)
-        xp_meter.max_value = arcade.FRENZY_DURATION if furious else arcade.xp_required
-        xp_meter.value = player.weapon.frenzy_time if furious else arcade.xp
-        xp_text.text = "FÚRIA ATIVA  •  %.1fs" % player.weapon.frenzy_time if furious else "FÚRIA  •  XP %d / %d" % [arcade.xp, arcade.xp_required]
+        xp_meter.max_value = arcade.FRENZY_DURATION if furious else (4 if player.weapon.overdrive_time > 0 else arcade.xp_required)
+        xp_meter.value = player.weapon.frenzy_time if furious else (player.weapon.overdrive_time if player.weapon.overdrive_time > 0 else arcade.xp)
+        xp_text.text = "FÚRIA ATIVA  •  %.1fs" % player.weapon.frenzy_time if furious else ("TRANCO TOTAL  •  %.1fs" % player.weapon.overdrive_time if player.weapon.overdrive_time > 0 else "FÚRIA  •  XP %d / %d" % [arcade.xp, arcade.xp_required])
         frenzy_text.text = "DANO ×3  •  VELOCIDADE ×1,5\nMUNIÇÃO ILIMITADA" if furious else ""
-        frenzy_text.visible = show_xp and furious and not power_banner.visible
+        frenzy_text.visible = false
     kill_time = maxf(0, kill_time - delta)
     var boosted: bool = is_instance_valid(player) and (player.weapon.overdrive_time > 0 or player.weapon.frenzy_time > 0)
     if is_instance_valid(arcade) and (arcade.chain >= 2 or boosted):
         kill_time = maxf(player.weapon.overdrive_time, player.weapon.frenzy_time) if boosted else arcade.chain_time
         kill_popup.text = "FÚRIA\nTRANCO!" if player.weapon.frenzy_time > 0 else ("TRANCO\nTOTAL!" if boosted else "%d\nCOMBO" % arcade.chain)
-    kill_popup.visible = kill_time > 0 and not overlay.visible and not portrait_mode and not power_banner.visible
+    kill_popup.visible = kill_time > 0 and not boosted and not overlay.visible and not portrait_mode and not power_banner.visible
     kill_popup.modulate.a = minf(1, kill_time * 3)
     combo_meter.visible = kill_popup.visible and is_instance_valid(arcade) and (arcade.chain >= 2 or boosted)
     combo_meter.max_value = 10 if is_instance_valid(player) and player.weapon.frenzy_time > 0 else 4
@@ -433,7 +433,7 @@ func update_status(hp: float, ammo: int, reload_active: bool, kills: int, curren
 
 func notify(text: String) -> void:
     toast.text = text
-    toast_time = 2.2
+    toast_time = 0.0 if text.begins_with("FÚRIA TRANCO") or text.begins_with("TRANCO TOTAL") else 2.2
 
 func show_overlay(text: String, paused: bool = false) -> void:
     outcome.text = text

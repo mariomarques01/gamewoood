@@ -61,12 +61,12 @@ func collect() -> void:
         return
     if kind == "health" and player.health.current >= player.health.maximum:
         return
+    if kind == "boost" and not player.weapon.activate_overdrive():
+        return
     taken = true
     Audio.play(self, "pickup")
     if kind == "health":
         player.health.heal(20)
-    elif kind == "boost":
-        player.weapon.activate_overdrive()
     elif kind == "ammo":
         player.weapon.resupply()
     collected.emit(kind)

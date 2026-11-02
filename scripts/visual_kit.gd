@@ -85,6 +85,8 @@ static func box(parent: Node3D, pos: Vector3, dimensions: Vector3, mat: Material
     visual.mesh = bevel(dimensions)
     visual.material_override = mat
     visual.position = pos
+    if pos.y <= 0.1 and dimensions.y <= 0.2:
+        visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
     parent.add_child(visual)
     return visual
 

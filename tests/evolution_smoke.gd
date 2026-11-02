@@ -20,15 +20,17 @@ func _run() -> void:
     enemy.receive_damage(1000)
     enemy.receive_damage(1000)
     assert(district.arcade.xp == 10 and district.score == 1)
-    for index in range(8):
+    for index in range(16):
         district.arcade.register_kill(Vector3(3, 0, 10))
-    assert(district.arcade.xp == 90 and player.weapon.frenzy_time == 0)
+    assert(district.arcade.xp == 170 and player.weapon.frenzy_time == 0)
     player.weapon.reload_time = 1.0
     district.arcade.register_kill(Vector3(3, 0, 10))
     assert(player.weapon.frenzy_time == 10 and player.weapon.reload_time == 0)
-    assert(district.arcade.xp == 0 and district.arcade.xp_required == 140)
+    assert(district.arcade.xp == 0 and district.arcade.xp_required == 260)
     assert(district.hud.power_banner.major and district.hud.power_banner.remaining > 0, "Frenzy activation banner missing")
     assert(get_nodes_in_group("power_surges").size() > 0, "World energy burst missing")
+    district.arcade.award_xp(100)
+    assert(district.arcade.xp == 0, "Frenzy kills must not charge the next ability")
     player.weapon.direction = Vector3.RIGHT
     player.weapon.active = true
     player.weapon.cooldown = 0
@@ -95,6 +97,17 @@ func _run() -> void:
         surge._process(0.2)
     await RenderingServer.frame_post_draw
     root.get_texture().get_image().save_png("res://build/logs/evolution-frenzy.png")
+    assert(district.hud.power_banner.title.size.x <= 288 and district.hud.power_banner.title.size.y <= 32, "Activation badge is oversized")
+    assert(not district.hud.kill_popup.visible and not district.hud.frenzy_text.visible, "Redundant ability text obscures combat")
+    assert(get_nodes_in_group("tree_grass").size() == 6, "Tree lawns missing")
+    district.hud.power_banner.remaining = 0
+    district.hud.power_banner.hide()
+    player.position = Vector3(18, 0, 6)
+    var camera = player.get_node("Camera3D")
+    camera.follow_position = player.global_position + camera.offset
+    camera.global_position = camera.follow_position
+    await RenderingServer.frame_post_draw
+    root.get_texture().get_image().save_png("res://build/logs/terrain-east.png")
     var old_xp: int = district.arcade.xp
     player.active = false
     district.arcade.register_kill(Vector3.ZERO)
