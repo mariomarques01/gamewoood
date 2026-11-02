@@ -44,6 +44,28 @@ func _run() -> void:
     player.weapon._physics_process(4.1)
     district.arcade._physics_process(5)
     assert(player.weapon.overdrive_time == 0 and district.arcade.chain == 0, "Combo/boost did not expire")
+    var credits = district.arcade.spawn_supply(player.position + Vector3.RIGHT * 4, "credit")
+    credits.collect()
+    credits.collect()
+    assert(district.arcade.credits == 5, "Credit pickup did not apply exactly once")
+    var boost = district.arcade.spawn_supply(player.position + Vector3.RIGHT * 4, "boost")
+    boost.collect()
+    assert(player.weapon.overdrive_time == 4, "Dropped boost did not activate")
+    for index in range(7):
+        district.arcade.register_kill(player.position + Vector3.RIGHT * 8)
+    assert(district.arcade.total_kills == 12 and district.arcade.credits == 30, "12-alien bonus did not award once")
+    var effect_script = preload("res://scripts/combat_effect.gd")
+    for index in range(14):
+        effect_script.burst(district, player.position + Vector3.RIGHT * 5, index % 2 == 0)
+    assert(get_nodes_in_group("combat_fx").size() <= 10, "Explosion effects exceeded budget")
+    var effect = get_nodes_in_group("combat_fx")[0]
+    effect._physics_process(0.2)
+    assert(effect.fragments.multimesh.instance_count == 18 and effect.stain.visible, "Burst or alien blood missing")
+    await RenderingServer.frame_post_draw
+    root.get_texture().get_image().save_png("res://build/logs/combat-feedback.png")
+    effect._physics_process(8.0)
+    await process_frame
+    assert(not is_instance_valid(effect), "Expired explosion effect leaked")
     player.health.current = 90
     district.arcade.mission_completed(1)
     assert(player.health.current == 100 and player.weapon.ammo == 24, "Mission checkpoint reward failed")

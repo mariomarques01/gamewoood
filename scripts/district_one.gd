@@ -15,6 +15,8 @@ var score := 0
 var ended := false
 var arcade: Node
 var last_hp := 100.0
+var orientation_blocked := false
+var manually_paused := false
 
 func _ready() -> void:
     player.position = Vector3(0, 0, 7)
@@ -44,6 +46,10 @@ func _ready() -> void:
     arcade.player = player
     add_child(arcade)
     arcade.notice.connect(hud.notify)
+    hud.show_credits(save.credits)
+    arcade.credits_changed.connect(func(value: int): hud.show_credits(save.credits + value))
+    arcade.elimination_feedback.connect(hud.show_kills)
+    hud.orientation_changed.connect(_orientation_changed)
     hud.pause_requested.connect(_pause)
     hud.restart_requested.connect(_restart)
     player.health.changed.connect(func(_current, _maximum):
@@ -54,7 +60,8 @@ func _ready() -> void:
     player.health.died.connect(func(): _finish(false))
     player.weapon.ammo_changed.connect(func(_ammo, _reloading): _update_hud())
     _update_hud()
-    print("DEADLIGHT_READY district=1 version=0.6.0 objects=%d" % district_map.get_child_count())
+    _orientation_changed(hud.portrait_mode)
+    print("DEADLIGHT_READY district=1 version=0.7.0 objects=%d" % district_map.get_child_count())
 
 func _update_hud() -> void:
     if not is_instance_valid(hud):
@@ -74,19 +81,28 @@ func _finish(won: bool) -> void:
     missions.active = false
     for shot in get_tree().get_nodes_in_group("projectiles"):
         shot.queue_free()
-    save.record(score, won)
+    save.record(score, won, arcade.credits)
     hud.show_overlay("BASE PROTEGIDA!\n3 MISSOES CONCLUIDAS" if won else "BASE INVADIDA!\nO CAPITAO VOLTA JA...")
     print("DEADLIGHT_RESULT victory=%s kills=%d" % [won, score])
 
 func _pause() -> void:
     if ended:
         return
-    get_tree().paused = not get_tree().paused
-    print("DEADLIGHT_PAUSE %s" % get_tree().paused)
-    if get_tree().paused:
+    manually_paused = not manually_paused
+    _sync_pause()
+    print("DEADLIGHT_PAUSE %s" % manually_paused)
+    if manually_paused:
         hud.show_overlay("OPERACAO EM PAUSA", true)
     else:
         hud.hide_overlay()
+
+func _orientation_changed(portrait: bool) -> void:
+    orientation_blocked = portrait
+    _sync_pause()
+    print("DEADLIGHT_ORIENTATION %s" % ("portrait" if portrait else "landscape"))
+
+func _sync_pause() -> void:
+    get_tree().paused = orientation_blocked or manually_paused
 
 func _restart() -> void:
     get_tree().paused = false

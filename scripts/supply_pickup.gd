@@ -12,9 +12,25 @@ func _ready() -> void:
     add_to_group("supplies")
     visual = Node3D.new()
     add_child(visual)
+    if kind == "credit":
+        var coin := MeshInstance3D.new()
+        var mesh := CylinderMesh.new()
+        mesh.top_radius = 0.32
+        mesh.bottom_radius = 0.32
+        mesh.height = 0.1
+        mesh.radial_segments = 16
+        coin.mesh = mesh
+        coin.material_override = Kit.material(Color(1, 0.65, 0.1), true)
+        coin.rotation.x = PI / 2
+        visual.add_child(coin)
+        Kit.box(visual, Vector3(0, 0, -0.065), Vector3(0.09, 0.37, 0.04), Kit.material(Color(1, 0.94, 0.5)))
+        return
     var color := Color(0.18, 0.9, 0.5) if kind == "health" else Color(1, 0.7, 0.1)
     Kit.box(visual, Vector3.ZERO, Vector3(0.65, 0.5, 0.5), Kit.material(Color(0.06, 0.18, 0.22)))
-    if kind == "health":
+    if kind == "boost":
+        var bolt := Kit.box(visual, Vector3(0, 0, -0.29), Vector3(0.14, 0.4, 0.05), Kit.material(Color(0.1, 0.8, 1), true))
+        bolt.rotation.z = -0.35
+    elif kind == "health":
         Kit.box(visual, Vector3(0, 0, -0.27), Vector3(0.4, 0.13, 0.04), Kit.material(color, true))
         Kit.box(visual, Vector3(0, 0, -0.28), Vector3(0.13, 0.38, 0.04), Kit.material(color, true))
     else:
@@ -45,7 +61,9 @@ func collect() -> void:
     taken = true
     if kind == "health":
         player.health.heal(20)
-    else:
+    elif kind == "boost":
+        player.weapon.overdrive_time = 4.0
+    elif kind == "ammo":
         player.weapon.resupply()
     collected.emit(kind)
     queue_free()
