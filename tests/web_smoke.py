@@ -142,13 +142,18 @@ try:
                 session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': points + [jump_point]})
                 page.wait_for_timeout(250)
                 expect_log('DEADLIGHT_JUMP')
-                session.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': points})
+                session.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+                # CDP touchEnd releases the full gesture. Re-acquire both sticks
+                # for each third-finger selection instead of faking partial ends.
+                base_points = [{'id': 0, 'x': x + 105, 'y': y + height - 100},
+                               {'id': 1, 'x': x + width - 105, 'y': y + height - 100}]
                 for logical_x, token in [(58, 'pistol'), (140, 'machine')]:
+                    session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': base_points})
+                    session.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': points})
                     selector = {'id': 3, 'x': x + logical_x * scale, 'y': y + height - 230 * scale}
                     session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': points + [selector]})
-                    session.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': points})
                     expect_log('DEADLIGHT_WEAPON ' + token)
-                session.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+                    session.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
                 assert any('DEADLIGHT_CONTROLS simultaneous' in line for line in messages), messages
             else:
                 page.keyboard.down('d')

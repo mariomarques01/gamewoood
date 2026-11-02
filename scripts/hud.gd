@@ -444,13 +444,15 @@ func _input(event: InputEvent) -> void:
         for button in [fullscreen_button] if portrait_mode else [pause_button, resume, restart_button, mute_button, results.replay_button] + weapon_buttons:
             if is_instance_valid(button) and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
                 touch_buttons[event.index] = button
+                if button in weapon_buttons:
+                    _request_weapon(weapon_buttons.find(button))
                 get_viewport().set_input_as_handled()
                 return
     elif touch_buttons.has(event.index):
         var button: Button = touch_buttons[event.index]
         touch_buttons.erase(event.index)
         get_viewport().set_input_as_handled()
-        if is_instance_valid(button) and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
+        if is_instance_valid(button) and button not in weapon_buttons and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
             button.pressed.emit()
 
 func show_kills(chain: int) -> void:

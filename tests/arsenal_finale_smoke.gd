@@ -75,6 +75,7 @@ func _run() -> void:
         Input.flush_buffered_events()
     var center: Vector2 = district.hud.weapon_buttons[1].get_global_rect().get_center()
     touch(2, center, true)
+    assert(weapon.selected == 1, "Combat selector waited for finger release")
     touch(2, center, false)
     assert(weapon.selected == 1 and district.hud.controls.move_id == 0 and district.hud.controls.aim_id == 1 and district.hud.controls.aiming and district.hud.controls.movement.length() > 0, "Weapon touch stole a stick")
     touch(0, Vector2(100, 430), false)
