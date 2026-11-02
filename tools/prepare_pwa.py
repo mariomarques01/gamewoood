@@ -13,6 +13,7 @@ manifest.update(id='./', scope='./', short_name='DEADLIGHT', lang='pt-BR',
                 description='Defenda a base costeira com o Capitão Tranco.',
                 theme_color='#10252f')
 shutil.copyfile(root / 'assets/pwa/icon-192.png', output / 'index.192x192.png')
+manifest['icons'] = [icon for icon in manifest['icons'] if icon['src'] != 'index.192x192.png']
 manifest['icons'].append({'src': 'index.192x192.png', 'sizes': '192x192', 'type': 'image/png'})
 manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
 worker_path = output / 'index.service.worker.js'
@@ -25,7 +26,7 @@ for constant in ('CACHED_FILES', 'CACHABLE_FILES'):
     if match is None:
         raise RuntimeError(f'Unsupported Godot worker: missing {constant}')
     files = [name for name in json.loads(match[1]) if (output / name).is_file()]
-    if constant == 'CACHED_FILES':
+    if constant == 'CACHED_FILES' and 'index.png' not in files:
         files.append('index.png')
     worker = re.sub(pattern, f'const {constant} = {json.dumps(files)};', worker)
 # Cache the complete game atomically. The first uncontrolled page also downloads

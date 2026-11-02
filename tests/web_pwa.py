@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import threading
+import tempfile
 from playwright.sync_api import sync_playwright
 
 parser = argparse.ArgumentParser()
@@ -18,10 +19,11 @@ server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), handler)
 threading.Thread(target=server.serve_forever, daemon=True).start()
 url = f'http://127.0.0.1:{server.server_port}/{directory.name}/'
 try:
-    with sync_playwright() as p:
-        browser = p.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN'),
+    with tempfile.TemporaryDirectory(prefix="deadlight-pwa-") as profile, sync_playwright() as p:
+        context = p.chromium.launch_persistent_context(profile,
+            viewport={"width": 640, "height": 360},
+            executable_path=os.environ.get('CHROMIUM_BIN'),
             args=['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
-        context = browser.new_context(viewport={'width': 1280, 'height': 720})
         page = context.new_page()
         messages, errors = [], []
         page.on('console', lambda msg: messages.append(msg.text))
@@ -33,8 +35,7 @@ try:
         assert manifest['orientation'] == 'landscape', manifest
         assert manifest['scope'] == './', manifest
         assert {'192x192', '512x512'} <= {i['sizes'] for i in manifest['icons']}
-        for icon in manifest['icons']:
-            assert page.evaluate('async src => (await fetch(src)).ok', icon['src'])
+        assert page.evaluate('async icons => (await Promise.all(icons.map(async i => (await fetch(i.src)).ok))).every(Boolean)', manifest['icons'])
         page.evaluate('async () => { await navigator.serviceWorker.ready; }')
         page.wait_for_function("async () => !!(await caches.match('index.wasm')) && !!(await caches.match('index.pck'))", timeout=120000)
         # Get controlled even when the first visit was not controlled by the SW.
@@ -59,7 +60,7 @@ try:
         Path('build/logs').mkdir(parents=True, exist_ok=True)
         Path('build/logs/pwa.json').write_text(json.dumps({'manifest': manifest, 'installability': installability,
             'offline_startup': ['directory', 'index.html']}, indent=2))
-        browser.close()
+        context.close()
         print('WEB_PWA_OK installable; actual game starts offline at directory and index.html')
 finally:
     server.shutdown()

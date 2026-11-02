@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 
 root = Path(__file__).resolve().parents[1]
@@ -31,4 +32,5 @@ with tempfile.TemporaryDirectory(prefix='deadlight-finale-') as temporary:
             log.write(result.stdout)
             if result.returncode or 'SCRIPT ERROR:' in result.stdout or any(line.startswith('ERROR:') for line in result.stdout.splitlines()):
                 raise SystemExit(f'Finale fixture export failed; see {log_path}')
+subprocess.run([sys.executable, str(root / 'tools/prepare_pwa.py'), str(output)], check=True)
 print('FINALE_FIXTURE_EXPORT_OK isolated production code and real mission/result logic')
