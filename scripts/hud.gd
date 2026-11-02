@@ -26,6 +26,7 @@ var pause_button: Button
 var restart_button: Button
 var jump_button: Button
 var jump_hint: Label
+var touch_buttons: Dictionary = {}
 
 func _style(color: Color, border: Color) -> StyleBoxFlat:
     var style := StyleBoxFlat.new()
@@ -217,3 +218,26 @@ func hide_overlay() -> void:
 func flash() -> void:
     damage_flash.color.a = 0.25
     create_tween().tween_property(damage_flash, "color:a", 0.0, 0.25)
+
+func _unhandled_input(event: InputEvent) -> void:
+    # This HUD keeps processing while the gameplay tree is paused.
+    if event.is_action_pressed("ui_cancel"):
+        pause_requested.emit()
+        get_viewport().set_input_as_handled()
+
+func _input(event: InputEvent) -> void:
+    # Native touch routing, independent of emulated mouse input and joystick IDs.
+    if not event is InputEventScreenTouch:
+        return
+    if event.pressed:
+        for button in [pause_button, resume, restart_button]:
+            if is_instance_valid(button) and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
+                touch_buttons[event.index] = button
+                get_viewport().set_input_as_handled()
+                return
+    elif touch_buttons.has(event.index):
+        var button: Button = touch_buttons[event.index]
+        touch_buttons.erase(event.index)
+        get_viewport().set_input_as_handled()
+        if is_instance_valid(button) and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
+            button.pressed.emit()

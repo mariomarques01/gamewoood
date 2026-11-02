@@ -66,10 +66,6 @@ func _finish(won: bool) -> void:
     hud.show_overlay("BASE PROTEGIDA!\n3 MISSOES CONCLUIDAS" if won else "BASE INVADIDA!\nO CAPITAO VOLTA JA...")
     print("DEADLIGHT_RESULT victory=%s kills=%d" % [won, score])
 
-func _unhandled_input(event: InputEvent) -> void:
-    if event.is_action_pressed("ui_cancel"):
-        _pause()
-
 func _pause() -> void:
     if ended:
         return
