@@ -36,8 +36,11 @@ try:
         assert manifest['scope'] == './', manifest
         assert {'192x192', '512x512'} <= {i['sizes'] for i in manifest['icons']}
         assert page.evaluate('async icons => (await Promise.all(icons.map(async i => (await fetch(i.src)).ok))).every(Boolean)', manifest['icons'])
-        page.evaluate('async () => { await navigator.serviceWorker.ready; }')
+        print('PWA_METADATA_OK', flush=True)
+        page.wait_for_function("async () => !!(await navigator.serviceWorker.getRegistration())?.active", timeout=120000)
+        print('PWA_SERVICE_WORKER_ACTIVE', flush=True)
         page.wait_for_function("async () => !!(await caches.match('index.wasm')) && !!(await caches.match('index.pck'))", timeout=120000)
+        print('PWA_GAME_CACHED', flush=True)
         # Get controlled even when the first visit was not controlled by the SW.
         page.reload(wait_until='networkidle', timeout=120000)
         page.wait_for_function('navigator.serviceWorker.controller !== null')
@@ -45,6 +48,7 @@ try:
         session = context.new_cdp_session(page)
         installability = session.send('Page.getInstallabilityErrors')
         assert not installability['installabilityErrors'], installability
+        print('PWA_INSTALLABILITY_OK', flush=True)
         context.set_offline(True)
         for target in (url, url + 'index.html'):
             messages.clear()
@@ -56,6 +60,7 @@ try:
                 page.wait_for_timeout(250)
             assert any('DEADLIGHT_READY district=1 version=0.10.0' in m for m in messages), messages
             assert page.locator('canvas').is_visible()
+            print(f'PWA_OFFLINE_START_OK {target}', flush=True)
         assert not errors, errors
         Path('build/logs').mkdir(parents=True, exist_ok=True)
         Path('build/logs/pwa.json').write_text(json.dumps({'manifest': manifest, 'installability': installability,
