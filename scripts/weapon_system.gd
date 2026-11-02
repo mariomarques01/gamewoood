@@ -31,7 +31,7 @@ func _physics_process(delta: float) -> void:
         return
     if not reported_fire:
         reported_fire = true
-        print("DEADLIGHT_FIRE")
+        print("DEADLIGHT_FIRE origin=%s direction=%s" % [owner_body.global_position, direction])
     var shot = Projectile.new()
     shot.direction = direction.normalized()
     shot.damage = 37.5 if overdrive_time > 0 else 25.0

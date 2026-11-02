@@ -81,8 +81,8 @@ try:
             messages, errors = [], []
             page.on('console', lambda msg: messages.append(msg.text))
             page.on('pageerror', lambda error: errors.append(str(error)))
-            def expect_log(token):
-                for attempt in range(60):
+            def expect_log(token, attempts=60):
+                for attempt in range(attempts):
                     if any(token in line for line in messages):
                         return
                     page.wait_for_timeout(100)
@@ -114,9 +114,11 @@ try:
                 expect_log('DEADLIGHT_PAUSE false')
                 page.mouse.move(bounds['x'] + target[0] * bounds['width'], bounds['y'] + target[1] * bounds['height'])
                 page.mouse.down()
-                expect_log('DEADLIGHT_CANISTER_ARMED')
+                # Software WebGL may advance game time slowly; native tests verify
+                # the 0.65s fuse, this gate verifies actual browser execution.
+                expect_log('DEADLIGHT_CANISTER_ARMED', attempts=200)
                 page.mouse.up()
-                expect_log('DEADLIGHT_CANISTER_EXPLODED')
+                expect_log('DEADLIGHT_CANISTER_EXPLODED', attempts=200)
                 page.screenshot(path='build/logs/web-energy-combat.png')
                 errors += [line for line in messages if 'SCRIPT ERROR:' in line or line.startswith('ERROR:')]
                 Path('build/logs/impact-console.json').write_text(json.dumps(messages, indent=2))

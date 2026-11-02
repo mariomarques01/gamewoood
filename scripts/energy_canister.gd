@@ -57,6 +57,7 @@ func receive_damage(amount: float) -> void:
     if spent or armed or amount <= 0:
         return
     health -= amount
+    print("DEADLIGHT_CANISTER_HIT health=%s" % health)
     if health <= 0:
         armed = true
         warning.show()
