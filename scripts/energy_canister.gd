@@ -8,6 +8,7 @@ const RADIUS := 4.5
 var health := 40.0
 var armed := false
 var spent := false
+var active := true
 var fuse := 0.65
 var warning: MeshInstance3D
 var shell: MeshInstance3D
@@ -54,7 +55,7 @@ func _ready() -> void:
     warning.hide()
 
 func receive_damage(amount: float) -> void:
-    if spent or armed or amount <= 0:
+    if not active or spent or armed or amount <= 0:
         return
     health -= amount
     print("DEADLIGHT_CANISTER_HIT health=%s" % health)
@@ -64,13 +65,17 @@ func receive_damage(amount: float) -> void:
         print("DEADLIGHT_CANISTER_ARMED")
 
 func _physics_process(delta: float) -> void:
-    if not armed or spent:
+    if not active or not armed or spent:
         return
     fuse -= delta
     shell.scale.x = 1 + sin(fuse * 40) * 0.06
     warning.visible = sin(fuse * 35) > -0.5
     if fuse <= 0:
         _detonate()
+
+func deactivate() -> void:
+    active = false
+    warning.hide()
 
 func _detonate() -> void:
     if spent:

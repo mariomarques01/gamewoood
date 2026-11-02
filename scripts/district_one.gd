@@ -33,6 +33,8 @@ func _ready() -> void:
     spawner.player = player
     add_child(spawner)
     spawner.eliminated.connect(func():
+        if ended:
+            return
         score += 1
         arcade.register_kill(spawner.last_elimination_position)
         _update_hud())
@@ -85,6 +87,8 @@ func _finish(won: bool) -> void:
     player.active = false
     spawner.active = false
     missions.active = false
+    for canister in get_tree().get_nodes_in_group("explosives"):
+        canister.deactivate()
     for shot in get_tree().get_nodes_in_group("projectiles"):
         shot.queue_free()
     save.record(score, won, arcade.credits)

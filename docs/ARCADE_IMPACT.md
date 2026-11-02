@@ -22,7 +22,8 @@ damages visible enemies with distance falloff, arms other exposed canisters and
 can hurt the player for 20 HP, subject to normal invulnerability. Walls block both
 blast damage and chain triggering. Enemies go through their normal elimination,
 combo, drop and mission accounting. Props are solid until destroyed and reset
-when the district restarts.
+when the district restarts. Pending fuses stop on victory/defeat; finished-run
+kill accounting cannot be changed by late signals.
 
 The blast uses a brief warm core, cyan shockwave and shrinking low-poly smoke;
 no dynamic lights, screen-wide flash or full-screen postprocessing. At most six

@@ -150,7 +150,16 @@ func _run() -> void:
     for frame in range(80):
         await physics_frame
     assert(get_nodes_in_group("energy_fx").is_empty(), "Expired blast visuals leaked")
-    print("DEADLIGHT_IMPACT_OK projectile fuse chain damage cover drops knockback combo aura cleanup")
+    var pending = get_nodes_in_group("explosives")[0]
+    pending.receive_damage(100)
+    player.health.invulnerability = 0
+    player.receive_damage(100)
+    assert(district.ended and not pending.active and not pending.warning.visible, "Defeat left an armed canister active")
+    var final_score: int = district.score
+    pending._physics_process(2)
+    district.spawner.eliminated.emit()
+    assert(not pending.spent and district.score == final_score, "Combat continued changing the finished run")
+    print("DEADLIGHT_IMPACT_OK projectile fuse chain damage cover drops knockback combo aura cleanup endstate")
     district.queue_free()
     await process_frame
     root.get_node("GameAudio").shutdown()
