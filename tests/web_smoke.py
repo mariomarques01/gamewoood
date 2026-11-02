@@ -71,7 +71,8 @@ try:
         browser = playwright.chromium.launch(
             executable_path=executable,
             args=['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
-        for name, size, mobile in [('desktop', {'width': 1280, 'height': 720}, False),
+        for name, size, mobile in [('impact', {'width': 1280, 'height': 720}, False),
+                                   ('desktop', {'width': 1280, 'height': 720}, False),
                                    ('mobile', {'width': 844, 'height': 390}, True),
                                    ('portrait', {'width': 390, 'height': 844}, True)]:
             context = browser.new_context(viewport=size, is_mobile=mobile, has_touch=mobile)
@@ -80,8 +81,8 @@ try:
             messages, errors = [], []
             page.on('console', lambda msg: messages.append(msg.text))
             page.on('pageerror', lambda error: errors.append(str(error)))
-            def expect_log(token):
-                for attempt in range(60):
+            def expect_log(token, attempts=60):
+                for attempt in range(attempts):
                     if any(token in line for line in messages):
                         return
                     page.wait_for_timeout(100)
@@ -91,10 +92,10 @@ try:
             assert response.ok, response.status
             # A printed sentinel originates in the executed GDScript, not the HTML shell.
             for _ in range(120):
-                if any('DEADLIGHT_READY district=1 version=0.8.0' in line for line in messages):
+                if any('DEADLIGHT_READY district=1 version=0.9.0' in line for line in messages):
                     break
                 page.wait_for_timeout(500)
-            assert any('DEADLIGHT_READY district=1 version=0.8.0' in line for line in messages), messages
+            assert any('DEADLIGHT_READY district=1 version=0.9.0' in line for line in messages), messages
             page.wait_for_timeout(1000)
             if name == 'portrait':
                 expect_log('DEADLIGHT_ORIENTATION portrait')
@@ -103,6 +104,28 @@ try:
                 expect_log('DEADLIGHT_ORIENTATION landscape')
                 page.wait_for_timeout(500)
             bounds = page.locator('canvas').bounding_box()
+            if name == 'impact':
+                # Start grounded and stationary: a projection captured before a
+                # jump/moving follow-camera settles is not a stable aiming target.
+                page.keyboard.press('Escape', delay=120)
+                expect_log('DEADLIGHT_COMBAT_TARGET ')
+                target = json.loads(next(line.split('DEADLIGHT_COMBAT_TARGET ', 1)[1] for line in reversed(messages) if 'DEADLIGHT_COMBAT_TARGET ' in line))
+                page.keyboard.press('Escape', delay=120)
+                expect_log('DEADLIGHT_PAUSE false')
+                page.mouse.move(bounds['x'] + target[0] * bounds['width'], bounds['y'] + target[1] * bounds['height'])
+                page.mouse.down()
+                # Software WebGL may advance game time slowly; native tests verify
+                # the 0.65s fuse, this gate verifies actual browser execution.
+                expect_log('DEADLIGHT_CANISTER_ARMED', attempts=200)
+                page.mouse.up()
+                expect_log('DEADLIGHT_CANISTER_EXPLODED', attempts=200)
+                page.screenshot(path='build/logs/web-energy-combat.png')
+                errors += [line for line in messages if 'SCRIPT ERROR:' in line or line.startswith('ERROR:')]
+                Path('build/logs/impact-console.json').write_text(json.dumps(messages, indent=2))
+                assert not errors, errors
+                print(f'WEB_IMPACT_OK mouse projectiles fuse explosion {url}')
+                context.close()
+                continue
             if mobile:
                 session = context.new_cdp_session(page)
                 x, y, width, height = (bounds[key] for key in ('x', 'y', 'width', 'height'))
@@ -123,12 +146,15 @@ try:
                 assert any('DEADLIGHT_CONTROLS simultaneous' in line for line in messages), messages
             else:
                 page.keyboard.down('d')
+                expect_log('DEADLIGHT_MOVE')
+                # Release once movement executes; slow software rendering must not
+                # keep walking across the entire arena while mouse calls settle.
+                page.keyboard.up('d')
                 page.keyboard.press('Space')
                 page.mouse.move(bounds['x'] + bounds['width'] * 0.75, bounds['y'] + bounds['height'] * 0.6)
                 page.mouse.down()
                 expect_log('DEADLIGHT_FIRE')
                 page.wait_for_timeout(300)
-                page.keyboard.up('d')
                 page.mouse.up()
             expect_log('DEADLIGHT_AUDIO_UNLOCKED')
             expect_log('DEADLIGHT_MUSIC_STARTED')

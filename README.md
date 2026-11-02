@@ -15,7 +15,7 @@ helipad and communications to win. Restart is available after victory/defeat.
 
 ## Validation and publication
 
-See [audio and credits](docs/AUDIO.md), [landscape combat](docs/LANDSCAPE_COMBAT.md), [compact HUD and research](docs/COMPACT_HUD_RESEARCH.md), [cartoon polish](docs/CARTOON_POLISH.md), [HUD and jump changes](docs/HUD_AND_JUMP.md), [recovery diagnosis](docs/RECOVERY.md) and [architecture/status](docs/ARCHITECTURE.md).
+See [tactical combat and references](docs/ARCADE_IMPACT.md), [audio and credits](docs/AUDIO.md), [landscape combat](docs/LANDSCAPE_COMBAT.md), [compact HUD and research](docs/COMPACT_HUD_RESEARCH.md), [cartoon polish](docs/CARTOON_POLISH.md), [HUD and jump changes](docs/HUD_AND_JUMP.md), [recovery diagnosis](docs/RECOVERY.md) and [architecture/status](docs/ARCHITECTURE.md).
 Run `tools/validate.sh --export` with official Godot 4.3, an OpenGL display or Xvfb,
 then `python3 tests/web_smoke.py --directory build/web` with Playwright installed.
 PRs run the same checks. A single workflow `.github/workflows/deploy-web.yml`
@@ -33,3 +33,7 @@ complete the optional 12-alien bonus objective; credits are recorded after a run
 
 Audio: quiet ambient music plus curated combat/interaction effects. The first touch
 or key activates browser audio. Adjust MUSICA/EFEITOS or mute in pause; settings persist.
+
+Shoot orange energy canisters twice, then leave their warning ring. Blasts can
+chain and walls block them. Combos show remaining time; TRANCO TOTAL lights a cyan
+aura. Hit aliens briefly show health, and supply attraction respects walls.

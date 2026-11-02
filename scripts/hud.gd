@@ -41,6 +41,8 @@ var fullscreen_button: Button
 var credit_text: Label
 var kill_popup: Label
 var kill_time := 0.0
+var arcade: Node
+var combo_meter: ProgressBar
 var details: Label
 var toast: Label
 var toast_time := 0.0
@@ -196,6 +198,16 @@ func _ready() -> void:
     kill_popup.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
     kill_popup.add_theme_color_override("font_shadow_color", Color(0.05, 0.08, 0.1))
     kill_popup.add_theme_constant_override("shadow_outline_size", 7)
+    combo_meter = ProgressBar.new()
+    combo_meter.max_value = 4
+    combo_meter.show_percentage = false
+    combo_meter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    for entry in [["background", Color(0.03, 0.07, 0.1, 0.85)], ["fill", Color(0.1, 0.85, 1)]]:
+        var meter_style := StyleBoxFlat.new()
+        meter_style.bg_color = entry[1]
+        meter_style.set_corner_radius_all(3)
+        combo_meter.add_theme_stylebox_override(entry[0], meter_style)
+    root.add_child(combo_meter)
     rotation_panel = Panel.new()
     root.add_child(rotation_panel)
     rotation_panel.add_theme_stylebox_override("panel", _style(Color(0.025, 0.065, 0.1, 0.99), Color(0.1, 0.5, 0.65)))
@@ -250,6 +262,8 @@ func _layout() -> void:
     toast.size = Vector2(area.x - 40, 32)
     kill_popup.position = Vector2(area.x - 280, 100)
     kill_popup.size = Vector2(230, 100)
+    combo_meter.position = Vector2(area.x - 250, 194)
+    combo_meter.size = Vector2(200, 6)
     rotation_panel.visible = portrait_mode
     rotation_label.position = Vector2(16, area.y * 0.5 - 160)
     rotation_label.size = Vector2(area.x - 32, 250)
@@ -268,8 +282,14 @@ func _request_jump() -> void:
 
 func _process(delta: float) -> void:
     kill_time = maxf(0, kill_time - delta)
+    var boosted: bool = is_instance_valid(player) and player.weapon.overdrive_time > 0
+    if is_instance_valid(arcade) and (arcade.chain >= 2 or boosted):
+        kill_time = player.weapon.overdrive_time if boosted else arcade.chain_time
+        kill_popup.text = "TRANCO\nTOTAL!" if boosted else "%d\nCOMBO" % arcade.chain
     kill_popup.visible = kill_time > 0 and not overlay.visible and not portrait_mode
     kill_popup.modulate.a = minf(1, kill_time * 3)
+    combo_meter.visible = kill_popup.visible and is_instance_valid(arcade) and (arcade.chain >= 2 or boosted)
+    combo_meter.value = kill_time
     toast_time = maxf(0, toast_time - delta)
     toast.visible = toast_time > 0 and not overlay.visible
     toast.modulate.a = minf(1, toast_time * 2)
@@ -292,7 +312,7 @@ func _process(delta: float) -> void:
     navigation.text = "%dm" % int(player.global_position.distance_to(target))
 
 func update_status(hp: float, ammo: int, reload_active: bool, kills: int, current_mission: Node) -> void:
-    status.text = "BAIRRO 1 v0.8.0  |  BASE DO CAPITAO"
+    status.text = "BAIRRO 1 v0.9.0  |  BASE DO CAPITAO"
     life.text = "%d" % int(ceil(hp))
     art.health_ratio = hp / 100.0
     art.queue_redraw()
@@ -409,3 +429,19 @@ func _report_audio_controls() -> void:
         "music": [music_rect.position.x / area.x, music_rect.position.y / area.y, music_rect.size.x / area.x, music_rect.size.y / area.y],
         "effects": [effects_rect.position.x / area.x, effects_rect.position.y / area.y, effects_rect.size.x / area.x, effects_rect.size.y / area.y]
     }))
+    _report_combat_target(area)
+
+func _report_combat_target(area: Vector2) -> void:
+    # Read-only screen coordinates let browser tests aim with actual mouse input.
+    var camera := get_viewport().get_camera_3d()
+    for canister in get_tree().get_nodes_in_group("explosives"):
+        var point: Vector3 = canister.global_position + Vector3.UP * 1.05
+        if canister.armed or camera.is_position_behind(point):
+            continue
+        var screen := camera.unproject_position(point)
+        var normalized := screen / area
+        if normalized.x > 0.06 and normalized.x < 0.94 and normalized.y > 0.22 and normalized.y < 0.74:
+            if not jump_button.get_global_rect().has_point(screen):
+                print("DEADLIGHT_COMBAT_TARGET " + JSON.stringify([normalized.x, normalized.y]))
+                return
+    print("DEADLIGHT_COMBAT_NO_TARGET player=%s" % player.global_position)
