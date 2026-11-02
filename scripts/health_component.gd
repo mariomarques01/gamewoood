@@ -16,3 +16,11 @@ func damage(amount: float, cooldown: float = 0.0) -> void:
     changed.emit(current, maximum)
     if current <= 0.0:
         died.emit()
+
+func heal(amount: float) -> void:
+    if current <= 0 or amount <= 0:
+        return
+    var before := current
+    current = minf(maximum, current + amount)
+    if current > before:
+        changed.emit(current, maximum)

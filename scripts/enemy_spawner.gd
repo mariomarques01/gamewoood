@@ -5,6 +5,7 @@ var player: CharacterBody3D
 var active := true
 var timer := 5.0
 var sequence := 0
+var last_elimination_position := Vector3.ZERO
 var points := [Vector3(-22, 0, -4), Vector3(22, 0, 5), Vector3(-9, 0, 15), Vector3(10, 0, 16), Vector3(0, 0, -22)]
 
 func _physics_process(delta: float) -> void:
@@ -32,7 +33,9 @@ func spawn() -> CharacterBody3D:
         enemy.ranged = sequence % 3 == 2
         get_parent().add_child(enemy)
         enemy.global_position = point
-        enemy.eliminated.connect(func(): eliminated.emit())
+        enemy.eliminated.connect(func():
+            last_elimination_position = enemy.global_position
+            eliminated.emit())
         sequence += 1
         return enemy
     return null

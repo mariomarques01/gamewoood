@@ -27,6 +27,9 @@ var restart_button: Button
 var jump_button: Button
 var jump_icon: Control
 var touch_buttons: Dictionary = {}
+var details: Label
+var toast: Label
+var toast_time := 0.0
 
 func _style(color: Color, border: Color) -> StyleBoxFlat:
     var style := StyleBoxFlat.new()
@@ -118,6 +121,11 @@ func _ready() -> void:
     status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     status.add_theme_font_size_override("font_size", 16)
     box.add_child(status)
+    details = Label.new()
+    details.add_theme_font_size_override("font_size", 18)
+    details.add_theme_color_override("font_color", Color(0.75, 0.86, 0.91))
+    details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    box.add_child(details)
     resume = _button("CONTINUAR")
     resume.reparent(box)
     resume.custom_minimum_size.y = 64
@@ -127,7 +135,11 @@ func _ready() -> void:
     restart_button.custom_minimum_size.y = 64
     restart_button.pressed.connect(func(): restart_requested.emit())
     overlay.hide()
-    navigation = _label("", 21, Color(0.55, 1, 0.65))
+    toast = _label("", 21, Color(1, 0.8, 0.3))
+    toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    toast.add_theme_color_override("font_shadow_color", Color.BLACK)
+    toast.add_theme_constant_override("shadow_outline_size", 4)
+    navigation = _label("", 17, Color(0.55, 1, 0.65))
     navigation.add_theme_color_override("font_shadow_color", Color.BLACK)
     navigation.add_theme_constant_override("shadow_outline_size", 5)
     get_viewport().size_changed.connect(_layout)
@@ -141,29 +153,29 @@ func _layout() -> void:
         viewport.content_scale_size = desired
     var area := viewport.get_visible_rect().size
     var portrait := area.x < area.y
-    var health_width := minf(330, area.x - 104)
-    art.health_rect = Rect2(16, 18, health_width, 94)
-    art.ammo_rect = Rect2(16, 124, 155, 80) if portrait else Rect2(area.x - 238, 18, 144, 94)
-    var mission_y := 218.0 if portrait else 18.0
-    var mission_x := 16.0 if portrait else 364.0
-    var mission_width := area.x - 32 if portrait else area.x - 620
-    art.mission_rect = Rect2(mission_x, mission_y, mission_width, 100)
-    captain.position = art.health_rect.position + Vector2(89, 13)
-    life.position = art.health_rect.position + Vector2(89, 67)
-    ammo_text.position = art.ammo_rect.position + Vector2(62, 7)
-    kills_text.position = art.ammo_rect.position + Vector2(14, 48)
-    mission_title.position = art.mission_rect.position + Vector2(14, 10)
-    objective.position = art.mission_rect.position + Vector2(14, 34)
-    objective.size = Vector2(mission_width - 28, 50)
-    objective.add_theme_font_size_override("font_size", 18 if mission_width < 380 else 21)
-    progress.position = art.mission_rect.position + Vector2(14, 84)
-    progress.size = Vector2(mission_width - 28, 7)
+    art.health_rect = Rect2(14, 16, 190, 46)
+    art.ammo_rect = Rect2(area.x * 0.5 - 67, area.y - 58, 134, 36)
+    art.mission_rect = Rect2(14, 72, minf(area.x - 108, 360), 34)
+    captain.hide()
+    kills_text.hide()
+    mission_title.hide()
+    life.position = art.health_rect.position + Vector2(145, 11)
+    life.add_theme_font_size_override("font_size", 18)
+    ammo_text.position = art.ammo_rect.position + Vector2(46, 5)
+    ammo_text.add_theme_font_size_override("font_size", 20)
+    objective.position = art.mission_rect.position + Vector2(12, 5)
+    objective.size = Vector2(art.mission_rect.size.x - 24, 26)
+    objective.add_theme_font_size_override("font_size", 18)
+    progress.position = art.mission_rect.position + Vector2(10, 29)
+    progress.size = Vector2(art.mission_rect.size.x - 20, 4)
     pause_button.position = Vector2(area.x - 78, 18)
     pause_button.size = Vector2(60, 64)
     jump_button.position = Vector2(area.x - 126, area.y - 264)
     jump_button.size = Vector2(104, 76)
-    overlay.position = area * 0.5 - Vector2(minf(460, area.x - 32), 340) * 0.5
-    overlay.size = Vector2(minf(460, area.x - 32), 340)
+    overlay.position = area * 0.5 - Vector2(minf(460, area.x - 32), 440) * 0.5
+    overlay.size = Vector2(minf(460, area.x - 32), 440)
+    toast.position = Vector2(20, area.y - 340)
+    toast.size = Vector2(area.x - 40, 32)
     art.queue_redraw()
     controls.queue_redraw()
 
@@ -172,6 +184,9 @@ func _request_jump() -> void:
         player.request_jump()
 
 func _process(delta: float) -> void:
+    toast_time = maxf(0, toast_time - delta)
+    toast.visible = toast_time > 0 and not overlay.visible
+    toast.modulate.a = minf(1, toast_time * 2)
     navigation_timer -= delta
     if navigation_timer > 0 or not is_instance_valid(player) or not is_instance_valid(mission):
         return
@@ -188,20 +203,29 @@ func _process(delta: float) -> void:
     if camera.is_position_behind(target):
         screen = area * 0.5 - (screen - area * 0.5)
     navigation.position = screen.clamp(Vector2(24, art.mission_rect.end.y + 16), area - Vector2(120, 300))
-    navigation.text = "OBJETIVO  %dm" % int(player.global_position.distance_to(target))
+    navigation.text = "%dm" % int(player.global_position.distance_to(target))
 
 func update_status(hp: float, ammo: int, reload_active: bool, kills: int, current_mission: Node) -> void:
-    status.text = "BAIRRO 1 v0.5.0  |  BASE DO CAPITAO"
-    life.text = "%d / 100" % int(ceil(hp))
+    status.text = "BAIRRO 1 v0.6.0  |  BASE DO CAPITAO"
+    life.text = "%d" % int(ceil(hp))
     art.health_ratio = hp / 100.0
     art.queue_redraw()
-    ammo_text.text = "REC..." if reload_active else "%02d / 24" % ammo
+    ammo_text.text = "REC..." if reload_active else "%02d/24" % ammo
     kills_text.text = "ALIENS  %d" % kills
-    mission_title.text = "OPERACAO BASE SEGURA  %d/3" % current_mission.current
-    objective.text = current_mission.TITLES[mini(current_mission.current, 2)] if current_mission.current < 3 else "BASE PROTEGIDA!"
+    var short_titles := ["ARSENAL", "HELIPONTO", "COMUNICACAO"]
+    objective.text = "%d/3  %s" % [mini(current_mission.current + 1, 3), short_titles[mini(current_mission.current, 2)]] if current_mission.current < 3 else "3/3  BASE SEGURA"
     if current_mission.contested:
-        objective.text = "ELIMINE OS INVASORES!"
+        objective.text += "  !"
+    progress.visible = current_mission.progress > 0 or current_mission.contested
     progress.value = current_mission.progress
+    details.text = "VIDA %d/100   •   ALIENS %d\n" % [int(ceil(hp)), kills]
+    for index in range(3):
+        var mark := "[OK]" if index < current_mission.current else "[  ]"
+        details.text += "%s %s\n" % [mark, short_titles[index]]
+
+func notify(text: String) -> void:
+    toast.text = text
+    toast_time = 2.2
 
 func show_overlay(text: String, paused: bool = false) -> void:
     outcome.text = text

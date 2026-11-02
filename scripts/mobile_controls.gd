@@ -38,7 +38,7 @@ func _input(event: InputEvent) -> void:
                 get_viewport().set_input_as_handled()
                 return
             # Keep the HUD / pause button region clear.
-            if event.position.y < (330 if size.x < size.y else 120):
+            if event.position.y < 116:
                 return
             if event.position.x < size.x * 0.5 and move_id == -1:
                 move_id = event.index
@@ -76,6 +76,3 @@ func _draw() -> void:
         draw_arc(center, RADIUS, 0, TAU, 48, Color(0.55, 0.85, 1, 0.5), 2, true)
     draw_circle(left + movement * RADIUS * 0.65, 23, Color(0.4, 0.8, 1, 0.55))
     draw_circle(right + (aim * RADIUS * 0.65 if aiming else Vector2.ZERO), 23, Color(1, 0.65, 0.15, 0.65))
-
-    draw_string(ThemeDB.fallback_font, left + Vector2(-33, 90), "MOVER", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(0.75, 0.9, 1, 0.8))
-    draw_string(ThemeDB.fallback_font, right + Vector2(-55, 90), "MIRAR / TIRO", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color(1, 0.8, 0.3, 0.8))
