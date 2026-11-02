@@ -27,6 +27,8 @@ func _run() -> void:
     district.arcade.register_kill(Vector3(3, 0, 10))
     assert(player.weapon.frenzy_time == 10 and player.weapon.reload_time == 0)
     assert(district.arcade.xp == 0 and district.arcade.xp_required == 140)
+    assert(district.hud.power_banner.major and district.hud.power_banner.remaining > 0, "Frenzy activation banner missing")
+    assert(get_nodes_in_group("power_surges").size() > 0, "World energy burst missing")
     player.weapon.direction = Vector3.RIGHT
     player.weapon.active = true
     player.weapon.cooldown = 0
@@ -76,6 +78,9 @@ func _run() -> void:
     for index in range(52):
         preload("res://scripts/blood_stain.gd").spread(district, Vector3(2 + index % 4, 0, 7 + index % 5), false)
     assert(get_nodes_in_group("blood_stains").size() <= 32)
+    preload("res://scripts/blood_stain.gd").spread(district, Vector3(17, 0, -9), false)
+    var raised = get_nodes_in_group("blood_stains")[-1]
+    assert(raised.mesh.get_faces()[0].y > 0.11, "Blood is hidden below the raised helipad")
     for existing in get_nodes_in_group("blood_stains"):
         existing.free()
     for point in [Vector3(1, 0, 7), Vector3(-2, 0, 10), Vector3(4, 0, 9), Vector3(-3, 0, 5)]:
@@ -85,6 +90,9 @@ func _run() -> void:
     player._physics_process(0.01)
     district.hud._process(0)
     assert(district.hud.xp_text.text.contains("FÚRIA ATIVA"))
+    district.hud.power_banner._process(0.2)
+    for surge in get_nodes_in_group("power_surges"):
+        surge._process(0.2)
     await RenderingServer.frame_post_draw
     root.get_texture().get_image().save_png("res://build/logs/evolution-frenzy.png")
     var old_xp: int = district.arcade.xp

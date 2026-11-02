@@ -4,6 +4,7 @@ const Projectile = preload("res://scripts/projectile.gd")
 const WEAPONS := [preload("res://resources/weapons/pistol.tres"), preload("res://resources/weapons/machine_gun.tres")]
 signal ammo_changed(remaining: int, reloading: bool)
 signal weapon_changed(index: int)
+signal power_activated(duration: float, major: bool)
 var selected := 1
 var magazines: Array[int] = [12, 24]
 var reloads: Array[float] = [0.0, 0.0]
@@ -45,6 +46,13 @@ func activate_frenzy(seconds: float) -> void:
     frenzy_time = seconds
     resupply(true)
     cooldown = 0
+    power_activated.emit(seconds, true)
+
+func activate_overdrive() -> void:
+    if not enabled or not owner_body.active or frenzy_time > 0:
+        return
+    overdrive_time = 4.0
+    power_activated.emit(4.0, false)
 
 func _unhandled_key_input(event: InputEvent) -> void:
     if not event is InputEventKey or not event.pressed or event.echo or not enabled or not owner_body.active:

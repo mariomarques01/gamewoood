@@ -28,11 +28,16 @@ func _ready() -> void:
     var batch := MultiMesh.new()
     batch.transform_format = MultiMesh.TRANSFORM_3D
     batch.mesh = Kit.bevel(Vector3(0.17, 0.16, 0.24))
+    batch.use_colors = true
     batch.instance_count = 18
     fragments.multimesh = batch
-    fragments.material_override = Kit.material(alien_color.lightened(0.18))
+    var spray_material := StandardMaterial3D.new()
+    spray_material.vertex_color_use_as_albedo = true
+    spray_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+    fragments.material_override = spray_material
     add_child(fragments)
     for index in range(18):
+        batch.set_instance_color(index, Color(0.6, 0.025, 0.055) if index < 12 else alien_color.lightened(0.18))
         positions.append(Vector3(0, 0.8, 0))
         var angle := random.randf() * TAU
         velocities.append(Vector3(cos(angle) * random.randf_range(2, 5), random.randf_range(2, 5), sin(angle) * random.randf_range(2, 5)))

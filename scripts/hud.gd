@@ -4,8 +4,8 @@ signal pause_requested
 signal restart_requested
 signal orientation_changed(portrait: bool)
 const MobileControls = preload("res://scripts/mobile_controls.gd")
-const DisplayFont = preload("res://assets/fonts/BarlowCondensed-Bold.ttf")
-const TextFont = preload("res://assets/fonts/BarlowCondensed-SemiBold.ttf")
+const DisplayFont = preload("res://assets/fonts/LilitaOne-Regular.ttf")
+const TextFont = preload("res://assets/fonts/Nunito-ExtraBold.ttf")
 const HUDArt = preload("res://scripts/hud_art.gd")
 var controls: Control
 var status: Label
@@ -56,6 +56,7 @@ var xp_panel: Panel
 var xp_meter: ProgressBar
 var xp_text: Label
 var frenzy_text: Label
+var power_banner: Control
 
 func _style(color: Color, border: Color) -> StyleBoxFlat:
     var style := StyleBoxFlat.new()
@@ -74,7 +75,7 @@ func _label(text: String, font_size: int, color: Color = Color.WHITE) -> Label:
     label.text = text
     label.add_theme_font_override("font", DisplayFont if font_size >= 20 else TextFont)
     label.add_theme_color_override("font_outline_color", Color(0.025, 0.045, 0.06, 0.95))
-    label.add_theme_constant_override("outline_size", 3)
+    label.add_theme_constant_override("outline_size", 3 if font_size >= 20 else 1)
     label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     label.add_theme_font_size_override("font_size", font_size)
     label.add_theme_color_override("font_color", color)
@@ -282,6 +283,8 @@ func _ready() -> void:
     fullscreen_button = _button("TELA CHEIA")
     fullscreen_button.reparent(rotation_panel)
     fullscreen_button.pressed.connect(_fullscreen)
+    power_banner = preload("res://scripts/power_banner.gd").new()
+    root.add_child(power_banner)
     get_viewport().size_changed.connect(_layout)
     _layout()
 
@@ -376,19 +379,19 @@ func _process(delta: float) -> void:
         xp_meter.value = player.weapon.frenzy_time if furious else arcade.xp
         xp_text.text = "FÚRIA ATIVA  •  %.1fs" % player.weapon.frenzy_time if furious else "FÚRIA  •  XP %d / %d" % [arcade.xp, arcade.xp_required]
         frenzy_text.text = "DANO ×3  •  VELOCIDADE ×1,5\nMUNIÇÃO ILIMITADA" if furious else ""
-        frenzy_text.visible = show_xp and furious
+        frenzy_text.visible = show_xp and furious and not power_banner.visible
     kill_time = maxf(0, kill_time - delta)
     var boosted: bool = is_instance_valid(player) and (player.weapon.overdrive_time > 0 or player.weapon.frenzy_time > 0)
     if is_instance_valid(arcade) and (arcade.chain >= 2 or boosted):
         kill_time = maxf(player.weapon.overdrive_time, player.weapon.frenzy_time) if boosted else arcade.chain_time
         kill_popup.text = "FÚRIA\nTRANCO!" if player.weapon.frenzy_time > 0 else ("TRANCO\nTOTAL!" if boosted else "%d\nCOMBO" % arcade.chain)
-    kill_popup.visible = kill_time > 0 and not overlay.visible and not portrait_mode
+    kill_popup.visible = kill_time > 0 and not overlay.visible and not portrait_mode and not power_banner.visible
     kill_popup.modulate.a = minf(1, kill_time * 3)
     combo_meter.visible = kill_popup.visible and is_instance_valid(arcade) and (arcade.chain >= 2 or boosted)
     combo_meter.max_value = 10 if is_instance_valid(player) and player.weapon.frenzy_time > 0 else 4
     combo_meter.value = kill_time
     toast_time = maxf(0, toast_time - delta)
-    toast.visible = toast_time > 0 and not overlay.visible
+    toast.visible = toast_time > 0 and not overlay.visible and not power_banner.visible
     toast.modulate.a = minf(1, toast_time * 2)
     navigation_timer -= delta
     if navigation_timer > 0 or not is_instance_valid(player) or not is_instance_valid(mission):
@@ -578,3 +581,7 @@ func show_result(summary: Dictionary) -> void:
     overlay.hide()
     _hide_game_ui()
     results.present(summary)
+
+func show_power_activation(_duration: float, major: bool) -> void:
+    power_banner.player = player
+    power_banner.trigger(major)

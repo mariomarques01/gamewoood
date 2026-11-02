@@ -11,6 +11,7 @@ const objectives := [Vector3(-17, 0, -7), Vector3(17, 0, -9), Vector3(0, 0, -18)
 var materials: Dictionary = {}
 var rock_mesh: SphereMesh
 var objective_markers: Array[Node3D] = []
+var ground_surfaces: Array[Dictionary] = []
 
 func _material(color: Color, glow: bool = false) -> StandardMaterial3D:
     if materials.has(color):
@@ -50,6 +51,9 @@ func _box(parent: Node3D, pos: Vector3, size: Vector3, color: Color, solid: bool
     visual.mesh = mesh
     visual.material_override = _material(color)
     root.add_child(visual)
+    if size.y <= 0.25 and pos.y >= -0.1 and pos.y <= 0.2:
+        var center := root.global_position
+        ground_surfaces.append({"rect": Rect2(Vector2(center.x - size.x * 0.5, center.z - size.z * 0.5), Vector2(size.x, size.z)), "height": center.y + size.y * 0.5})
     if solid:
         var shape := CollisionShape3D.new()
         var box := BoxShape3D.new()
@@ -194,7 +198,7 @@ func _sphere(pos: Vector3, dimensions: Vector3, color: Color) -> void:
 func _sign(text: String, pos: Vector3, pixel_size: float) -> void:
     var sign := Label3D.new()
     sign.text = text
-    sign.font = preload("res://assets/fonts/BarlowCondensed-Bold.ttf")
+    sign.font = preload("res://assets/fonts/LilitaOne-Regular.ttf")
     sign.font_size = 40
     sign.outline_size = 6
     sign.pixel_size = pixel_size
@@ -358,3 +362,10 @@ func _batch_static_meshes() -> void:
             instances.set_instance_transform(index, global_transform.affine_inverse() * group[index].global_transform)
             group[index].hide()
             group[index].queue_free()
+
+func blood_surface_height(point: Vector3, fallback: float) -> float:
+    var height := fallback
+    for surface in ground_surfaces:
+        if surface.rect.has_point(Vector2(point.x, point.z)):
+            height = maxf(height, surface.height)
+    return height

@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://gtw43soab48b"
-path="res://.godot/imported/BarlowCondensed-SemiBold.ttf-a61dd99857b2d1cd6578199d7509bfaf.fontdata"
+uid="uid://ib3xm4iwgorf"
+path="res://.godot/imported/Nunito-ExtraBold.ttf-594753cc93381d41429b036c2db26ee9.fontdata"
 
 [deps]
 
-source_file="res://assets/fonts/BarlowCondensed-SemiBold.ttf"
-dest_files=["res://.godot/imported/BarlowCondensed-SemiBold.ttf-a61dd99857b2d1cd6578199d7509bfaf.fontdata"]
+source_file="res://assets/fonts/Nunito-ExtraBold.ttf"
+dest_files=["res://.godot/imported/Nunito-ExtraBold.ttf-594753cc93381d41429b036c2db26ee9.fontdata"]
 
 [params]
 

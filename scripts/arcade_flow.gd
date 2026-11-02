@@ -52,7 +52,7 @@ func register_kill(position: Vector3) -> void:
     if chain >= 5:
         chain = 0
         if player.weapon.frenzy_time <= 0:
-            player.weapon.overdrive_time = 4.0
+            player.weapon.activate_overdrive()
             notice.emit("TRANCO TOTAL! 4s")
     if total_kills % 8 == 0 and get_tree().get_nodes_in_group("supplies").size() < 12:
         spawn_supply(position + Vector3(-0.5, 0, 0), "boost")

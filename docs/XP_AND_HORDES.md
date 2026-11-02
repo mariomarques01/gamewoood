@@ -13,7 +13,8 @@ Cada alienígena eliminado concede **10 XP**, inclusive em explosões. A primeir
 - intervalo de disparo reduzido para **45%** do normal;
 - velocidade de movimento multiplicada por **1,5**;
 - munição ilimitada, com recargas interrompidas ao ativar;
-- arma ampliada, projéteis dourados, aura e contagem regressiva no HUD.
+- arma ampliada, projéteis dourados, aura e contagem regressiva no HUD;
+- faixa animada ao ativar, onda de energia, partículas e sinal sonoro.
 
 A exigência aumenta em 40 XP por ativação, até o limite de 300 XP. XP ganho durante
 a habilidade carrega a próxima ativação, até o limite atual. A pausa congela a
@@ -32,12 +33,14 @@ MultiMeshes, mantendo pés animados e materiais de dano independentes.
 O sangue forma poças pequenas e 11 gotas espalhadas por até 1,8 metro ao redor
 da eliminação. Cada conjunto é um mesh, dura até **30 segundos** e tem limite de
 **32 conjuntos**, independentemente dos fragmentos de curta duração. O sangue
+acompanha a altura visual do asfalto e do heliponto, para não ficar sob o piso, e
 usa superfícies 3D compatíveis com WebGL 2, sem exigir decals do renderer Forward+.
 
 ## Interface e cenário
 
-Barlow Condensed Bold/SemiBold são distribuídas localmente sob SIL OFL 1.1 em
-`assets/fonts/OFL.txt`; não dependem de requisições externas. O HUD mostra XP,
+Lilita One (títulos cartoon) e Nunito (textos de apoio) são distribuídas
+localmente sob SIL OFL 1.1 em `assets/fonts/LilitaOne-OFL.txt` e
+`assets/fonts/Nunito-OFL.txt`; não dependem de requisições externas. O HUD mostra XP,
 limiar, duração e efeitos da Fúria, com contorno para legibilidade. O cenário
 recebe calçadas modulares, meio-fio pintado, uma travessia entre calçadas com acessos rebaixados, bueiros, drenos, detalhes
 nos alienígenas e filtragem com mipmaps no asfalto.

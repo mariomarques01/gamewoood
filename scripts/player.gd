@@ -31,6 +31,7 @@ func _ready() -> void:
     add_child(health)
     weapon = Weapon.new()
     add_child(weapon)
+    weapon.power_activated.connect(_power_activated)
     visual = $Visual
     $Visual/MeshInstance3D.hide()
     actor = CaptainVisual.new()
@@ -166,3 +167,12 @@ func screen_to_world(direction: Vector2) -> Vector3:
     var right := Vector3(basis.x.x, 0, basis.x.z).normalized()
     var back := Vector3(basis.z.x, 0, basis.z.z).normalized()
     return right * direction.x + back * direction.y
+
+func _power_activated(_duration: float, major: bool) -> void:
+    for child in get_children():
+        if child.is_in_group("power_surges"):
+            child.queue_free()
+    var effect = preload("res://scripts/power_surge.gd").new()
+    effect.major = major
+    add_child(effect)
+    Audio.play(self, "mission")

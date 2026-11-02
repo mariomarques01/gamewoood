@@ -66,7 +66,7 @@ func collect() -> void:
     if kind == "health":
         player.health.heal(20)
     elif kind == "boost":
-        player.weapon.overdrive_time = 4.0
+        player.weapon.activate_overdrive()
     elif kind == "ammo":
         player.weapon.resupply()
     collected.emit(kind)
