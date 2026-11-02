@@ -18,6 +18,20 @@ func drag(index: int, position: Vector2) -> void:
     Input.parse_input_event(event)
     Input.flush_buffered_events()
 
+func pause_key() -> void:
+    var key := InputEventKey.new()
+    key.keycode = KEY_ESCAPE
+    key.physical_keycode = KEY_ESCAPE
+    key.pressed = true
+    Input.parse_input_event(key)
+    Input.flush_buffered_events()
+    key = InputEventKey.new()
+    key.keycode = KEY_ESCAPE
+    key.physical_keycode = KEY_ESCAPE
+    key.pressed = false
+    Input.parse_input_event(key)
+    Input.flush_buffered_events()
+
 func _run() -> void:
     Input.emulate_mouse_from_touch = false
     root.size = Vector2i(1280, 720)
@@ -147,9 +161,9 @@ func _run() -> void:
         shot.queue_free()
     await process_frame
     print("DEADLIGHT_STRESS_OK 10 mixed enemies for 120 physics frames")
-    district._pause()
+    pause_key()
     assert(paused and district.hud.overlay.visible, "Pause failed")
-    district._pause()
+    pause_key()
     assert(not paused, "Resume failed")
     # Physical trigger range, contested objective and sequential completion.
     player.position = Vector3.ZERO

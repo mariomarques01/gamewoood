@@ -36,6 +36,13 @@ try:
             messages, errors = [], []
             page.on('console', lambda msg: messages.append(msg.text))
             page.on('pageerror', lambda error: errors.append(str(error)))
+            def expect_log(token):
+                for attempt in range(30):
+                    if any(token in line for line in messages):
+                        return
+                    page.wait_for_timeout(100)
+                raise AssertionError(messages)
+
             response = page.goto(url, wait_until='networkidle', timeout=120000)
             assert response.ok, response.status
             # A printed sentinel originates in the executed GDScript, not the HTML shell.
@@ -61,7 +68,7 @@ try:
                 jump_point = {'id': 2, 'x': x + width - 74 * scale, 'y': y + height - 226 * scale}
                 session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': points + [jump_point]})
                 page.wait_for_timeout(250)
-                assert any('DEADLIGHT_JUMP' in line for line in messages), messages
+                expect_log('DEADLIGHT_JUMP')
                 session.send('Input.dispatchTouchEvent', {'type': 'touchEnd' , 'touchPoints': []})
                 assert any('DEADLIGHT_CONTROLS simultaneous' in line for line in messages), messages
             else:
@@ -80,14 +87,14 @@ try:
             else:
                 page.keyboard.press('Escape')
             page.wait_for_timeout(200)
-            assert any('DEADLIGHT_PAUSE true' in line for line in messages), messages
+            expect_log('DEADLIGHT_PAUSE true')
             page.screenshot(path=f'build/logs/{name}-paused.png')
             if mobile:
                 page.touchscreen.tap(bounds['x'] + bounds['width'] - 48 * scale, bounds['y'] + 50 * scale)
             else:
                 page.keyboard.press('Escape')
             page.wait_for_timeout(200)
-            assert any('DEADLIGHT_PAUSE false' in line for line in messages), messages
+            expect_log('DEADLIGHT_PAUSE false')
             page.screenshot(path=f'build/logs/{name}.png')
             errors += [line for line in messages if 'SCRIPT ERROR:' in line or line.startswith('ERROR:')]
             Path(f'build/logs/{name}-console.json').write_text(json.dumps(messages, indent=2))

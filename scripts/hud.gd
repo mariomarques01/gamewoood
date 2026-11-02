@@ -219,13 +219,12 @@ func flash() -> void:
     damage_flash.color.a = 0.25
     create_tween().tween_property(damage_flash, "color:a", 0.0, 0.25)
 
-func _unhandled_input(event: InputEvent) -> void:
-    # This HUD keeps processing while the gameplay tree is paused.
+func _input(event: InputEvent) -> void:
+    # Handle Escape before GUI focus can consume it, including while paused.
     if event.is_action_pressed("ui_cancel"):
         pause_requested.emit()
         get_viewport().set_input_as_handled()
-
-func _input(event: InputEvent) -> void:
+        return
     # Native touch routing, independent of emulated mouse input and joystick IDs.
     if not event is InputEventScreenTouch:
         return
