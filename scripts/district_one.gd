@@ -44,7 +44,7 @@ func _ready() -> void:
     player.health.died.connect(func(): _finish(false))
     player.weapon.ammo_changed.connect(func(_ammo, _reloading): _update_hud())
     _update_hud()
-    print("DEADLIGHT_READY district=1 version=0.3.0 objects=%d" % district_map.get_child_count())
+    print("DEADLIGHT_READY district=1 version=0.4.0 objects=%d" % district_map.get_child_count())
 
 func _update_hud() -> void:
     if not is_instance_valid(hud):
@@ -66,14 +66,11 @@ func _finish(won: bool) -> void:
     hud.show_overlay("BASE PROTEGIDA!\n3 MISSOES CONCLUIDAS" if won else "BASE INVADIDA!\nO CAPITAO VOLTA JA...")
     print("DEADLIGHT_RESULT victory=%s kills=%d" % [won, score])
 
-func _unhandled_input(event: InputEvent) -> void:
-    if event.is_action_pressed("ui_cancel"):
-        _pause()
-
 func _pause() -> void:
     if ended:
         return
     get_tree().paused = not get_tree().paused
+    print("DEADLIGHT_PAUSE %s" % get_tree().paused)
     if get_tree().paused:
         hud.show_overlay("OPERACAO EM PAUSA", true)
     else:

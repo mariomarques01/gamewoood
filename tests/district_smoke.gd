@@ -6,7 +6,7 @@ func _initialize() -> void:
 func touch(index: int, position: Vector2, pressed: bool) -> void:
     var event := InputEventScreenTouch.new()
     event.index = index
-    event.position = position
+    event.position = root.get_final_transform() * position
     event.pressed = pressed
     Input.parse_input_event(event)
     Input.flush_buffered_events()
@@ -14,8 +14,22 @@ func touch(index: int, position: Vector2, pressed: bool) -> void:
 func drag(index: int, position: Vector2) -> void:
     var event := InputEventScreenDrag.new()
     event.index = index
-    event.position = position
+    event.position = root.get_final_transform() * position
     Input.parse_input_event(event)
+    Input.flush_buffered_events()
+
+func pause_key() -> void:
+    var key := InputEventKey.new()
+    key.keycode = KEY_ESCAPE
+    key.physical_keycode = KEY_ESCAPE
+    key.pressed = true
+    Input.parse_input_event(key)
+    Input.flush_buffered_events()
+    key = InputEventKey.new()
+    key.keycode = KEY_ESCAPE
+    key.physical_keycode = KEY_ESCAPE
+    key.pressed = false
+    Input.parse_input_event(key)
     Input.flush_buffered_events()
 
 func _run() -> void:
@@ -29,7 +43,7 @@ func _run() -> void:
     await process_frame
     assert(district.get_script() != null and district.district_map.get_child_count() >= 100, "Base geometry missing")
     assert(district.district_map.objective_markers.size() == 3, "Mission markers missing")
-    assert(district.hud.status.text.contains("v0.3.0"), "Version missing")
+    assert(district.hud.status.text.contains("v0.4.0"), "Version missing")
     var player = district.player
     var camera: Camera3D = player.get_node("Camera3D")
     assert(camera.is_current(), "Camera not active")
@@ -54,6 +68,22 @@ func _run() -> void:
     assert(camera.global_position.x > camera_start.x, "Camera did not follow")
     assert(player.weapon.direction.z < -0.9 and player.velocity.x > 0.9, "Aim depends on movement")
     assert(player.weapon.ammo < 24, "Aim did not fire")
+    # A third touch jumps while both existing pointers keep movement and aim.
+    var jump_center: Vector2 = district.hud.jump_button.get_global_rect().get_center()
+    var floor_y: float = player.position.y
+    touch(2, jump_center, true)
+    for frame in range(8):
+        await physics_frame
+    assert(player.position.y > floor_y + 0.4, "Third-touch jump did not leave ground")
+    assert(district.hud.controls.move_id == 0 and district.hud.controls.aim_id == 1, "Jump stole a joystick pointer")
+    var rising_speed: float = player.velocity.y
+    touch(2, jump_center, false)
+    player.request_jump()
+    await physics_frame
+    assert(player.velocity.y <= rising_speed, "Airborne request caused double jump")
+    for frame in range(55):
+        await physics_frame
+    assert(player.is_on_floor(), "Jump did not land")
     touch(0, Vector2(170, 400), false)
     assert(district.hud.controls.movement == Vector2.ZERO and district.hud.controls.aim_id == 1, "Release interrupted aim")
     touch(1, Vector2(1170, 400), false)
@@ -131,9 +161,9 @@ func _run() -> void:
         shot.queue_free()
     await process_frame
     print("DEADLIGHT_STRESS_OK 10 mixed enemies for 120 physics frames")
-    district._pause()
+    pause_key()
     assert(paused and district.hud.overlay.visible, "Pause failed")
-    district._pause()
+    pause_key()
     assert(not paused, "Resume failed")
     # Physical trigger range, contested objective and sequential completion.
     player.position = Vector3.ZERO

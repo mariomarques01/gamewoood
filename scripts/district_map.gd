@@ -77,7 +77,6 @@ func build() -> void:
     # Heliponto com marcas e heliponto de acesso.
     _box(self, Vector3(17, 0.05, -9), Vector3(10, 0.12, 10), ASPHALT)
     _box(self, Vector3(17, 0.13, -9), Vector3(7, 0.04, 0.6), GOLD)
-    _box(self, Vector3(17, 0.14, -9), Vector3(0.6, 0.04, 6), GOLD)
     # Caixas de suprimentos e vegetacao.
     for p in [Vector3(-19, 0.65, 5), Vector3(-16, 0.65, 8), Vector3(19, 0.65, 10), Vector3(22, 0.65, 8)]:
         _box(self, p, Vector3(1.4, 1.3, 1.4), Color(0.22, 0.47, 0.25), true)
@@ -93,6 +92,7 @@ func build() -> void:
         objective_markers.append(marker)
 
     _details()
+    _reference_pass()
 
 func _details() -> void:
     var sea := Color(0.04, 0.27, 0.38)
@@ -171,3 +171,56 @@ func _sign(text: String, pos: Vector3, pixel_size: float) -> void:
     sign.position = pos
     sign.no_depth_test = false
     add_child(sign)
+
+# First art pass toward the supplied coastal-base concept, using reusable geometry.
+func _reference_pass() -> void:
+    var dark_blue := Color(0.07, 0.18, 0.3)
+    var warm := Color(1, 0.72, 0.27)
+    for x in [-5.9, -1.5, 1.5, 5.9]:
+        _box(self, Vector3(x, 3.0, 0.65), Vector3(0.3, 6, 0.3), dark_blue)
+    _box(self, Vector3(0, 3.15, 0.7), Vector3(12.2, 0.28, 0.4), BLUE)
+    _box(self, Vector3(0, 0.12, 1.0), Vector3(4.5, 0.22, 1.0), CONCRETE)
+    for x in [-1.25, 1.25]:
+        _box(self, Vector3(x, 1.5, 0.7), Vector3(0.15, 2.6, 0.15), Color(0.08, 0.8, 1))
+    # Rooftop helipad and parapet from the reference; the playable objective stays on the ground.
+    var ring := MeshInstance3D.new()
+    var torus := TorusMesh.new()
+    torus.inner_radius = 2.65
+    torus.outer_radius = 2.88
+    torus.rings = 24
+    torus.ring_segments = 8
+    ring.mesh = torus
+    ring.material_override = _material(GOLD)
+    ring.position = Vector3(0, 6.59, -4)
+    add_child(ring)
+    for x in [-1.1, 1.1]:
+        _box(self, Vector3(x, 6.6, -4), Vector3(0.35, 0.06, 2.7), Color(0.9, 0.92, 0.85))
+    _box(self, Vector3(0, 6.6, -4), Vector3(2.3, 0.06, 0.35), Color(0.9, 0.92, 0.85))
+    for x in [-6.1, 6.1]:
+        _box(self, Vector3(x, 6.7, -4), Vector3(0.2, 0.5, 9.8), CONCRETE)
+        for z in [-8.2, 0.2]:
+            _box(self, Vector3(x, 7.1, z), Vector3(0.3, 0.35, 0.3), Color(1, 0.2, 0.08))
+    for x in [-4.6, 4.6]:
+        _box(self, Vector3(x, 6.95, -6.8), Vector3(1.3, 0.8, 1.3), CONCRETE)
+        for z in [-7.1, -6.8, -6.5]:
+            _box(self, Vector3(x, 7.37, z), Vector3(0.9, 0.04, 0.09), dark_blue)
+    # Arsenal roller door and original military crate hardware.
+    for y in [0.6, 1.1, 1.6, 2.1]:
+        _box(self, Vector3(-18, y, -10.96), Vector3(3, 0.35, 0.08), dark_blue)
+    for p in [Vector3(-19, 0.65, 5), Vector3(-16, 0.65, 8), Vector3(19, 0.65, 10), Vector3(22, 0.65, 8)]:
+        for x in [-0.5, 0.5]:
+            _box(self, p + Vector3(x, 0, 0.72), Vector3(0.12, 1.25, 0.08), GOLD)
+    # Lightweight lamps: emissive surfaces, without per-lamp real-time shadows.
+    for x in [-8.2, 8.2]:
+        for z in [4.0, 15.0]:
+            _box(self, Vector3(x, 2.2, z), Vector3(0.15, 4.4, 0.15), dark_blue)
+            var lamp := _box(self, Vector3(x, 4.4, z), Vector3(0.65, 0.25, 0.45), warm)
+            var mesh := lamp.get_child(0) as MeshInstance3D
+            var emission := StandardMaterial3D.new()
+            emission.albedo_color = warm
+            emission.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+            mesh.material_override = emission
+    for p in [Vector3(-23, 0, -4), Vector3(23, 0, 13), Vector3(-23, 0, 13)]:
+        _box(self, p + Vector3.UP, Vector3(0.35, 2, 0.35), Color(0.32, 0.2, 0.1))
+        for y in [2.0, 2.8, 3.5]:
+            _sphere(p + Vector3(0, y, 0), Vector3(2.8 - y * 0.4, 1.3, 2.8 - y * 0.4), Color(0.16, 0.38 + y * 0.035, 0.22))
