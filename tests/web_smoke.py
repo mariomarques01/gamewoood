@@ -132,7 +132,13 @@ try:
                 page.mouse.up()
             expect_log('DEADLIGHT_AUDIO_UNLOCKED')
             expect_log('DEADLIGHT_MUSIC_STARTED')
-            energy = page.evaluate(ENERGY_JS)
+            # The context resumes asynchronously; allow the worklet and music fade
+            # to produce real samples after the first gesture, including rotation.
+            energy = 0
+            for _ in range(16):
+                energy = page.evaluate(ENERGY_JS)
+                if energy > 1e-6:
+                    break
             assert energy > 1e-6, ('Audio graph was silent after gesture', energy, page.evaluate('window.__deadlightAudio.map(ctx => ({state: ctx.state, rate: ctx.sampleRate}))'), messages)
             assert any('DEADLIGHT_JUMP' in line for line in messages), messages
             assert any('DEADLIGHT_MOVE' in line for line in messages), messages
