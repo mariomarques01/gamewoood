@@ -13,17 +13,17 @@ var last_mission := 0
 const XP_PER_KILL := 10
 const FRENZY_DURATION := 10.0
 var xp := 0
-var xp_required := 100
+var xp_required := 180
 var frenzy_level := 0
 
 func award_xp(amount: int) -> void:
-    if amount <= 0 or not is_instance_valid(player) or not player.active:
+    if amount <= 0 or not is_instance_valid(player) or not player.active or player.weapon.frenzy_time > 0:
         return
     xp = mini(xp + amount, xp_required)
     if xp >= xp_required and player.weapon.frenzy_time <= 0:
         xp = 0
         frenzy_level += 1
-        xp_required = mini(100 + frenzy_level * 40, 300)
+        xp_required = mini(180 + frenzy_level * 80, 500)
         player.weapon.activate_frenzy(FRENZY_DURATION)
         notice.emit("FÚRIA TRANCO! 10s • PODER MÁXIMO")
         print("DEADLIGHT_FRENZY level=%d" % frenzy_level)
@@ -49,12 +49,11 @@ func register_kill(position: Vector3) -> void:
     elimination_feedback.emit(chain)
     if get_tree().get_nodes_in_group("supplies").size() < 12:
         spawn_supply(position + Vector3(0.45, 0, 0), "credit")
-    if chain >= 5:
+    if chain >= 10:
         chain = 0
-        if player.weapon.frenzy_time <= 0:
-            player.weapon.activate_overdrive()
+        if player.weapon.activate_overdrive():
             notice.emit("TRANCO TOTAL! 4s")
-    if total_kills % 8 == 0 and get_tree().get_nodes_in_group("supplies").size() < 12:
+    if total_kills % 24 == 0 and get_tree().get_nodes_in_group("supplies").size() < 12:
         spawn_supply(position + Vector3(-0.5, 0, 0), "boost")
     if total_kills % 3 == 0 and get_tree().get_nodes_in_group("supplies").size() < 12:
         spawn_supply(position, "health" if player.health.current < 80 else "ammo")

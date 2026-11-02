@@ -26,7 +26,7 @@ deploys main only after runtime, export and browser checks pass.
 This is a playable procedural prototype. Real iPhone/Safari and Android device
 validation, native signing/exports, profiling and production art remain necessary.
 
-Combat supplies drop every third elimination. Five quick kills trigger a four-second
+Combat supplies drop every third elimination. Ten quick kills trigger a four-second
 TRANCO TOTAL boost. Pause to see the complete objective list and elimination count.
 
 Play in landscape. Portrait pauses the game and asks you to rotate the device.
@@ -70,7 +70,7 @@ do diretório quanto em `index.html`. Esse teste também roda no CI antes do dep
 
 ## XP, Fúria Tranco e hordas
 
-Elimine alienígenas para ganhar 10 XP por inimigo. Com 100 XP, a **Fúria Tranco**
+Elimine alienígenas para ganhar 10 XP por inimigo. Com 180 XP, a **Fúria Tranco**
 ativa por 10 segundos: dano triplicado, tiros mais rápidos, movimento 50% mais
 rápido e munição ilimitada. A barra no topo mostra a próxima ativação e sua
 contagem regressiva. Cada ativação aumenta a exigência de XP; reiniciar zera a

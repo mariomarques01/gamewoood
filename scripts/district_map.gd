@@ -3,7 +3,7 @@ const Kit = preload("res://scripts/visual_kit.gd")
 
 const SIZE := 58.0
 const BLUE := Color(0.12, 0.35, 0.62)
-const ASPHALT := Color(0.27, 0.31, 0.34)
+const ASPHALT := Color(0.17, 0.20, 0.25)
 const CONCRETE := Color(0.47, 0.51, 0.56)
 const GOLD := Color(1.0, 0.68, 0.12)
 const GREEN := Color(0.18, 0.86, 0.36)
@@ -19,18 +19,6 @@ func _material(color: Color, glow: bool = false) -> StandardMaterial3D:
     var mat := StandardMaterial3D.new()
     mat.albedo_color = color
     mat.roughness = 0.75
-    if color == ASPHALT:
-        var image := Image.create(32, 32, false, Image.FORMAT_RGBA8)
-        var random := RandomNumberGenerator.new()
-        random.seed = 412
-        for y in range(32):
-            for x in range(32):
-                var grain := random.randf_range(0.9, 1.1)
-                image.set_pixel(x, y, Color(grain, grain, grain, 1))
-        image.generate_mipmaps()
-        mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-        mat.albedo_texture = ImageTexture.create_from_image(image)
-        mat.uv1_scale = Vector3(16, 16, 1)
     if glow:
         mat.emission_enabled = true
         mat.emission = color
@@ -50,6 +38,8 @@ func _box(parent: Node3D, pos: Vector3, size: Vector3, color: Color, solid: bool
     var mesh: Mesh = Kit.bevel(size) if minf(minf(size.x, size.y), size.z) > 0.18 else _plain_box(size)
     visual.mesh = mesh
     visual.material_override = _material(color)
+    if pos.y <= 0.2 and size.y <= 1.0:
+        visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
     root.add_child(visual)
     if size.y <= 0.25 and pos.y >= -0.1 and pos.y <= 0.2:
         var center := root.global_position
@@ -64,7 +54,7 @@ func _box(parent: Node3D, pos: Vector3, size: Vector3, color: Color, solid: bool
 
 func build() -> void:
     # Area principal e acesso ao portao sul.
-    _box(self, Vector3(0, -0.55, 0), Vector3(SIZE, 1, SIZE), Color(0.24, 0.32, 0.30), true)
+    _box(self, Vector3(0, -0.55, 0), Vector3(SIZE, 1, SIZE), Color(0.33, 0.29, 0.22), true)
     _box(self, Vector3(0, -0.04, 14), Vector3(12, 0.08, 27), ASPHALT)
     _box(self, Vector3(0, -0.03, -7), Vector3(42, 0.08, 16), ASPHALT)
     _box(self, Vector3(0, -0.03, 1), Vector3(12, 0.08, 26), ASPHALT)
@@ -124,6 +114,7 @@ func build() -> void:
     _architecture_pass()
     preload("res://scripts/base_set_dressing.gd").build(self)
     preload("res://scripts/street_detail.gd").build(self)
+    preload("res://scripts/terrain_gardens.gd").build(self)
     _batch_static_meshes()
     # Dynamic/destructible objects are added after static batching.
     for point in [Vector3(-9, 0, 10), Vector3(10, 0, 9), Vector3(-21, 0, -3), Vector3(21, 0, -3), Vector3(7, 0, -12), Vector3(-8, 0, -11)]:

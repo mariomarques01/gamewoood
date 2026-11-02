@@ -27,7 +27,10 @@ func _run() -> void:
     assert(player.weapon.ammo == 3, "Pickup applied twice")
     for index in range(5):
         district.arcade.register_kill(player.position + Vector3.RIGHT * 8)
-    assert(player.weapon.overdrive_time == 4, "Five-kill sequence did not activate boost")
+    assert(player.weapon.overdrive_time == 0, "Five kills must no longer grant overdrive")
+    for index in range(5):
+        district.arcade.register_kill(player.position + Vector3.RIGHT * 8)
+    assert(player.weapon.overdrive_time == 4, "Ten-kill sequence did not activate boost")
     assert(district.hud.toast.text.contains("TRANCO TOTAL"), "Boost feedback missing")
     assert(get_nodes_in_group("supplies").size() >= 1, "Kills did not drop supplies")
     player.weapon.direction = Vector3.RIGHT
@@ -48,10 +51,12 @@ func _run() -> void:
     credits.collect()
     credits.collect()
     assert(district.arcade.credits == 5, "Credit pickup did not apply exactly once")
+    assert(not player.weapon.activate_overdrive(), "Cooldown allowed another boost")
+    player.weapon._physics_process(26)
     var boost = district.arcade.spawn_supply(player.position + Vector3.RIGHT * 4, "boost")
     boost.collect()
     assert(player.weapon.overdrive_time == 4, "Dropped boost did not activate")
-    for index in range(7):
+    for index in range(2):
         district.arcade.register_kill(player.position + Vector3.RIGHT * 8)
     assert(district.arcade.total_kills == 12 and district.arcade.credits == 30, "12-alien bonus did not award once")
     var effect_script = preload("res://scripts/combat_effect.gd")

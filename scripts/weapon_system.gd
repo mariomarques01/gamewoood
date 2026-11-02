@@ -17,7 +17,9 @@ var reload_time: float:
 var capacity: int:
     get: return WEAPONS[selected].capacity
 var cooldown := 0.0
+const OVERDRIVE_LOCKOUT := 25.0
 var overdrive_time := 0.0
+var overdrive_lockout := 0.0
 var frenzy_time := 0.0
 var frenzy_material: StandardMaterial3D
 var direction := Vector3.ZERO
@@ -44,15 +46,19 @@ func activate_frenzy(seconds: float) -> void:
     if not enabled or not owner_body.active:
         return
     frenzy_time = seconds
+    overdrive_time = 0
+    overdrive_lockout = OVERDRIVE_LOCKOUT
     resupply(true)
     cooldown = 0
     power_activated.emit(seconds, true)
 
-func activate_overdrive() -> void:
-    if not enabled or not owner_body.active or frenzy_time > 0:
-        return
+func activate_overdrive() -> bool:
+    if not enabled or not owner_body.active or frenzy_time > 0 or overdrive_lockout > 0:
+        return false
     overdrive_time = 4.0
+    overdrive_lockout = OVERDRIVE_LOCKOUT
     power_activated.emit(4.0, false)
+    return true
 
 func _unhandled_key_input(event: InputEvent) -> void:
     if not event is InputEventKey or not event.pressed or event.echo or not enabled or not owner_body.active:
@@ -79,6 +85,7 @@ func select_weapon(index: int) -> bool:
 func _physics_process(delta: float) -> void:
     if not enabled:
         return
+    overdrive_lockout = maxf(0, overdrive_lockout - delta)
     frenzy_time = maxf(0, frenzy_time - delta)
     overdrive_time = maxf(0, overdrive_time - delta)
     cooldown = maxf(0, cooldown - delta)
