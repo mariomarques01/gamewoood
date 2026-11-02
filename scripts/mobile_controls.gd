@@ -71,8 +71,21 @@ func _input(event: InputEvent) -> void:
 func _draw() -> void:
     var left := move_start if move_id >= 0 else Vector2(96, size.y - 100)
     var right := aim_start if aim_id >= 0 else Vector2(size.x - 96, size.y - 100)
-    for center in [left, right]:
-        draw_circle(center, RADIUS, Color(0.03, 0.1, 0.18, 0.42))
-        draw_arc(center, RADIUS, 0, TAU, 48, Color(0.55, 0.85, 1, 0.5), 2, true)
-    draw_circle(left + movement * RADIUS * 0.65, 23, Color(0.4, 0.8, 1, 0.55))
-    draw_circle(right + (aim * RADIUS * 0.65 if aiming else Vector2.ZERO), 23, Color(1, 0.65, 0.15, 0.65))
+    _stick(left, movement, move_id >= 0)
+    _stick(right, aim if aiming else Vector2.ZERO, aiming)
+
+func _stick(center: Vector2, direction: Vector2, active: bool) -> void:
+    draw_circle(center + Vector2(0, 5), RADIUS + 5, Color(0.02, 0.025, 0.03, 0.25))
+    draw_circle(center, RADIUS + 3, Color(0.75, 0.81, 0.85, 0.4))
+    draw_circle(center, RADIUS, Color(0.33, 0.39, 0.43, 0.38))
+    draw_circle(center, RADIUS - 8, Color(0.61, 0.68, 0.72, 0.15))
+    draw_arc(center, RADIUS - 3, PI, TAU, 32, Color(0.95, 0.98, 1, 0.45), 2, true)
+    if active:
+        draw_arc(center, RADIUS, 0, TAU, 48, Color(0.5, 0.9, 1, 0.55), 2, true)
+    var knob := center + direction * RADIUS * 0.62
+    draw_circle(knob + Vector2(2, 5), 27, Color(0, 0, 0, 0.4))
+    for index in range(8):
+        var radius := 26.0 - index * 2.7
+        var shade := 0.62 - index * 0.06
+        draw_circle(knob + Vector2(0, -index * 0.15), radius, Color(shade, shade + 0.025, shade + 0.045, 0.95))
+    draw_arc(knob + Vector2(0, -2), 20, PI, TAU, 24, Color(0.82, 0.88, 0.92, 0.7), 2, true)

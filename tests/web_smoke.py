@@ -47,11 +47,17 @@ try:
             assert response.ok, response.status
             # A printed sentinel originates in the executed GDScript, not the HTML shell.
             for _ in range(120):
-                if any('DEADLIGHT_READY district=1 version=0.6.0' in line for line in messages):
+                if any('DEADLIGHT_READY district=1 version=0.7.0' in line for line in messages):
                     break
                 page.wait_for_timeout(500)
-            assert any('DEADLIGHT_READY district=1 version=0.6.0' in line for line in messages), messages
+            assert any('DEADLIGHT_READY district=1 version=0.7.0' in line for line in messages), messages
             page.wait_for_timeout(1000)
+            if name == 'portrait':
+                expect_log('DEADLIGHT_ORIENTATION portrait')
+                page.screenshot(path='build/logs/portrait-rotate.png')
+                page.set_viewport_size({'width': 844, 'height': 390})
+                expect_log('DEADLIGHT_ORIENTATION landscape')
+                page.wait_for_timeout(500)
             bounds = page.locator('canvas').bounding_box()
             if mobile:
                 session = context.new_cdp_session(page)
@@ -83,14 +89,14 @@ try:
             assert any('DEADLIGHT_MOVE' in line for line in messages), messages
             assert any('DEADLIGHT_FIRE' in line for line in messages), messages
             if mobile:
-                page.touchscreen.tap(bounds['x'] + bounds['width'] - 48 * scale, bounds['y'] + 50 * scale)
+                page.touchscreen.tap(bounds['x'] + 48 * scale, bounds['y'] + 50 * scale)
             else:
                 page.keyboard.press('Escape', delay=120)
             page.wait_for_timeout(200)
             expect_log('DEADLIGHT_PAUSE true')
             page.screenshot(path=f'build/logs/{name}-paused.png')
             if mobile:
-                page.touchscreen.tap(bounds['x'] + bounds['width'] - 48 * scale, bounds['y'] + 50 * scale)
+                page.touchscreen.tap(bounds['x'] + 48 * scale, bounds['y'] + 50 * scale)
             else:
                 page.keyboard.press('Escape', delay=120)
             page.wait_for_timeout(200)

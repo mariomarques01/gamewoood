@@ -4,6 +4,8 @@ var legs: Array[Node3D] = []
 var arms: Array[Node3D] = []
 var chest: MeshInstance3D
 var muzzle: MeshInstance3D
+var muzzle_flash: MeshInstance3D
+var flash_time := 0.0
 var phase := 0.0
 var recoil := 0.0
 
@@ -47,8 +49,12 @@ func _ready() -> void:
     Kit.box(self, Vector3(0.4, 1.04, -0.85), Vector3(0.23, 0.18, 0.85), dark)
     Kit.box(self, Vector3(0.4, 1.18, -0.68), Vector3(0.12, 0.07, 0.6), cyan)
     muzzle = Kit.box(self, Vector3(0.4, 1.04, -1.3), Vector3(0.3, 0.26, 0.16), cyan)
+    muzzle_flash = Kit.sphere(self, Vector3(0.4, 1.04, -1.48), Vector3(0.46, 0.46, 0.65), Kit.material(Color(1, 0.75, 0.15), true))
+    muzzle_flash.hide()
 
 func animate(delta: float, speed: float, airborne: bool, firing: bool) -> void:
+    flash_time = maxf(0, flash_time - delta)
+    muzzle_flash.visible = flash_time > 0
     phase += delta * (10 if speed > 0.2 else 2)
     var stride := minf(speed / 6.0, 1.0) * 0.55
     for index in range(2):
@@ -60,3 +66,5 @@ func animate(delta: float, speed: float, airborne: bool, firing: bool) -> void:
 
 func fire() -> void:
     recoil = 1.0
+    flash_time = 0.055
+    muzzle_flash.show()

@@ -1,6 +1,7 @@
 extends CanvasLayer
 signal pause_requested
 signal restart_requested
+signal orientation_changed(portrait: bool)
 const MobileControls = preload("res://scripts/mobile_controls.gd")
 const HUDArt = preload("res://scripts/hud_art.gd")
 var controls: Control
@@ -27,6 +28,13 @@ var restart_button: Button
 var jump_button: Button
 var jump_icon: Control
 var touch_buttons: Dictionary = {}
+var portrait_mode := false
+var rotation_panel: Panel
+var rotation_label: Label
+var fullscreen_button: Button
+var credit_text: Label
+var kill_popup: Label
+var kill_time := 0.0
 var details: Label
 var toast: Label
 var toast_time := 0.0
@@ -142,6 +150,23 @@ func _ready() -> void:
     navigation = _label("", 17, Color(0.55, 1, 0.65))
     navigation.add_theme_color_override("font_shadow_color", Color.BLACK)
     navigation.add_theme_constant_override("shadow_outline_size", 5)
+    credit_text = _label("0", 20, Color(1, 0.85, 0.35))
+    kill_popup = _label("", 38, Color(1, 0.9, 0.5))
+    kill_popup.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+    kill_popup.add_theme_color_override("font_shadow_color", Color(0.05, 0.08, 0.1))
+    kill_popup.add_theme_constant_override("shadow_outline_size", 7)
+    rotation_panel = Panel.new()
+    root.add_child(rotation_panel)
+    rotation_panel.add_theme_stylebox_override("panel", _style(Color(0.025, 0.065, 0.1, 0.99), Color(0.1, 0.5, 0.65)))
+    rotation_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    rotation_label = Label.new()
+    rotation_label.text = "PROJECT: DEADLIGHT\n\nGIRE O CELULAR\n\nJogue na horizontal"
+    rotation_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    rotation_label.add_theme_font_size_override("font_size", 28)
+    rotation_panel.add_child(rotation_label)
+    fullscreen_button = _button("TELA CHEIA")
+    fullscreen_button.reparent(rotation_panel)
+    fullscreen_button.pressed.connect(_fullscreen)
     get_viewport().size_changed.connect(_layout)
     _layout()
 
@@ -153,22 +178,28 @@ func _layout() -> void:
         viewport.content_scale_size = desired
     var area := viewport.get_visible_rect().size
     var portrait := area.x < area.y
-    art.health_rect = Rect2(14, 16, 190, 46)
-    art.ammo_rect = Rect2(area.x * 0.5 - 67, area.y - 58, 134, 36)
-    art.mission_rect = Rect2(14, 72, minf(area.x - 108, 360), 34)
+    portrait_mode = portrait
+    art.health_rect = Rect2(94, 18, 190, 38)
+    art.ammo_rect = Rect2(area.x - 200, 18, 182, 44)
+    art.mission_rect = Rect2(300, 18, minf(240, maxf(160, area.x - 720)), 34)
+    art.credit_rect = Rect2(art.mission_rect.end.x + 12, 18, 92, 34)
     captain.hide()
     kills_text.hide()
-    mission_title.hide()
-    life.position = art.health_rect.position + Vector2(145, 11)
-    life.add_theme_font_size_override("font_size", 18)
-    ammo_text.position = art.ammo_rect.position + Vector2(46, 5)
-    ammo_text.add_theme_font_size_override("font_size", 20)
-    objective.position = art.mission_rect.position + Vector2(12, 5)
-    objective.size = Vector2(art.mission_rect.size.x - 24, 26)
-    objective.add_theme_font_size_override("font_size", 18)
+    mission_title.show()
+    mission_title.position = Vector2(96, 65)
+    mission_title.add_theme_font_size_override("font_size", 16)
+    life.position = art.health_rect.position + Vector2(98, 7)
+    life.add_theme_font_size_override("font_size", 19)
+    life.add_theme_color_override("font_color", Color.WHITE)
+    ammo_text.position = art.ammo_rect.position + Vector2(60, 6)
+    ammo_text.add_theme_font_size_override("font_size", 24)
+    credit_text.position = art.credit_rect.position + Vector2(37, 5)
+    objective.position = art.mission_rect.position + Vector2(10, 5)
+    objective.size = Vector2(art.mission_rect.size.x - 20, 26)
+    objective.add_theme_font_size_override("font_size", 17)
     progress.position = art.mission_rect.position + Vector2(10, 29)
     progress.size = Vector2(art.mission_rect.size.x - 20, 4)
-    pause_button.position = Vector2(area.x - 78, 18)
+    pause_button.position = Vector2(18, 16)
     pause_button.size = Vector2(60, 64)
     jump_button.position = Vector2(area.x - 126, area.y - 264)
     jump_button.size = Vector2(104, 76)
@@ -176,6 +207,17 @@ func _layout() -> void:
     overlay.size = Vector2(minf(460, area.x - 32), 440)
     toast.position = Vector2(20, area.y - 340)
     toast.size = Vector2(area.x - 40, 32)
+    kill_popup.position = Vector2(area.x - 280, 100)
+    kill_popup.size = Vector2(230, 100)
+    rotation_panel.visible = portrait_mode
+    rotation_label.position = Vector2(16, area.y * 0.5 - 160)
+    rotation_label.size = Vector2(area.x - 32, 250)
+    fullscreen_button.position = Vector2(area.x * 0.5 - 120, area.y * 0.5 + 100)
+    fullscreen_button.size = Vector2(240, 68)
+    controls.enabled = not portrait_mode and not overlay.visible
+    if portrait_mode:
+        controls.reset()
+    orientation_changed.emit(portrait_mode)
     art.queue_redraw()
     controls.queue_redraw()
 
@@ -184,6 +226,9 @@ func _request_jump() -> void:
         player.request_jump()
 
 func _process(delta: float) -> void:
+    kill_time = maxf(0, kill_time - delta)
+    kill_popup.visible = kill_time > 0 and not overlay.visible and not portrait_mode
+    kill_popup.modulate.a = minf(1, kill_time * 3)
     toast_time = maxf(0, toast_time - delta)
     toast.visible = toast_time > 0 and not overlay.visible
     toast.modulate.a = minf(1, toast_time * 2)
@@ -206,12 +251,13 @@ func _process(delta: float) -> void:
     navigation.text = "%dm" % int(player.global_position.distance_to(target))
 
 func update_status(hp: float, ammo: int, reload_active: bool, kills: int, current_mission: Node) -> void:
-    status.text = "BAIRRO 1 v0.6.0  |  BASE DO CAPITAO"
+    status.text = "BAIRRO 1 v0.7.0  |  BASE DO CAPITAO"
     life.text = "%d" % int(ceil(hp))
     art.health_ratio = hp / 100.0
     art.queue_redraw()
     ammo_text.text = "REC..." if reload_active else "%02d/24" % ammo
     kills_text.text = "ALIENS  %d" % kills
+    mission_title.text = "ALIENS  %d/12" % mini(kills, 12)
     var short_titles := ["ARSENAL", "HELIPONTO", "COMUNICACAO"]
     objective.text = "%d/3  %s" % [mini(current_mission.current + 1, 3), short_titles[mini(current_mission.current, 2)]] if current_mission.current < 3 else "3/3  BASE SEGURA"
     if current_mission.contested:
@@ -219,6 +265,7 @@ func update_status(hp: float, ammo: int, reload_active: bool, kills: int, curren
     progress.visible = current_mission.progress > 0 or current_mission.contested
     progress.value = current_mission.progress
     details.text = "VIDA %d/100   •   ALIENS %d\n" % [int(ceil(hp)), kills]
+    details.text += "BONUS: 12 ALIENS  %d/12\n" % mini(kills, 12)
     for index in range(3):
         var mark := "[OK]" if index < current_mission.current else "[  ]"
         details.text += "%s %s\n" % [mark, short_titles[index]]
@@ -238,7 +285,7 @@ func show_overlay(text: String, paused: bool = false) -> void:
 func hide_overlay() -> void:
     overlay.hide()
     jump_button.show()
-    controls.enabled = true
+    controls.enabled = not portrait_mode
 
 func flash() -> void:
     damage_flash.color.a = 0.1
@@ -254,7 +301,7 @@ func _input(event: InputEvent) -> void:
     if not event is InputEventScreenTouch:
         return
     if event.pressed:
-        for button in [pause_button, resume, restart_button]:
+        for button in [fullscreen_button] if portrait_mode else [pause_button, resume, restart_button]:
             if is_instance_valid(button) and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
                 touch_buttons[event.index] = button
                 get_viewport().set_input_as_handled()
@@ -265,3 +312,16 @@ func _input(event: InputEvent) -> void:
         get_viewport().set_input_as_handled()
         if is_instance_valid(button) and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
             button.pressed.emit()
+
+func show_kills(chain: int) -> void:
+    kill_popup.text = "%d\nALIENS" % chain
+    kill_time = 1.5
+
+func show_credits(value: int) -> void:
+    credit_text.text = str(value)
+
+func _fullscreen() -> void:
+    if OS.has_feature("web"):
+        JavaScriptBridge.eval("(function(){var el=document.documentElement;var p=el.requestFullscreen?el.requestFullscreen():null;if(p&&p.then){p.then(function(){if(screen.orientation&&screen.orientation.lock){screen.orientation.lock('landscape').catch(function(){});}}).catch(function(){});}})()")
+    else:
+        DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)

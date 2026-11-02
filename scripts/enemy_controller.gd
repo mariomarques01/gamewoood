@@ -1,5 +1,6 @@
 extends CharacterBody3D
 signal eliminated
+const CombatEffect = preload("res://scripts/combat_effect.gd")
 const AlienVisual = preload("res://scripts/alien_visual.gd")
 const Health = preload("res://scripts/health_component.gd")
 const Projectile = preload("res://scripts/projectile.gd")
@@ -135,6 +136,6 @@ func _die() -> void:
     collision_layer = 0
     collision_mask = 0
     eliminated.emit()
-    var tween := create_tween()
-    tween.tween_property(visual, "scale", Vector3(1.4, 0.05, 1.4), 0.18)
-    tween.tween_callback(queue_free)
+    CombatEffect.burst(get_parent(), global_position, ranged)
+    visual.hide()
+    queue_free()
