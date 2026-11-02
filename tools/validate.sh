@@ -28,6 +28,8 @@ run_checked build/logs/arsenal-finale.log timeout 75 "${DISPLAY_RUNNER[@]}" "$GO
 grep -q 'DEADLIGHT_ARSENAL_FINALE_OK' build/logs/arsenal-finale.log
 run_checked build/logs/navigation.log timeout 90 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/navigation_smoke.gd
 grep -q 'DEADLIGHT_NAVIGATION_OK' build/logs/navigation.log
+run_checked build/logs/evolution.log timeout 90 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/evolution_smoke.gd
+grep -q 'DEADLIGHT_EVOLUTION_OK' build/logs/evolution.log
 if [[ "${1:-}" == '--export' ]]; then
   mkdir -p build/web
   run_checked build/logs/export.log "$GODOT_BIN" --headless --path . --export-release Web build/web/index.html

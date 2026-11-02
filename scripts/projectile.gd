@@ -4,6 +4,7 @@ var direction := Vector3.FORWARD
 var speed := 24.0
 var damage := 25.0
 var hostile := false
+var empowered := false
 var life := 1.8
 var shooter: CollisionObject3D
 var material: Material
@@ -30,6 +31,9 @@ func _ready() -> void:
     trail.rotation.y = atan2(-direction.x, -direction.z)
     trail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
     add_child(trail)
+    if empowered:
+        visual.scale = Vector3.ONE * 1.8
+        trail.scale = Vector3(2.5, 2.5, 1.8)
     add_to_group("projectiles")
 
 func _physics_process(delta: float) -> void:

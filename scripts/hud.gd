@@ -4,6 +4,8 @@ signal pause_requested
 signal restart_requested
 signal orientation_changed(portrait: bool)
 const MobileControls = preload("res://scripts/mobile_controls.gd")
+const DisplayFont = preload("res://assets/fonts/BarlowCondensed-Bold.ttf")
+const TextFont = preload("res://assets/fonts/BarlowCondensed-SemiBold.ttf")
 const HUDArt = preload("res://scripts/hud_art.gd")
 var controls: Control
 var status: Label
@@ -50,6 +52,10 @@ var weapon_buttons: Array[Button] = []
 var ammo_icon: Control
 var reload_meter: ProgressBar
 var results: Control
+var xp_panel: Panel
+var xp_meter: ProgressBar
+var xp_text: Label
+var frenzy_text: Label
 
 func _style(color: Color, border: Color) -> StyleBoxFlat:
     var style := StyleBoxFlat.new()
@@ -66,6 +72,9 @@ func _style(color: Color, border: Color) -> StyleBoxFlat:
 func _label(text: String, font_size: int, color: Color = Color.WHITE) -> Label:
     var label := Label.new()
     label.text = text
+    label.add_theme_font_override("font", DisplayFont if font_size >= 20 else TextFont)
+    label.add_theme_color_override("font_outline_color", Color(0.025, 0.045, 0.06, 0.95))
+    label.add_theme_constant_override("outline_size", 3)
     label.mouse_filter = Control.MOUSE_FILTER_IGNORE
     label.add_theme_font_size_override("font_size", font_size)
     label.add_theme_color_override("font_color", color)
@@ -89,16 +98,20 @@ func _ready() -> void:
     add_child(root)
     root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    var interface_theme := Theme.new()
+    interface_theme.default_font = TextFont
+    interface_theme.default_font_size = 18
+    root.theme = interface_theme
     controls = MobileControls.new()
     root.add_child(controls)
     art = HUDArt.new()
     root.add_child(art)
     art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    captain = _label("CAPITAO TRANCO", 21)
+    captain = _label("CAPITÃO TRANCO", 21)
     life = _label("100 / 100", 16, Color(0.5, 0.9, 0.75))
     ammo_text = _label("24 / 24", 26, Color(1, 0.8, 0.3))
     kills_text = _label("ALIENS  0", 18)
-    mission_title = _label("OPERACAO BASE SEGURA", 15, Color(1, 0.72, 0.22))
+    mission_title = _label("OPERAÇÃO BASE SEGURA", 15, Color(1, 0.72, 0.22))
     objective = _label("LIBERE O ARSENAL", 20)
     objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     progress = ProgressBar.new()
@@ -176,7 +189,7 @@ func _ready() -> void:
     audio_row.add_theme_constant_override("separation", 8)
     box.add_child(audio_row)
     var music_label := Label.new()
-    music_label.text = "MUSICA"
+    music_label.text = "MÚSICA"
     music_label.add_theme_font_size_override("font_size", 14)
     audio_row.add_child(music_label)
     music_slider = HSlider.new()
@@ -238,6 +251,22 @@ func _ready() -> void:
         meter_style.set_corner_radius_all(3)
         combo_meter.add_theme_stylebox_override(entry[0], meter_style)
     root.add_child(combo_meter)
+    xp_panel = Panel.new()
+    xp_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    xp_panel.add_theme_stylebox_override("panel", _style(Color(0.025, 0.065, 0.095, 0.94), Color(0.18, 0.55, 0.63)))
+    root.add_child(xp_panel)
+    xp_text = _label("FÚRIA  •  XP 0 / 100", 17, Color(0.55, 0.93, 1))
+    xp_meter = ProgressBar.new()
+    xp_meter.show_percentage = false
+    xp_meter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    for entry in [["background", Color(0.03, 0.09, 0.13)], ["fill", Color(0.18, 0.84, 0.95)]]:
+        var meter_style := StyleBoxFlat.new()
+        meter_style.bg_color = entry[1]
+        meter_style.set_corner_radius_all(4)
+        xp_meter.add_theme_stylebox_override(entry[0], meter_style)
+    root.add_child(xp_meter)
+    frenzy_text = _label("", 18, Color(1, 0.82, 0.25))
+    frenzy_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     results = preload("res://scripts/stage_results.gd").new()
     root.add_child(results)
     results.replay_requested.connect(func(): restart_requested.emit())
@@ -269,6 +298,14 @@ func _layout() -> void:
     art.ammo_rect = Rect2(area.x - 200, 18, 182, 44)
     art.mission_rect = Rect2(300, 18, minf(240, maxf(160, area.x - 720)), 34)
     art.credit_rect = Rect2(art.mission_rect.end.x + 12, 18, 92, 34)
+    xp_panel.position = Vector2(300, 63)
+    xp_panel.size = Vector2(240, 48)
+    xp_text.position = xp_panel.position + Vector2(12, 4)
+    xp_text.size = Vector2(216, 24)
+    xp_meter.position = xp_panel.position + Vector2(12, 32)
+    xp_meter.size = Vector2(216, 6)
+    frenzy_text.position = Vector2(270, 118)
+    frenzy_text.size = Vector2(300, 54)
     captain.hide()
     kills_text.hide()
     mission_title.show()
@@ -328,14 +365,27 @@ func _process(delta: float) -> void:
     if is_instance_valid(player):
         reload_meter.visible = player.weapon.reload_time > 0 and not overlay.visible
         reload_meter.value = 1 - player.weapon.reload_time / player.weapon.WEAPONS[player.weapon.selected].reload_seconds
+    if is_instance_valid(arcade) and is_instance_valid(player):
+        var furious: bool = player.weapon.frenzy_time > 0
+        var show_xp := not overlay.visible and not portrait_mode
+        xp_panel.visible = show_xp
+        xp_meter.visible = show_xp
+        xp_text.visible = show_xp
+        xp_meter.get_theme_stylebox("fill").bg_color = Color(1, 0.68, 0.12) if furious else Color(0.18, 0.84, 0.95)
+        xp_meter.max_value = arcade.FRENZY_DURATION if furious else arcade.xp_required
+        xp_meter.value = player.weapon.frenzy_time if furious else arcade.xp
+        xp_text.text = "FÚRIA ATIVA  •  %.1fs" % player.weapon.frenzy_time if furious else "FÚRIA  •  XP %d / %d" % [arcade.xp, arcade.xp_required]
+        frenzy_text.text = "DANO ×3  •  VELOCIDADE ×1,5\nMUNIÇÃO ILIMITADA" if furious else ""
+        frenzy_text.visible = show_xp and furious
     kill_time = maxf(0, kill_time - delta)
-    var boosted: bool = is_instance_valid(player) and player.weapon.overdrive_time > 0
+    var boosted: bool = is_instance_valid(player) and (player.weapon.overdrive_time > 0 or player.weapon.frenzy_time > 0)
     if is_instance_valid(arcade) and (arcade.chain >= 2 or boosted):
-        kill_time = player.weapon.overdrive_time if boosted else arcade.chain_time
-        kill_popup.text = "TRANCO\nTOTAL!" if boosted else "%d\nCOMBO" % arcade.chain
+        kill_time = maxf(player.weapon.overdrive_time, player.weapon.frenzy_time) if boosted else arcade.chain_time
+        kill_popup.text = "FÚRIA\nTRANCO!" if player.weapon.frenzy_time > 0 else ("TRANCO\nTOTAL!" if boosted else "%d\nCOMBO" % arcade.chain)
     kill_popup.visible = kill_time > 0 and not overlay.visible and not portrait_mode
     kill_popup.modulate.a = minf(1, kill_time * 3)
     combo_meter.visible = kill_popup.visible and is_instance_valid(arcade) and (arcade.chain >= 2 or boosted)
+    combo_meter.max_value = 10 if is_instance_valid(player) and player.weapon.frenzy_time > 0 else 4
     combo_meter.value = kill_time
     toast_time = maxf(0, toast_time - delta)
     toast.visible = toast_time > 0 and not overlay.visible
@@ -365,15 +415,15 @@ func update_status(hp: float, ammo: int, reload_active: bool, kills: int, curren
     art.queue_redraw()
     ammo_text.text = "REC..." if reload_active else "%02d/%d" % [ammo, player.weapon.capacity]
     kills_text.text = "ALIENS  %d" % kills
-    mission_title.text = "ALIENS  %d/12" % mini(kills, 12)
-    var short_titles := ["ARSENAL", "HELIPONTO", "COMUNICACAO"]
+    mission_title.text = "ELIMINAÇÕES  %d" % kills
+    var short_titles := ["ARSENAL", "HELIPONTO", "COMUNICAÇÃO"]
     objective.text = "%d/3  %s" % [mini(current_mission.current + 1, 3), short_titles[mini(current_mission.current, 2)]] if current_mission.current < 3 else "3/3  BASE SEGURA"
     if current_mission.contested:
         objective.text += "  !"
     progress.visible = current_mission.progress > 0 or current_mission.contested
     progress.value = current_mission.progress
     details.text = "VIDA %d/100   •   ALIENS %d\n" % [int(ceil(hp)), kills]
-    details.text += "BONUS: 12 ALIENS  %d/12\n" % mini(kills, 12)
+    details.text += "BÔNUS: 12 ALIENS  %d/12\n" % mini(kills, 12)
     for index in range(3):
         var mark := "[OK]" if index < current_mission.current else "[  ]"
         details.text += "%s %s\n" % [mark, short_titles[index]]
@@ -518,7 +568,7 @@ func show_weapon(index: int) -> void:
         weapon_buttons[slot].modulate.a = 1 if selected else 0.65
 
 func _hide_game_ui() -> void:
-    for node in [art, captain, life, ammo_text, kills_text, mission_title, objective, progress, pause_button, jump_button, navigation, credit_text, kill_popup, combo_meter, toast, ammo_icon, reload_meter, controls] + weapon_buttons:
+    for node in [xp_panel, xp_meter, xp_text, frenzy_text, art, captain, life, ammo_text, kills_text, mission_title, objective, progress, pause_button, jump_button, navigation, credit_text, kill_popup, combo_meter, toast, ammo_icon, reload_meter, controls] + weapon_buttons:
         node.hide()
     controls.enabled = false
     controls.reset()

@@ -67,3 +67,16 @@ HTTPS é obrigatório em produção; localhost funciona para desenvolvimento.
 `python3 tests/web_pwa.py --directory build/web` verifica os metadados de
 instalação no Chromium e executa o jogo com a rede desativada, tanto no endereço
 do diretório quanto em `index.html`. Esse teste também roda no CI antes do deploy.
+
+## XP, Fúria Tranco e hordas
+
+Elimine alienígenas para ganhar 10 XP por inimigo. Com 100 XP, a **Fúria Tranco**
+ativa por 10 segundos: dano triplicado, tiros mais rápidos, movimento 50% mais
+rápido e munição ilimitada. A barra no topo mostra a próxima ativação e sua
+contagem regressiva. Cada ativação aumenta a exigência de XP; reiniciar zera a
+progressão da partida.
+
+As hordas chegam a 24 alienígenas e incluem corredores e brutamontes, além dos
+soldados e atiradores. As eliminações deixam sangue mais espalhado e persistente.
+O visual inclui novas fontes locais e detalhes de rua. Consulte
+[XP e hordas](docs/XP_AND_HORDES.md) para regras, limites e validação.

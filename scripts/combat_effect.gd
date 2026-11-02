@@ -10,6 +10,7 @@ var positions: Array[Vector3] = []
 var velocities: Array[Vector3] = []
 
 static func burst(parent: Node3D, point: Vector3, ranged: bool) -> Node3D:
+    preload("res://scripts/blood_stain.gd").spread(parent, point, ranged)
     var active := parent.get_tree().get_nodes_in_group("combat_fx")
     if active.size() >= MAX_EFFECTS:
         active[0].free()
@@ -52,7 +53,7 @@ func _ready() -> void:
     var points: Array[Vector3] = []
     for index in range(18):
         var angle := TAU * index / 18
-        var radius := random.randf_range(0.35, 0.9)
+        var radius := random.randf_range(0.15, 0.4)
         points.append(Vector3(cos(angle) * radius, 0.035, sin(angle) * radius))
     for index in range(18):
         for point in [Vector3(0, 0.035, 0), points[index], points[(index + 1) % 18]]:
@@ -60,7 +61,7 @@ func _ready() -> void:
             tool.add_vertex(point)
     stain.mesh = tool.commit()
     var blood := StandardMaterial3D.new()
-    blood.albedo_color = alien_color.darkened(0.25)
+    blood.albedo_color = Color(0.3, 0.025, 0.045)
     blood.roughness = 1
     blood.cull_mode = BaseMaterial3D.CULL_DISABLED
     stain.material_override = blood

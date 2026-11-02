@@ -17,6 +17,8 @@ var capacity: int:
     get: return WEAPONS[selected].capacity
 var cooldown := 0.0
 var overdrive_time := 0.0
+var frenzy_time := 0.0
+var frenzy_material: StandardMaterial3D
 var direction := Vector3.ZERO
 var active := false
 var enabled := true
@@ -35,6 +37,14 @@ func _ready() -> void:
         material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
         materials.append(material)
     shot_material = materials[selected]
+    frenzy_material = preload("res://scripts/visual_kit.gd").material(Color(1, 0.65, 0.08), true)
+
+func activate_frenzy(seconds: float) -> void:
+    if not enabled or not owner_body.active:
+        return
+    frenzy_time = seconds
+    resupply(true)
+    cooldown = 0
 
 func _unhandled_key_input(event: InputEvent) -> void:
     if not event is InputEventKey or not event.pressed or event.echo or not enabled or not owner_body.active:
@@ -61,6 +71,7 @@ func select_weapon(index: int) -> bool:
 func _physics_process(delta: float) -> void:
     if not enabled:
         return
+    frenzy_time = maxf(0, frenzy_time - delta)
     overdrive_time = maxf(0, overdrive_time - delta)
     cooldown = maxf(0, cooldown - delta)
     for index in range(WEAPONS.size()):
@@ -81,15 +92,17 @@ func _physics_process(delta: float) -> void:
     var definition = WEAPONS[selected]
     var shot = Projectile.new()
     shot.direction = direction.normalized().rotated(Vector3.UP, random.randf_range(-definition.spread, definition.spread))
-    shot.damage = definition.damage * (1.5 if overdrive_time > 0 else 1.0)
+    shot.damage = definition.damage * (3.0 if frenzy_time > 0 else (1.5 if overdrive_time > 0 else 1.0))
     shot.shooter = owner_body
-    shot.material = shot_material
+    shot.material = frenzy_material if frenzy_time > 0 else shot_material
+    shot.empowered = frenzy_time > 0
     owner_body.get_parent().add_child(shot)
     shot.global_position = owner_body.global_position + Vector3.UP * 1.05 + shot.direction * 0.75
     owner_body.actor.fire()
     Audio.play(self, definition.sound, owner_body.global_position)
-    cooldown = definition.interval * (0.75 if overdrive_time > 0 else 1.0)
-    ammo -= 1
+    cooldown = definition.interval * (0.45 if frenzy_time > 0 else (0.75 if overdrive_time > 0 else 1.0))
+    if frenzy_time <= 0:
+        ammo -= 1
     if ammo == 0:
         reload()
     ammo_changed.emit(ammo, reload_time > 0)
@@ -109,5 +122,7 @@ func resupply(all_weapons: bool = false) -> void:
     ammo_changed.emit(ammo, false)
 
 func stop() -> void:
+    frenzy_time = 0
+    overdrive_time = 0
     enabled = false
     active = false
