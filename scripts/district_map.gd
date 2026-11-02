@@ -3,6 +3,7 @@ const Kit = preload("res://scripts/visual_kit.gd")
 
 const SIZE := 58.0
 const BLUE := Color(0.12, 0.35, 0.62)
+const PAVEMENT := Color(0.48, 0.5, 0.49)
 const ASPHALT := Color(0.17, 0.20, 0.25)
 const CONCRETE := Color(0.47, 0.51, 0.56)
 const GOLD := Color(1.0, 0.68, 0.12)
@@ -19,6 +20,19 @@ func _material(color: Color, glow: bool = false) -> StandardMaterial3D:
     var mat := StandardMaterial3D.new()
     mat.albedo_color = color
     mat.roughness = 0.75
+    if color == PAVEMENT:
+        var image := Image.create(64, 64, false, Image.FORMAT_RGBA8)
+        for y in range(64):
+            for x in range(64):
+                var grout := x < 2 or y < 2
+                var shade := 0.65 if grout else 0.96
+                image.set_pixel(x, y, Color(shade, shade, shade))
+        image.generate_mipmaps()
+        mat.albedo_texture = ImageTexture.create_from_image(image)
+        mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+        mat.uv1_triplanar = true
+        mat.uv1_world_triplanar = true
+        mat.uv1_scale = Vector3.ONE * 0.65
     if glow:
         mat.emission_enabled = true
         mat.emission = color
@@ -54,7 +68,7 @@ func _box(parent: Node3D, pos: Vector3, size: Vector3, color: Color, solid: bool
 
 func build() -> void:
     # Area principal e acesso ao portao sul.
-    _box(self, Vector3(0, -0.55, 0), Vector3(SIZE, 1, SIZE), Color(0.33, 0.29, 0.22), true)
+    _box(self, Vector3(0, -0.55, 0), Vector3(SIZE, 1, SIZE), PAVEMENT, true)
     _box(self, Vector3(0, -0.04, 14), Vector3(12, 0.08, 27), ASPHALT)
     _box(self, Vector3(0, -0.03, -7), Vector3(42, 0.08, 16), ASPHALT)
     _box(self, Vector3(0, -0.03, 1), Vector3(12, 0.08, 26), ASPHALT)
