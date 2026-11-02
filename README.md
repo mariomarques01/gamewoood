@@ -15,7 +15,7 @@ helipad and communications to win. Restart is available after victory/defeat.
 
 ## Validation and publication
 
-See [cartoon polish](docs/CARTOON_POLISH.md), [HUD and jump changes](docs/HUD_AND_JUMP.md), [recovery diagnosis](docs/RECOVERY.md) and [architecture/status](docs/ARCHITECTURE.md).
+See [compact HUD and research](docs/COMPACT_HUD_RESEARCH.md), [cartoon polish](docs/CARTOON_POLISH.md), [HUD and jump changes](docs/HUD_AND_JUMP.md), [recovery diagnosis](docs/RECOVERY.md) and [architecture/status](docs/ARCHITECTURE.md).
 Run `tools/validate.sh --export` with official Godot 4.3, an OpenGL display or Xvfb,
 then `python3 tests/web_smoke.py --directory build/web` with Playwright installed.
 PRs run the same checks. A single workflow `.github/workflows/deploy-web.yml`
@@ -23,3 +23,6 @@ deploys main only after runtime, export and browser checks pass.
 
 This is a playable procedural prototype. Real iPhone/Safari and Android device
 validation, native signing/exports, profiling and production art remain necessary.
+
+Combat supplies drop every third elimination. Five quick kills trigger a four-second
+TRANCO TOTAL boost. Pause to see the complete objective list and elimination count.

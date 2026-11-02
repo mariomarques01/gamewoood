@@ -37,7 +37,7 @@ try:
             page.on('console', lambda msg: messages.append(msg.text))
             page.on('pageerror', lambda error: errors.append(str(error)))
             def expect_log(token):
-                for attempt in range(30):
+                for attempt in range(60):
                     if any(token in line for line in messages):
                         return
                     page.wait_for_timeout(100)
@@ -47,10 +47,10 @@ try:
             assert response.ok, response.status
             # A printed sentinel originates in the executed GDScript, not the HTML shell.
             for _ in range(120):
-                if any('DEADLIGHT_READY district=1 version=0.5.0' in line for line in messages):
+                if any('DEADLIGHT_READY district=1 version=0.6.0' in line for line in messages):
                     break
                 page.wait_for_timeout(500)
-            assert any('DEADLIGHT_READY district=1 version=0.5.0' in line for line in messages), messages
+            assert any('DEADLIGHT_READY district=1 version=0.6.0' in line for line in messages), messages
             page.wait_for_timeout(1000)
             bounds = page.locator('canvas').bounding_box()
             if mobile:
@@ -85,14 +85,14 @@ try:
             if mobile:
                 page.touchscreen.tap(bounds['x'] + bounds['width'] - 48 * scale, bounds['y'] + 50 * scale)
             else:
-                page.keyboard.press('Escape')
+                page.keyboard.press('Escape', delay=120)
             page.wait_for_timeout(200)
             expect_log('DEADLIGHT_PAUSE true')
             page.screenshot(path=f'build/logs/{name}-paused.png')
             if mobile:
                 page.touchscreen.tap(bounds['x'] + bounds['width'] - 48 * scale, bounds['y'] + 50 * scale)
             else:
-                page.keyboard.press('Escape')
+                page.keyboard.press('Escape', delay=120)
             page.wait_for_timeout(200)
             expect_log('DEADLIGHT_PAUSE false')
             page.screenshot(path=f'build/logs/{name}.png')

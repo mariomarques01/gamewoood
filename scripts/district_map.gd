@@ -18,6 +18,16 @@ func _material(color: Color, glow: bool = false) -> StandardMaterial3D:
     var mat := StandardMaterial3D.new()
     mat.albedo_color = color
     mat.roughness = 0.75
+    if color == ASPHALT:
+        var image := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+        var random := RandomNumberGenerator.new()
+        random.seed = 412
+        for y in range(32):
+            for x in range(32):
+                var grain := random.randf_range(0.9, 1.1)
+                image.set_pixel(x, y, Color(grain, grain, grain, 1))
+        mat.albedo_texture = ImageTexture.create_from_image(image)
+        mat.uv1_scale = Vector3(16, 16, 1)
     if glow:
         mat.emission_enabled = true
         mat.emission = color
@@ -83,18 +93,30 @@ func build() -> void:
         _box(self, p, Vector3(1.4, 1.3, 1.4), Color(0.22, 0.47, 0.25), true)
     for p in [Vector3(-22, 0, 10), Vector3(22, 0, 1), Vector3(-21, 0, -10)]:
         _box(self, p + Vector3(0, 1, 0), Vector3(0.6, 2, 0.6), Color(0.42, 0.25, 0.12))
-        _box(self, p + Vector3(0, 2.5, 0), Vector3(2.7, 2.1, 2.7), Color(0.14, 0.48, 0.24))
+        _sphere(p + Vector3(0, 2.3, 0), Vector3(2.3, 1.9, 2.3), Color(0.14, 0.42, 0.23))
+        _sphere(p + Vector3(0, 3.3, 0), Vector3(1.6, 1.4, 1.8), Color(0.19, 0.5, 0.25))
     for i in range(3):
         var marker := Node3D.new()
         add_child(marker)
         marker.position = objectives[i]
-        _box(marker, Vector3(0, 0.08, 0), Vector3(3.2, 0.15, 3.2), GREEN, false)
-        _box(marker, Vector3(0, 2.0, 0), Vector3(0.28, 3.8, 0.28), GREEN, false)
+        var ring := MeshInstance3D.new()
+        var ring_mesh := TorusMesh.new()
+        ring_mesh.inner_radius = 1.45
+        ring_mesh.outer_radius = 1.58
+        ring_mesh.rings = 24
+        ring_mesh.ring_segments = 6
+        ring.mesh = ring_mesh
+        ring.material_override = Kit.material(GREEN, true)
+        ring.position.y = 0.1
+        marker.add_child(ring)
+        var beacon := Kit.box(marker, Vector3(0, 1.75, 0), Vector3(0.4, 0.4, 0.18), Kit.material(GREEN, true))
+        beacon.rotation.z = PI / 4
         objective_markers.append(marker)
 
     _details()
     _reference_pass()
     _architecture_pass()
+    preload("res://scripts/base_set_dressing.gd").build(self)
     _batch_static_meshes()
 
 func _details() -> void:

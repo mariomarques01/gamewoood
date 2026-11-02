@@ -43,8 +43,11 @@ func _run() -> void:
     await process_frame
     assert(district.get_script() != null and district.district_map.get_child_count() >= 100, "Base geometry missing")
     assert(district.district_map.objective_markers.size() == 3, "Mission markers missing")
-    assert(district.hud.status.text.contains("v0.5.0"), "Version missing")
+    assert(district.hud.status.text.contains("v0.6.0"), "Version missing")
     assert(district.hud.jump_button.text.is_empty(), "Jump action should use an icon")
+    assert(district.hud.art.mission_rect.end.y <= 110, "HUD still occupies too much of the upper screen")
+    assert(district.hud.art.health_rect.size.y <= 48, "Health HUD is oversized")
+    assert(not district.hud.art.mission_rect.intersects(district.hud.pause_button.get_global_rect()), "HUD overlaps pause")
     var player = district.player
     assert(player.actor.legs.size() == 2, "Animated captain model missing")
     var camera: Camera3D = player.get_node("Camera3D")
@@ -188,6 +191,14 @@ func _run() -> void:
     assert(paused and district.hud.overlay.visible, "Pause failed")
     pause_key()
     assert(not paused, "Resume failed")
+    root.size = Vector2i(390, 844)
+    await process_frame
+    await process_frame
+    assert(district.hud.art.mission_rect.end.y < root.get_visible_rect().size.y * 0.14, "Portrait HUD exceeds compact budget")
+    assert(district.hud.details.text.contains("ARSENAL"), "Pause objective details missing")
+    root.size = Vector2i(1280, 720)
+    await process_frame
+    await process_frame
     # Physical trigger range, contested objective and sequential completion.
     player.position = Vector3.ZERO
     district.missions._physics_process(3.1)

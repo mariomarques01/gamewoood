@@ -3,6 +3,7 @@ const DistrictMap = preload("res://scripts/district_map.gd")
 const Spawner = preload("res://scripts/enemy_spawner.gd")
 const Missions = preload("res://scripts/mission_manager.gd")
 const HUD = preload("res://scripts/hud.gd")
+const Arcade = preload("res://scripts/arcade_flow.gd")
 const Save = preload("res://scripts/save_manager.gd")
 @onready var player: CharacterBody3D = $Player
 var district_map: Node3D
@@ -12,6 +13,8 @@ var hud: CanvasLayer
 var save: Node
 var score := 0
 var ended := false
+var arcade: Node
+var last_hp := 100.0
 
 func _ready() -> void:
     player.position = Vector3(0, 0, 7)
@@ -28,6 +31,7 @@ func _ready() -> void:
     add_child(spawner)
     spawner.eliminated.connect(func():
         score += 1
+        arcade.register_kill(spawner.last_elimination_position)
         _update_hud())
     save = Save.new()
     add_child(save)
@@ -36,19 +40,27 @@ func _ready() -> void:
     hud.player = player
     hud.mission = missions
     player.controls = hud.controls
+    arcade = Arcade.new()
+    arcade.player = player
+    add_child(arcade)
+    arcade.notice.connect(hud.notify)
     hud.pause_requested.connect(_pause)
     hud.restart_requested.connect(_restart)
     player.health.changed.connect(func(_current, _maximum):
-        hud.flash()
+        if _current < last_hp:
+            hud.flash()
+        last_hp = _current
         _update_hud())
     player.health.died.connect(func(): _finish(false))
     player.weapon.ammo_changed.connect(func(_ammo, _reloading): _update_hud())
     _update_hud()
-    print("DEADLIGHT_READY district=1 version=0.5.0 objects=%d" % district_map.get_child_count())
+    print("DEADLIGHT_READY district=1 version=0.6.0 objects=%d" % district_map.get_child_count())
 
 func _update_hud() -> void:
     if not is_instance_valid(hud):
         return
+    if is_instance_valid(arcade):
+        arcade.mission_completed(missions.current)
     hud.update_status(player.health.current, player.weapon.ammo, player.weapon.reload_time > 0, score, missions)
     for index in range(3):
         district_map.objective_markers[index].visible = index == missions.current
