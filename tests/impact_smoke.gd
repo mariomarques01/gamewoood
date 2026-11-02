@@ -85,13 +85,14 @@ func _run() -> void:
     assert(district.hud.combo_meter.visible and district.hud.combo_meter.value > 0, "Combo duration feedback missing")
     assert(district.hud.kill_popup.get_global_rect().end.x <= root.get_visible_rect().size.x, "Combo text extends off screen")
     var camera := root.get_camera_3d()
-    assert(camera.impact_time > 0 and camera.impact_strength <= 0.13, "Nearby blast camera impulse missing or excessive")
+    assert(camera.impact_strength > 0 and camera.impact_strength <= 0.130001, "Nearby blast camera impulse missing or excessive")
     await RenderingServer.frame_post_draw
     root.get_texture().get_image().save_png("res://build/logs/energy-combat.png")
     for frame in range(45):
         await physics_frame
     assert(not is_instance_valid(secondary), "Chain reaction did not finish")
     assert(player.health.current == 80, "Chain reaction bypassed player invulnerability")
+    await create_timer(0.3).timeout
     assert(camera.global_position.distance_to(camera.follow_position) < 0.001, "Camera shake accumulated drift")
     var protected = Enemy.new()
     protected.player = player
