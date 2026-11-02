@@ -1,6 +1,7 @@
 extends Control
 signal jump_requested
 var jump_button: Button
+var weapon_buttons: Array[Button] = []
 var move_id := -1
 var aim_id := -1
 var move_start := Vector2.ZERO
@@ -33,6 +34,9 @@ func _input(event: InputEvent) -> void:
         return
     if event is InputEventScreenTouch:
         if event.pressed:
+            for button in weapon_buttons:
+                if button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
+                    return
             if is_instance_valid(jump_button) and jump_button.visible and jump_button.get_global_rect().has_point(event.position):
                 jump_requested.emit()
                 get_viewport().set_input_as_handled()

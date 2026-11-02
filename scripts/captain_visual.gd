@@ -8,6 +8,7 @@ var muzzle_flash: MeshInstance3D
 var flash_time := 0.0
 var phase := 0.0
 var recoil := 0.0
+var weapon_models: Array[Node3D] = []
 
 func _ready() -> void:
     var navy := Kit.material(Color(0.07, 0.2, 0.37))
@@ -45,12 +46,27 @@ func _ready() -> void:
         Kit.sphere(arm, Vector3(0, -0.12, 0), Vector3(0.32, 0.5, 0.32), navy)
         Kit.box(arm, Vector3(0, -0.01, 0), Vector3(0.36, 0.24, 0.4), orange)
         Kit.sphere(arm, Vector3(0, -0.37, -0.08), Vector3(0.28, 0.3, 0.29), skin)
-    Kit.box(self, Vector3(0.4, 1.03, -0.68), Vector3(0.3, 0.32, 0.9), trim)
-    Kit.box(self, Vector3(0.4, 1.04, -0.85), Vector3(0.23, 0.18, 0.85), dark)
-    Kit.box(self, Vector3(0.4, 1.18, -0.68), Vector3(0.12, 0.07, 0.6), cyan)
-    muzzle = Kit.box(self, Vector3(0.4, 1.04, -1.3), Vector3(0.3, 0.26, 0.16), cyan)
-    muzzle_flash = Kit.sphere(self, Vector3(0.4, 1.04, -1.48), Vector3(0.46, 0.46, 0.65), Kit.material(Color(1, 0.75, 0.15), true))
+    for index in range(2):
+        var model = preload("res://scripts/weapon_model.gd").new()
+        model.weapon_index = index
+        add_child(model)
+        weapon_models.append(model)
+    equip_weapon(1)
+
+func equip_weapon(index: int) -> void:
+    for slot in range(weapon_models.size()):
+        weapon_models[slot].visible = slot == index
+        weapon_models[slot].flash.hide()
+    muzzle = weapon_models[index].muzzle
+    muzzle_flash = weapon_models[index].flash
+    flash_time = 0
+
+func celebrate(time: float) -> void:
     muzzle_flash.hide()
+    for index in range(2):
+        legs[index].rotation.x = 0
+        arms[index].rotation.x = -2.6 + sin(time * 5 + index) * 0.15
+    chest.position.y = 1.04 + sin(time * 6) * 0.035
 
 func animate(delta: float, speed: float, airborne: bool, firing: bool) -> void:
     flash_time = maxf(0, flash_time - delta)

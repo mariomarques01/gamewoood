@@ -38,10 +38,6 @@ func _draw() -> void:
     draw_circle(coin, 11, Color(0.6, 0.34, 0.02))
     draw_circle(coin + Vector2(0, -1), 9, Color(1, 0.76, 0.12))
     draw_line(coin + Vector2(0, -6), coin + Vector2(0, 5), Color(1, 0.95, 0.5), 3)
-    var gun := ammo_rect.position + Vector2(12, 13)
-    draw_rect(Rect2(gun, Vector2(37, 8)), Color(0.68, 0.77, 0.82))
-    draw_rect(Rect2(gun + Vector2(6, 8), Vector2(9, 12)), Color(0.25, 0.31, 0.36))
-    draw_rect(Rect2(gun + Vector2(31, 1), Vector2(9, 6)), Color(0.05, 0.9, 1))
 
 func _bar(color: Color) -> StyleBoxFlat:
     var style := StyleBoxFlat.new()
