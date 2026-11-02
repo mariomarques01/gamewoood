@@ -25,7 +25,7 @@ var mission_title: Label
 var pause_button: Button
 var restart_button: Button
 var jump_button: Button
-var jump_hint: Label
+var jump_icon: Control
 var touch_buttons: Dictionary = {}
 
 func _style(color: Color, border: Color) -> StyleBoxFlat:
@@ -89,11 +89,13 @@ func _ready() -> void:
     root.add_child(progress)
     pause_button = _button("II")
     pause_button.pressed.connect(func(): pause_requested.emit())
-    jump_button = _button("PULAR")
+    jump_button = _button("")
+    jump_button.tooltip_text = "Saltar (Espaco)"
+    jump_icon = preload("res://scripts/jump_icon.gd").new()
+    jump_button.add_child(jump_icon)
     jump_button.add_theme_font_size_override("font_size", 20)
     jump_button.add_theme_stylebox_override("normal", _style(Color(0.1, 0.24, 0.3, 0.94), Color(0.1, 0.85, 1)))
     jump_button.pressed.connect(_request_jump)
-    jump_hint = _label("ESPACO: PULAR", 15, Color(0.7, 0.84, 0.9))
     controls.jump_button = jump_button
     controls.jump_requested.connect(_request_jump)
     damage_flash = ColorRect.new()
@@ -160,8 +162,6 @@ func _layout() -> void:
     pause_button.size = Vector2(60, 64)
     jump_button.position = Vector2(area.x - 126, area.y - 264)
     jump_button.size = Vector2(104, 76)
-    jump_hint.visible = not portrait
-    jump_hint.position = Vector2(area.x - 164, area.y - 294)
     overlay.position = area * 0.5 - Vector2(minf(460, area.x - 32), 340) * 0.5
     overlay.size = Vector2(minf(460, area.x - 32), 340)
     art.queue_redraw()
@@ -176,7 +176,8 @@ func _process(delta: float) -> void:
     if navigation_timer > 0 or not is_instance_valid(player) or not is_instance_valid(mission):
         return
     navigation_timer = 0.1
-    jump_button.text = "PULAR" if player.is_on_floor() else "NO AR"
+    jump_icon.airborne = not player.is_on_floor()
+    jump_icon.queue_redraw()
     navigation.visible = mission.active and not overlay.visible
     if not navigation.visible:
         return
@@ -190,7 +191,7 @@ func _process(delta: float) -> void:
     navigation.text = "OBJETIVO  %dm" % int(player.global_position.distance_to(target))
 
 func update_status(hp: float, ammo: int, reload_active: bool, kills: int, current_mission: Node) -> void:
-    status.text = "BAIRRO 1 v0.4.0  |  BASE DO CAPITAO"
+    status.text = "BAIRRO 1 v0.5.0  |  BASE DO CAPITAO"
     life.text = "%d / 100" % int(ceil(hp))
     art.health_ratio = hp / 100.0
     art.queue_redraw()
@@ -216,7 +217,7 @@ func hide_overlay() -> void:
     controls.enabled = true
 
 func flash() -> void:
-    damage_flash.color.a = 0.25
+    damage_flash.color.a = 0.1
     create_tween().tween_property(damage_flash, "color:a", 0.0, 0.25)
 
 func _input(event: InputEvent) -> void:

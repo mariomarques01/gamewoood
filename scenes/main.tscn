@@ -10,3 +10,7 @@ script = ExtResource("2")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 rotation = Vector3(-0.785398, -0.523599, 0)
+light_color = Color(1, 0.88, 0.69, 1)
+light_energy = 1.35
+shadow_enabled = true
+directional_shadow_max_distance = 48.0

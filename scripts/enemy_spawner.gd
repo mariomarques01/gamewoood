@@ -3,7 +3,7 @@ signal eliminated
 const Enemy = preload("res://scripts/enemy_controller.gd")
 var player: CharacterBody3D
 var active := true
-var timer := 2.0
+var timer := 5.0
 var sequence := 0
 var points := [Vector3(-22, 0, -4), Vector3(22, 0, 5), Vector3(-9, 0, 15), Vector3(10, 0, 16), Vector3(0, 0, -22)]
 
@@ -11,7 +11,7 @@ func _physics_process(delta: float) -> void:
     timer -= delta
     if not active or timer > 0.0 or get_tree().get_nodes_in_group("enemies").size() >= 10:
         return
-    timer = 3.0
+    timer = maxf(3.0, 4.8 - sequence * 0.08)
     spawn()
 
 func spawn() -> CharacterBody3D:

@@ -43,8 +43,10 @@ func _run() -> void:
     await process_frame
     assert(district.get_script() != null and district.district_map.get_child_count() >= 100, "Base geometry missing")
     assert(district.district_map.objective_markers.size() == 3, "Mission markers missing")
-    assert(district.hud.status.text.contains("v0.4.0"), "Version missing")
+    assert(district.hud.status.text.contains("v0.5.0"), "Version missing")
+    assert(district.hud.jump_button.text.is_empty(), "Jump action should use an icon")
     var player = district.player
+    assert(player.actor.legs.size() == 2, "Animated captain model missing")
     var camera: Camera3D = player.get_node("Camera3D")
     assert(camera.is_current(), "Camera not active")
     district.spawner.timer = 0.0
@@ -66,7 +68,7 @@ func _run() -> void:
     assert(district.hud.controls.move_id == 0 and district.hud.controls.aim_id == 1, "Touch ownership failed")
     assert(player.position.x > start.x + 0.5, "Player did not move")
     assert(camera.global_position.x > camera_start.x, "Camera did not follow")
-    assert(player.weapon.direction.z < -0.9 and player.velocity.x > 0.9, "Aim depends on movement")
+    assert(player.weapon.direction.dot(player.screen_to_world(Vector2.UP)) > 0.99 and player.velocity.x > 0.9, "Aim depends on movement")
     assert(player.weapon.ammo < 24, "Aim did not fire")
     # A third touch jumps while both existing pointers keep movement and aim.
     var jump_center: Vector2 = district.hud.jump_button.get_global_rect().get_center()
@@ -96,6 +98,8 @@ func _run() -> void:
     district.add_child(enemy)
     enemy.global_position = player.global_position + Vector3(3, 0, 0)
     enemy.set_physics_process(false)
+    var free_aim := Vector3(1, 0, 0.15).normalized()
+    assert(player._assist_aim(free_aim).dot(Vector3.RIGHT) > free_aim.dot(Vector3.RIGHT), "Touch aim assistance failed")
     var projectile = preload("res://scripts/projectile.gd").new()
     projectile.direction = Vector3.RIGHT
     projectile.damage = 100
@@ -120,6 +124,23 @@ func _run() -> void:
     assert(player.health.current == 90, "Player damage failed")
     player.receive_damage(10)
     assert(player.health.current == 90, "Damage cooldown failed")
+    var melee = preload("res://scripts/enemy_controller.gd").new()
+    melee.player = player
+    district.add_child(melee)
+    melee.position = player.position + Vector3.RIGHT * 1.3
+    melee.set_physics_process(false)
+    player.health.invulnerability = 0
+    var before_attack: float = player.health.current
+    melee._physics_process(0.1)
+    assert(melee.winding_up and melee.warning_ring.visible, "Melee warning missing")
+    assert(player.health.current == before_attack, "Melee damage arrived before warning")
+    var original_position: Vector3 = player.position
+    player.position += Vector3.BACK * 4
+    melee._physics_process(0.5)
+    assert(player.health.current == before_attack, "Escaping the attack did not prevent damage")
+    player.position = original_position
+    melee.queue_free()
+    await process_frame
     player.weapon.ammo = 1
     player.weapon.cooldown = 0.0
     player.weapon.direction = Vector3.RIGHT
@@ -135,6 +156,8 @@ func _run() -> void:
     district.add_child(ranged)
     ranged.global_position = player.global_position + Vector3(4, 0, 0)
     ranged._physics_process(0.1)
+    assert(ranged.winding_up, "Plasma attack has no warning")
+    ranged._physics_process(0.6)
     assert(not get_nodes_in_group("projectiles").is_empty(), "Plasma attack missing")
     ranged.queue_free()
     await process_frame

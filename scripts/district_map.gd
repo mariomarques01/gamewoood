@@ -1,4 +1,5 @@
 extends Node3D
+const Kit = preload("res://scripts/visual_kit.gd")
 
 const SIZE := 58.0
 const BLUE := Color(0.12, 0.35, 0.62)
@@ -8,6 +9,7 @@ const GOLD := Color(1.0, 0.68, 0.12)
 const GREEN := Color(0.18, 0.86, 0.36)
 const objectives := [Vector3(-17, 0, -7), Vector3(17, 0, -9), Vector3(0, 0, -18)]
 var materials: Dictionary = {}
+var rock_mesh: SphereMesh
 var objective_markers: Array[Node3D] = []
 
 func _material(color: Color, glow: bool = false) -> StandardMaterial3D:
@@ -32,8 +34,7 @@ func _box(parent: Node3D, pos: Vector3, size: Vector3, color: Color, solid: bool
     parent.add_child(root)
     root.position = pos
     var visual := MeshInstance3D.new()
-    var mesh := BoxMesh.new()
-    mesh.size = size
+    var mesh: Mesh = Kit.bevel(size) if minf(minf(size.x, size.y), size.z) > 0.18 else _plain_box(size)
     visual.mesh = mesh
     visual.material_override = _material(color)
     root.add_child(visual)
@@ -93,6 +94,8 @@ func build() -> void:
 
     _details()
     _reference_pass()
+    _architecture_pass()
+    _batch_static_meshes()
 
 func _details() -> void:
     var sea := Color(0.04, 0.27, 0.38)
@@ -148,16 +151,17 @@ func _details() -> void:
     settings.background_color = Color(0.12, 0.22, 0.33)
     settings.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
     settings.ambient_light_color = Color(0.6, 0.72, 0.9)
-    settings.ambient_light_energy = 0.6
+    settings.ambient_light_energy = 0.42
     environment.environment = settings
     add_child(environment)
 
 func _sphere(pos: Vector3, dimensions: Vector3, color: Color) -> void:
     var visual := MeshInstance3D.new()
-    var sphere := SphereMesh.new()
-    sphere.radial_segments = 8
-    sphere.rings = 3
-    visual.mesh = sphere
+    if rock_mesh == null:
+        rock_mesh = SphereMesh.new()
+        rock_mesh.radial_segments = 8
+        rock_mesh.rings = 3
+    visual.mesh = rock_mesh
     visual.material_override = _material(color)
     visual.scale = dimensions
     visual.position = pos
@@ -224,3 +228,107 @@ func _reference_pass() -> void:
         _box(self, p + Vector3.UP, Vector3(0.35, 2, 0.35), Color(0.32, 0.2, 0.1))
         for y in [2.0, 2.8, 3.5]:
             _sphere(p + Vector3(0, y, 0), Vector3(2.8 - y * 0.4, 1.3, 2.8 - y * 0.4), Color(0.16, 0.38 + y * 0.035, 0.22))
+
+func _plain_box(dimensions: Vector3) -> BoxMesh:
+    var box := BoxMesh.new()
+    box.size = dimensions
+    return box
+
+func _architecture_pass() -> void:
+    var frame := Kit.material(Color(0.075, 0.17, 0.27))
+    var stone := Kit.material(Color(0.37, 0.42, 0.46))
+    var glass := Kit.material(Color(0.65, 0.38, 0.12), true)
+    var neon := Kit.material(Color(0.08, 0.75, 1), true)
+    # Recessed window surrounds and mullions cast real shadows across the facade.
+    for x in [-4.4, -2.8, 2.8, 4.4]:
+        for y in [2.0, 4.5]:
+            Kit.box(self, Vector3(x, y, 0.63), Vector3(1.36, 1.55, 0.18), frame)
+            Kit.box(self, Vector3(x, y, 0.74), Vector3(1.07, 1.26, 0.05), glass)
+            Kit.box(self, Vector3(x, y, 0.8), Vector3(0.06, 1.3, 0.06), frame)
+            Kit.box(self, Vector3(x, y - 0.8, 0.72), Vector3(1.5, 0.12, 0.4), stone)
+    # Modular wall panels / cornices make the headquarters read as a building.
+    for x in [-5.8, 5.8]:
+        for z in [-7.4, -5.1, -2.8, -0.5]:
+            Kit.box(self, Vector3(x * 1.045, 2.8, z), Vector3(0.35, 5.6, 0.2), stone)
+    for y in [0.45, 3.1, 6.1]:
+        Kit.box(self, Vector3(0, y, 0.7), Vector3(12.4, 0.18, 0.4), frame)
+    Kit.box(self, Vector3(0, 3.62, 0.76), Vector3(5.8, 0.8, 0.3), frame)
+    # Original winged shield emblem, aligned to the front of the headquarters.
+    emblem(self, Vector3(0, 5.05, 0.84), neon)
+    for x in [-1.75, 1.75]:
+        Kit.box(self, Vector3(x, 1.5, 1.0), Vector3(0.32, 2.9, 0.6), frame)
+        Kit.box(self, Vector3(x, 1.55, 1.32), Vector3(0.1, 2.15, 0.04), neon)
+    # Perimeter columns and inset rails; all stay behind existing colliders.
+    for x in [-25.9, 25.9]:
+        for z in [-23.0, -17.0, -11.0, -5.0, 1.0, 7.0, 13.0, 19.0]:
+            Kit.box(self, Vector3(x, 1.6, z), Vector3(1.6, 3.2, 0.5), stone)
+            Kit.box(self, Vector3(x, 2.7, z + 2.7), Vector3(0.14, 0.14, 4.7), frame)
+    # Watchtower cabins, tinted glazing and diagonal supports.
+    for x in [-22.0, 22.0]:
+        for z in [-22.0, 16.0]:
+            Kit.box(self, Vector3(x, 5.55, z), Vector3(3, 1.0, 3), frame)
+            Kit.box(self, Vector3(x, 5.6, z + 1.52), Vector3(2.5, 0.65, 0.06), glass)
+            for side in [-1.0, 1.0]:
+                Kit.beam(self, Vector3(x - 1.1, 0.5, z + side * 1.18), Vector3(x + 1.1, 4.6, z + side * 1.18), 0.16, stone)
+    # Workshop canopy, service bay, vented walls and two fuel cylinders.
+    Kit.box(self, Vector3(13, 2.8, -13.25), Vector3(7, 0.4, 2), frame)
+    Kit.box(self, Vector3(13, 1.3, -13.43), Vector3(4, 2.3, 0.08), Kit.material(Color(0.09, 0.14, 0.19)))
+    for x in [10.3, 15.7]:
+        Kit.box(self, Vector3(x, 1.3, -13.3), Vector3(0.16, 2.3, 0.12), glass)
+    for x in [17.8, 19.0]:
+        var mesh := CylinderMesh.new()
+        mesh.top_radius = 0.42
+        mesh.bottom_radius = 0.42
+        mesh.height = 1.5
+        mesh.radial_segments = 12
+        var barrel := MeshInstance3D.new()
+        barrel.mesh = mesh
+        barrel.material_override = frame
+        barrel.position = Vector3(x, 0.75, -21.8)
+        add_child(barrel)
+    # Road-side safety markings and small stones at the edge of the island.
+    for x in [-6.3, 6.3]:
+        for z in range(7, 19, 2):
+            Kit.box(self, Vector3(x, 0.035, z), Vector3(0.17, 0.03, 0.8), Kit.material(GOLD))
+    for index in range(14):
+        var angle := index * TAU / 14
+        _sphere(Vector3(cos(angle) * 30, -1.5, sin(angle) * 30), Vector3(4, 3, 3), Color(0.29 + (index % 3) * 0.025, 0.27, 0.26))
+
+func emblem(parent: Node3D, pos: Vector3, mat: Material) -> void:
+    var badge := Kit.box(parent, pos, Vector3(1.0, 0.9, 0.16), mat)
+    badge.rotation.z = PI / 4
+    for sign_value in [-1.0, 1.0]:
+        for row in range(3):
+            Kit.box(parent, pos + Vector3(sign_value * 1.05, 0.27 - row * 0.23, 0), Vector3(1.2 - row * 0.2, 0.14, 0.13), mat)
+
+func _batch_static_meshes() -> void:
+    # Batch repeated static art; keep physics bodies and independently visible objectives.
+    var groups: Dictionary = {}
+    for node in find_children("*", "MeshInstance3D", true, false):
+        var mesh := node as MeshInstance3D
+        var is_marker := false
+        for marker in objective_markers:
+            if marker.is_ancestor_of(mesh):
+                is_marker = true
+                break
+        if is_marker or mesh.material_override == null:
+            continue
+        var key := str(mesh.mesh.get_rid()) + str(mesh.material_override.get_rid())
+        if not groups.has(key):
+            groups[key] = []
+        groups[key].append(mesh)
+    for group in groups.values():
+        if group.size() < 3:
+            continue
+        var instances := MultiMesh.new()
+        instances.transform_format = MultiMesh.TRANSFORM_3D
+        instances.mesh = group[0].mesh
+        instances.instance_count = group.size()
+        var batch := MultiMeshInstance3D.new()
+        batch.multimesh = instances
+        batch.material_override = group[0].material_override
+        add_child(batch)
+        for index in range(group.size()):
+            instances.set_instance_transform(index, global_transform.affine_inverse() * group[index].global_transform)
+            group[index].hide()
+            group[index].queue_free()
