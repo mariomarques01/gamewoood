@@ -92,7 +92,7 @@ func _physics_process(delta: float) -> void:
         if ranged and distance < 13.0:
             attack_timer = 1.8
             _shoot(toward.normalized())
-        elif not ranged and distance < 1.5:
+        elif not ranged and distance < 1.5 and absf(player.global_position.y - global_position.y) < 1.0:
             attack_timer = 0.8
             player.receive_damage(10.0)
 

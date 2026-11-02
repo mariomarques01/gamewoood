@@ -22,6 +22,11 @@ pointing/emulate_mouse_from_touch=false
 
 [input]
 
+jump={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":32)]
+}
+
 move_left={
 "deadzone": 0.2,
 "events": [Object(InputEventKey,"physical_keycode":65), Object(InputEventKey,"physical_keycode":4194319)]

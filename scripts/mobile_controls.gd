@@ -1,4 +1,6 @@
 extends Control
+signal jump_requested
+var jump_button: Button
 var move_id := -1
 var aim_id := -1
 var move_start := Vector2.ZERO
@@ -31,8 +33,12 @@ func _input(event: InputEvent) -> void:
         return
     if event is InputEventScreenTouch:
         if event.pressed:
+            if is_instance_valid(jump_button) and jump_button.visible and jump_button.get_global_rect().has_point(event.position):
+                jump_requested.emit()
+                get_viewport().set_input_as_handled()
+                return
             # Keep the HUD / pause button region clear.
-            if event.position.y < 100:
+            if event.position.y < (330 if size.x < size.y else 120):
                 return
             if event.position.x < size.x * 0.5 and move_id == -1:
                 move_id = event.index
@@ -63,8 +69,8 @@ func _input(event: InputEvent) -> void:
         queue_redraw()
 
 func _draw() -> void:
-    var left := move_start if move_id >= 0 else Vector2(105, size.y - 105)
-    var right := aim_start if aim_id >= 0 else Vector2(size.x - 105, size.y - 105)
+    var left := move_start if move_id >= 0 else Vector2(96, size.y - 100)
+    var right := aim_start if aim_id >= 0 else Vector2(size.x - 96, size.y - 100)
     for center in [left, right]:
         draw_circle(center, RADIUS, Color(0.03, 0.1, 0.18, 0.42))
         draw_arc(center, RADIUS, 0, TAU, 48, Color(0.55, 0.85, 1, 0.5), 2, true)

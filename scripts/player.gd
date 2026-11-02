@@ -9,6 +9,11 @@ var health: Node
 var weapon: Node
 var active := true
 var reported_movement := false
+const GRAVITY := 22.0
+const JUMP_SPEED := 8.0
+var jump_buffer := 0.0
+var jump_lock := 0.0
+var safe_position := Vector3(0, 0, 7)
 var visual: Node3D
 var body_material: StandardMaterial3D
 
@@ -60,15 +65,33 @@ func _physics_process(delta: float) -> void:
     var target := Vector3(direction.x, 0.0, direction.y) * move_speed
     velocity.x = move_toward(velocity.x, target.x, acceleration * delta)
     velocity.z = move_toward(velocity.z, target.z, acceleration * delta)
-    velocity.y = -1.0
+    jump_lock = maxf(0.0, jump_lock - delta)
+    if Input.is_action_just_pressed("jump"):
+        request_jump()
+    jump_buffer = maxf(0.0, jump_buffer - delta)
+    if is_on_floor():
+        velocity.y = -0.5
+        if position.y < 0.2 and absf(position.x) < 25 and absf(position.z) < 25:
+            safe_position = position
+        if jump_buffer > 0.0 and jump_lock <= 0.0:
+            velocity.y = JUMP_SPEED
+            jump_buffer = 0.0
+            jump_lock = 0.3
+            print("DEADLIGHT_JUMP")
+    else:
+        velocity.y -= GRAVITY * delta
     move_and_slide()
+    if position.y < -6.0:
+        position = safe_position + Vector3.UP * 0.2
+        velocity = Vector3.ZERO
+        receive_damage(15.0)
     if velocity.length_squared() > 1 and not reported_movement:
         reported_movement = true
         print("DEADLIGHT_MOVE")
     var aim := Vector3.ZERO
     if is_instance_valid(controls) and controls.aiming:
         aim = Vector3(controls.aim.x, 0, controls.aim.y)
-    elif Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+    elif Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and get_viewport().gui_get_hovered_control() == null:
         var camera := get_viewport().get_camera_3d()
         var mouse := get_viewport().get_mouse_position()
         var plane := Plane(Vector3.UP, global_position.y + 1.05)
@@ -91,3 +114,7 @@ func receive_damage(amount: float) -> void:
 
 func set_mobile_direction(direction: Vector2) -> void:
     mobile_direction = direction
+
+func request_jump() -> void:
+    if active and jump_lock <= 0.0:
+        jump_buffer = 0.12

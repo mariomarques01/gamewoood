@@ -1,4 +1,4 @@
-# Bairro 1 v0.3.0 — playable prototype
+# Bairro 1 v0.4.0 — playable prototype
 
 ## Responsibilities
 
@@ -15,7 +15,7 @@
 | enemy_controller.gd | Green melee / purple plasma enemies, local obstacle steering |
 | enemy_spawner.gd | Validated spawn points, distance checks, cap of ten enemies |
 | mission_manager.gd | Sequential proximity objectives, progress, contested areas |
-| hud.gd | Life/ammo/kills, objective, progress, directional marker, overlays |
+| hud.gd / hud_art.gd | Responsive arcade HUD, portrait, segmented health, ammo, objective, overlays |
 | save_manager.gd | Best kill count and district completion in user://deadlight.cfg |
 
 Physics collision bits: world=1, aliens=2, player=4. Projectiles raycast their
@@ -53,3 +53,5 @@ area checks on real notches/toolbars, native Android/iOS presets/signing, sustai
 FPS/memory measurements on target phones, audio, richer animation and production
 cartoon art. No 60 FPS claim is made from software-rendered CI. Save persistence
 may be unavailable in restrictive/private browser modes.
+
+See [HUD and jump](HUD_AND_JUMP.md) for v0.4.0 controls, portrait layout and the next base art pass.
