@@ -91,10 +91,10 @@ try:
             assert response.ok, response.status
             # A printed sentinel originates in the executed GDScript, not the HTML shell.
             for _ in range(120):
-                if any('DEADLIGHT_READY district=1 version=0.8.0' in line for line in messages):
+                if any('DEADLIGHT_READY district=1 version=0.9.0' in line for line in messages):
                     break
                 page.wait_for_timeout(500)
-            assert any('DEADLIGHT_READY district=1 version=0.8.0' in line for line in messages), messages
+            assert any('DEADLIGHT_READY district=1 version=0.9.0' in line for line in messages), messages
             page.wait_for_timeout(1000)
             if name == 'portrait':
                 expect_log('DEADLIGHT_ORIENTATION portrait')
@@ -183,6 +183,15 @@ try:
                 page.keyboard.press('Escape', delay=120)
             page.wait_for_timeout(200)
             expect_log('DEADLIGHT_PAUSE false')
+            if not mobile:
+                expect_log('DEADLIGHT_COMBAT_TARGET ')
+                target = json.loads(next(line.split('DEADLIGHT_COMBAT_TARGET ', 1)[1] for line in reversed(messages) if 'DEADLIGHT_COMBAT_TARGET ' in line))
+                page.mouse.move(bounds['x'] + target[0] * bounds['width'], bounds['y'] + target[1] * bounds['height'])
+                page.mouse.down()
+                expect_log('DEADLIGHT_CANISTER_ARMED')
+                page.mouse.up()
+                expect_log('DEADLIGHT_CANISTER_EXPLODED')
+                print('WEB_IMPACT_OK desktop mouse projectiles fuse explosion')
             page.screenshot(path=f'build/logs/{name}.png')
             errors += [line for line in messages if 'SCRIPT ERROR:' in line or line.startswith('ERROR:')]
             Path(f'build/logs/{name}-console.json').write_text(json.dumps(messages, indent=2))

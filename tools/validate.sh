@@ -22,6 +22,8 @@ run_checked build/logs/audio.log timeout 45 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" 
 grep -q 'DEADLIGHT_AUDIO_OK' build/logs/audio.log
 run_checked build/logs/arcade.log timeout 45 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/arcade_smoke.gd
 grep -q 'DEADLIGHT_ARCADE_OK' build/logs/arcade.log
+run_checked build/logs/impact.log timeout 60 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/impact_smoke.gd
+grep -q 'DEADLIGHT_IMPACT_OK' build/logs/impact.log
 run_checked build/logs/navigation.log timeout 90 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/navigation_smoke.gd
 grep -q 'DEADLIGHT_NAVIGATION_OK' build/logs/navigation.log
 if [[ "${1:-}" == '--export' ]]; then

@@ -46,6 +46,7 @@ func _ready() -> void:
     arcade = Arcade.new()
     arcade.player = player
     add_child(arcade)
+    hud.arcade = arcade
     arcade.notice.connect(hud.notify)
     hud.show_credits(save.credits)
     arcade.credits_changed.connect(func(value: int): hud.show_credits(save.credits + value))
@@ -63,7 +64,8 @@ func _ready() -> void:
     player.weapon.ammo_changed.connect(func(_ammo, _reloading): _update_hud())
     _update_hud()
     _orientation_changed(hud.portrait_mode)
-    print("DEADLIGHT_READY district=1 version=0.8.0 objects=%d" % district_map.get_child_count())
+    hud.notify("RECIPIENTES LARANJA: ATIRE E AFASTE-SE")
+    print("DEADLIGHT_READY district=1 version=0.9.0 objects=%d" % district_map.get_child_count())
 
 func _update_hud() -> void:
     if not is_instance_valid(hud):

@@ -118,6 +118,11 @@ func build() -> void:
     _architecture_pass()
     preload("res://scripts/base_set_dressing.gd").build(self)
     _batch_static_meshes()
+    # Dynamic/destructible objects are added after static batching.
+    for point in [Vector3(-9, 0, 10), Vector3(10, 0, 9), Vector3(-21, 0, -3), Vector3(21, 0, -3), Vector3(7, 0, -12), Vector3(-8, 0, -11)]:
+        var canister = preload("res://scripts/energy_canister.gd").new()
+        add_child(canister)
+        canister.position = point
 
 func _details() -> void:
     var sea := Color(0.04, 0.27, 0.38)

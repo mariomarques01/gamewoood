@@ -49,13 +49,15 @@ func _physics_process(delta: float) -> void:
     var distance := Vector2(offset.x, offset.z).length()
     if distance < 1.35 and absf(offset.y) < 1.5:
         collect()
-    elif distance < 2.8:
+    elif distance < 2.8 and _path_clear():
         global_position += Vector3(offset.x, 0, offset.z).normalized() * delta * 3
     if lifetime <= 0:
         queue_free()
 
 func collect() -> void:
     if taken or not player.active:
+        return
+    if not _path_clear():
         return
     if kind == "health" and player.health.current >= player.health.maximum:
         return
@@ -69,3 +71,7 @@ func collect() -> void:
         player.weapon.resupply()
     collected.emit(kind)
     queue_free()
+
+func _path_clear() -> bool:
+    var query := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 0.5, player.global_position + Vector3.UP * 0.5, 1)
+    return get_world_3d().direct_space_state.intersect_ray(query).is_empty()

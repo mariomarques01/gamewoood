@@ -31,8 +31,6 @@ func register_kill(position: Vector3) -> void:
         player.weapon.overdrive_time = 4.0
         chain = 0
         notice.emit("TRANCO TOTAL! 4s")
-    elif chain >= 2 and total_kills != 12:
-        notice.emit("SEQUENCIA x%d" % chain)
     if total_kills % 8 == 0 and get_tree().get_nodes_in_group("supplies").size() < 12:
         spawn_supply(position + Vector3(-0.5, 0, 0), "boost")
     if total_kills % 3 == 0 and get_tree().get_nodes_in_group("supplies").size() < 12:

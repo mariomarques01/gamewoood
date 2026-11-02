@@ -18,6 +18,10 @@ var speed := 2.5
 var winding_up := false
 var windup := 0.0
 var warning_ring: MeshInstance3D
+var knockback := Vector3.ZERO
+var hit_bar: Node3D
+var hit_fill: MeshInstance3D
+var hit_time := 0.0
 
 func _ready() -> void:
     add_to_group("enemies")
@@ -53,6 +57,13 @@ func _ready() -> void:
     warning_ring.position.y = 0.06
     add_child(warning_ring)
     warning_ring.hide()
+    hit_bar = Node3D.new()
+    hit_bar.position.y = 2.05
+    add_child(hit_bar)
+    var kit = preload("res://scripts/visual_kit.gd")
+    kit.box(hit_bar, Vector3.ZERO, Vector3(0.94, 0.1, 0.12), kit.material(Color(0.04, 0.08, 0.1)))
+    hit_fill = kit.box(hit_bar, Vector3(0, 0, 0.025), Vector3(0.86, 0.06, 0.13), kit.material(Color(1, 0.72, 0.16), true))
+    hit_bar.hide()
     plasma_material = StandardMaterial3D.new()
     plasma_material.albedo_color = Color(1, 0.15, 0.85)
     plasma_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -62,12 +73,23 @@ func _physics_process(delta: float) -> void:
         return
     attack_timer -= delta
     hurt_timer = maxf(0.0, hurt_timer - delta)
+    hit_time = maxf(0, hit_time - delta)
+    hit_bar.visible = hit_time > 0
+    var camera := get_viewport().get_camera_3d()
+    if camera != null and hit_bar.visible:
+        hit_bar.global_rotation.y = camera.global_rotation.y
     body_material.emission_enabled = hurt_timer > 0.0
     body_material.emission = Color(0.8, 0.2, 0.15)
     var toward: Vector3 = player.global_position - global_position
     toward.y = 0.0
     var distance := toward.length()
     if distance > 38.0:
+        return
+    if knockback.length_squared() > 0.04:
+        velocity = knockback
+        move_and_slide()
+        knockback = knockback.move_toward(Vector3.ZERO, delta * 24)
+        visual.animate(delta, false)
         return
     visual.animate(delta, velocity.length_squared() > 0.1 and not winding_up)
     if winding_up:
@@ -119,17 +141,23 @@ func _shoot(direction: Vector3) -> void:
     shot.global_position = global_position + Vector3.UP * 1.05 + direction * 0.8
 
 func receive_damage(amount: float) -> void:
-    if dead:
+    if dead or amount <= 0:
         return
     hurt_timer = 0.12
     if amount > 0:
         winding_up = false
         warning_ring.hide()
         attack_timer = maxf(attack_timer, 0.3)
-        var away := global_position - player.global_position
-        away.y = 0
-        velocity = away.normalized() * 2.0
+        if is_instance_valid(player):
+            var away := global_position - player.global_position
+            away.y = 0
+            knockback = away.normalized() * 3.5
     health.damage(amount)
+    if not dead:
+        hit_time = 1.5
+        hit_bar.show()
+        hit_fill.scale.x = health.current / health.maximum
+        hit_fill.position.x = -(1 - hit_fill.scale.x) * 0.43
 
 func _die() -> void:
     dead = true

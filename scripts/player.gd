@@ -21,8 +21,10 @@ var visual: Node3D
 var body_material: StandardMaterial3D
 var actor: Node3D
 var damage_push := Vector3.ZERO
+var boost_aura: MeshInstance3D
 
 func _ready() -> void:
+    add_to_group("player")
     collision_layer = 4
     collision_mask = 1 | 2
     health = Health.new()
@@ -34,13 +36,27 @@ func _ready() -> void:
     actor = CaptainVisual.new()
     visual.add_child(actor)
     body_material = actor.chest.material_override
+    boost_aura = MeshInstance3D.new()
+    var ring := TorusMesh.new()
+    ring.inner_radius = 0.65
+    ring.outer_radius = 0.73
+    ring.rings = 24
+    ring.ring_segments = 6
+    boost_aura.mesh = ring
+    boost_aura.material_override = preload("res://scripts/visual_kit.gd").material(Color(0.1, 0.85, 1), true)
+    boost_aura.position.y = 0.08
+    add_child(boost_aura)
+    boost_aura.hide()
 
 func _physics_process(delta: float) -> void:
     if not active:
+        boost_aura.hide()
         velocity = Vector3.ZERO
         weapon.active = false
         return
     get_node("/root/GameAudio").listener_position = global_position
+    boost_aura.visible = weapon.overdrive_time > 0
+    boost_aura.scale = Vector3.ONE * (1 + sin(weapon.overdrive_time * 12) * 0.1)
     var direction := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
     if is_instance_valid(controls):
         mobile_direction = controls.movement
