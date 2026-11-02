@@ -1,4 +1,5 @@
 extends CharacterBody3D
+const Audio = preload("res://scripts/audio_api.gd")
 signal eliminated
 const CombatEffect = preload("res://scripts/combat_effect.gd")
 const AlienVisual = preload("res://scripts/alien_visual.gd")
@@ -106,6 +107,7 @@ func _physics_process(delta: float) -> void:
         warning_ring.show()
 
 func _shoot(direction: Vector3) -> void:
+    Audio.play(self, "plasma", global_position)
     var shot = Projectile.new()
     shot.direction = direction
     shot.speed = 10.0
@@ -136,6 +138,8 @@ func _die() -> void:
     collision_layer = 0
     collision_mask = 0
     eliminated.emit()
+    Audio.play(self, "explosion", global_position)
+    Audio.play(self, "splatter", global_position)
     CombatEffect.burst(get_parent(), global_position, ranged)
     visual.hide()
     queue_free()

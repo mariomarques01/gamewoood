@@ -1,4 +1,5 @@
 extends Node
+const Audio = preload("res://scripts/audio_api.gd")
 signal notice(text: String)
 signal credits_changed(value: int)
 signal elimination_feedback(chain: int)
@@ -57,6 +58,7 @@ func mission_completed(current: int) -> void:
     if current <= last_mission:
         return
     last_mission = current
+    Audio.play(self, "mission")
     var names := ["ARSENAL LIBERADO", "HELIPONTO ATIVADO", "COMUNICACAO ONLINE"]
     notice.emit(names[mini(current - 1, 2)])
     if current < 3:

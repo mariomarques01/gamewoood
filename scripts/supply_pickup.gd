@@ -1,4 +1,5 @@
 extends Node3D
+const Audio = preload("res://scripts/audio_api.gd")
 signal collected(kind: String)
 const Kit = preload("res://scripts/visual_kit.gd")
 var player: CharacterBody3D
@@ -59,6 +60,7 @@ func collect() -> void:
     if kind == "health" and player.health.current >= player.health.maximum:
         return
     taken = true
+    Audio.play(self, "pickup")
     if kind == "health":
         player.health.heal(20)
     elif kind == "boost":

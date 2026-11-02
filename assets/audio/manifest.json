@@ -1,0 +1,87 @@
+{
+  "sfx/shot_a.wav": {
+    "source": "laserSmall_000.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "d318cd61a60f96cca39ae3f2bf8ebe319883219e11765c42a554dbab35896ba7"
+  },
+  "sfx/shot_b.wav": {
+    "source": "laserSmall_001.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "5b558ce6ba300f55ce86617c231d3a7dc369618eef04c4db388f9bdf5e61b531"
+  },
+  "sfx/shot_c.wav": {
+    "source": "laserSmall_002.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "5b451ddca7819d530e68491ed5d3f64841d91238b2d2e8f3ea90ad2a3d46c29c"
+  },
+  "sfx/plasma.wav": {
+    "source": "laserLarge_000.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "b762b09a910eeca9476688415259c9433a23da30430c7a7eebaee2fe0dadea8b"
+  },
+  "sfx/impact.wav": {
+    "source": "impactMetal_000.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "4a8c745fc6ab75d54f0369dcaab29c8e2445a7c5889c002f33c8faf31100b28c"
+  },
+  "sfx/explosion.wav": {
+    "source": "lowFrequency_explosion_000.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "849aa79adf88ec2f049b48d8fbb0c767d98625a59da8f54368c5812e0e3481fd"
+  },
+  "sfx/splatter.wav": {
+    "source": "slime_000.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "e9ad13763e6c0666f2b3b5d96bb322d1f44383cad760c69e7b3a91ba5438ea45"
+  },
+  "sfx/reload.wav": {
+    "source": "doorClose_001.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "dd94436fec8ede6f9ccaee02fbe5fa9f32d194ed2d67bd4b5126171f7a36c571"
+  },
+  "sfx/jump.wav": {
+    "source": "thrusterFire_001.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "e33d66bb7230e95d805e4f52fd9d3af28fdd963d8af1cf1d04b262740bfebef1"
+  },
+  "sfx/step.wav": {
+    "source": "impactMetal_002.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "aee88cd4b3ea641d65169fafbaa80ad495ef416c5f058650a2571b8aa9eaa465"
+  },
+  "sfx/hurt.wav": {
+    "source": "slime_001.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "b496ae74e14e83549589a71ccabdf120368073671c05102fb8490bbeead1b146"
+  },
+  "sfx/pickup.wav": {
+    "source": "forceField_000.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "8385c2eb0aa92d416d233b3fac7727dee68b5cd7861b3bb205de58b70f4c4ac3"
+  },
+  "sfx/ui.wav": {
+    "source": "computerNoise_001.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "20501af9f22841e3076223212009ef017953c146b82dd701d0d50fe27f78f18c"
+  },
+  "sfx/mission.wav": {
+    "source": "forceField_002.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "681e0fdab36aa40a0a67375c7bc164484db8200c11f957fa468c1e7c207530a7"
+  },
+  "sfx/victory.wav": {
+    "source": "forceField_003.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "642a5a021bc380bc7607971ad0da5f0f5dfa65f514bcab5b9e0dccb3560e32c9"
+  },
+  "sfx/defeat.wav": {
+    "source": "spaceEngineLow_000.ogg",
+    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
+    "sha256": "24a5e40c66c51d26ed3a027080a2c7503d01ea4094e90b3f7a124dffae7fbb0e"
+  },
+  "music/coastal_patrol.ogg": {
+    "source": "SRG774 \u2014 Sector (sector_0.mp3)",
+    "processing": "full ambient track with 2s wrap crossfade, 44.1kHz stereo Vorbis, gentle EQ, -20 LUFS / -4dBTP target",
+    "sha256": "98a3f0362426aab52cb931b1a91ea56cc08ad073f9f750d72ca128e783e4b28e"
+  }
+}

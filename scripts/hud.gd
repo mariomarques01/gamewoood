@@ -1,4 +1,5 @@
 extends CanvasLayer
+@onready var audio: Node = get_node("/root/GameAudio")
 signal pause_requested
 signal restart_requested
 signal orientation_changed(portrait: bool)
@@ -28,6 +29,11 @@ var restart_button: Button
 var jump_button: Button
 var jump_icon: Control
 var touch_buttons: Dictionary = {}
+var music_slider: HSlider
+var effects_slider: HSlider
+var mute_button: Button
+var audio_drag_id := -1
+var audio_drag_slider: HSlider
 var portrait_mode := false
 var rotation_panel: Panel
 var rotation_label: Label
@@ -118,7 +124,7 @@ func _ready() -> void:
     root.add_child(overlay)
     overlay.add_theme_stylebox_override("panel", _style(Color(0.03, 0.06, 0.1, 0.98), Color(1, 0.65, 0.1)))
     var box := VBoxContainer.new()
-    box.add_theme_constant_override("separation", 18)
+    box.add_theme_constant_override("separation", 10)
     overlay.add_child(box)
     outcome = Label.new()
     outcome.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -134,6 +140,41 @@ func _ready() -> void:
     details.add_theme_color_override("font_color", Color(0.75, 0.86, 0.91))
     details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     box.add_child(details)
+    var audio_row := HBoxContainer.new()
+    audio_row.add_theme_constant_override("separation", 8)
+    box.add_child(audio_row)
+    var music_label := Label.new()
+    music_label.text = "MUSICA"
+    music_label.add_theme_font_size_override("font_size", 14)
+    audio_row.add_child(music_label)
+    music_slider = HSlider.new()
+    music_slider.name = "MusicVolume"
+    music_slider.max_value = 100
+    music_slider.step = 1
+    music_slider.value = audio.music_volume * 100
+    music_slider.custom_minimum_size = Vector2(80, 40)
+    music_slider.tooltip_text = "Volume da musica"
+    audio_row.add_child(music_slider)
+    var effects_label := Label.new()
+    effects_label.text = "EFEITOS"
+    effects_label.add_theme_font_size_override("font_size", 14)
+    audio_row.add_child(effects_label)
+    effects_slider = HSlider.new()
+    effects_slider.name = "EffectsVolume"
+    effects_slider.max_value = 100
+    effects_slider.step = 1
+    effects_slider.value = audio.effects_volume * 100
+    effects_slider.custom_minimum_size = Vector2(80, 40)
+    effects_slider.tooltip_text = "Volume dos efeitos"
+    audio_row.add_child(effects_slider)
+    mute_button = _button("MUDO" if audio.muted else "SOM")
+    mute_button.add_theme_font_size_override("font_size", 16)
+    mute_button.reparent(audio_row)
+    mute_button.pressed.connect(func():
+        audio.set_muted(not audio.muted)
+        mute_button.text = "MUDO" if audio.muted else "SOM")
+    music_slider.value_changed.connect(func(value: float): audio.set_levels(value / 100, effects_slider.value / 100))
+    effects_slider.value_changed.connect(func(value: float): audio.set_levels(music_slider.value / 100, value / 100))
     resume = _button("CONTINUAR")
     resume.reparent(box)
     resume.custom_minimum_size.y = 64
@@ -251,7 +292,7 @@ func _process(delta: float) -> void:
     navigation.text = "%dm" % int(player.global_position.distance_to(target))
 
 func update_status(hp: float, ammo: int, reload_active: bool, kills: int, current_mission: Node) -> void:
-    status.text = "BAIRRO 1 v0.7.0  |  BASE DO CAPITAO"
+    status.text = "BAIRRO 1 v0.8.0  |  BASE DO CAPITAO"
     life.text = "%d" % int(ceil(hp))
     art.health_ratio = hp / 100.0
     art.queue_redraw()
@@ -276,6 +317,8 @@ func notify(text: String) -> void:
 
 func show_overlay(text: String, paused: bool = false) -> void:
     outcome.text = text
+    if paused:
+        call_deferred("_report_audio_controls")
     resume.visible = paused
     overlay.show()
     jump_button.hide()
@@ -292,16 +335,38 @@ func flash() -> void:
     create_tween().tween_property(damage_flash, "color:a", 0.0, 0.25)
 
 func _input(event: InputEvent) -> void:
+    if (event is InputEventScreenTouch and event.pressed) or (event is InputEventMouseButton and event.pressed) or (event is InputEventKey and event.pressed):
+        audio.activate()
     # Handle Escape before GUI focus can consume it, including while paused.
     if event.is_action_pressed("ui_cancel"):
         pause_requested.emit()
         get_viewport().set_input_as_handled()
         return
+    # Sliders handle native touch directly, without enabling emulated mouse.
+    if event is InputEventScreenDrag and event.index == audio_drag_id and is_instance_valid(audio_drag_slider):
+        _drag_audio(event.position)
+        get_viewport().set_input_as_handled()
+        return
+    if event is InputEventScreenTouch:
+        if not event.pressed and event.index == audio_drag_id:
+            audio_drag_id = -1
+            audio_drag_slider = null
+            audio.play("ui")
+            get_viewport().set_input_as_handled()
+            return
+        if event.pressed and overlay.visible:
+            for slider in [music_slider, effects_slider]:
+                if slider.get_global_rect().grow(8).has_point(event.position):
+                    audio_drag_id = event.index
+                    audio_drag_slider = slider
+                    _drag_audio(event.position)
+                    get_viewport().set_input_as_handled()
+                    return
     # Native touch routing, independent of emulated mouse input and joystick IDs.
     if not event is InputEventScreenTouch:
         return
     if event.pressed:
-        for button in [fullscreen_button] if portrait_mode else [pause_button, resume, restart_button]:
+        for button in [fullscreen_button] if portrait_mode else [pause_button, resume, restart_button, mute_button]:
             if is_instance_valid(button) and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
                 touch_buttons[event.index] = button
                 get_viewport().set_input_as_handled()
@@ -325,3 +390,22 @@ func _fullscreen() -> void:
         JavaScriptBridge.eval("(function(){var el=document.documentElement;var p=el.requestFullscreen?el.requestFullscreen():null;if(p&&p.then){p.then(function(){if(screen.orientation&&screen.orientation.lock){screen.orientation.lock('landscape').catch(function(){});}}).catch(function(){});}})()")
     else:
         DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+
+func _drag_audio(point: Vector2) -> void:
+    var rect := audio_drag_slider.get_global_rect()
+    audio_drag_slider.value = clampf((point.x - rect.position.x) / maxf(1, rect.size.x), 0, 1) * 100
+
+func _report_audio_controls() -> void:
+    await get_tree().process_frame
+    await RenderingServer.frame_post_draw
+    if not overlay.visible:
+        return
+    var area := get_viewport().get_visible_rect().size
+    var mute_center := mute_button.get_global_rect().get_center() / area
+    var music_rect := music_slider.get_global_rect()
+    var effects_rect := effects_slider.get_global_rect()
+    print("DEADLIGHT_AUDIO_CONTROLS " + JSON.stringify({
+        "mute": [mute_center.x, mute_center.y],
+        "music": [music_rect.position.x / area.x, music_rect.position.y / area.y, music_rect.size.x / area.x, music_rect.size.y / area.y],
+        "effects": [effects_rect.position.x / area.x, effects_rect.position.y / area.y, effects_rect.size.x / area.x, effects_rect.size.y / area.y]
+    }))

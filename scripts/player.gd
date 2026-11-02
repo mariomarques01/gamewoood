@@ -1,4 +1,5 @@
 extends CharacterBody3D
+const Audio = preload("res://scripts/audio_api.gd")
 const Health = preload("res://scripts/health_component.gd")
 const CaptainVisual = preload("res://scripts/captain_visual.gd")
 const Weapon = preload("res://scripts/weapon_system.gd")
@@ -14,6 +15,7 @@ const GRAVITY := 22.0
 const JUMP_SPEED := 8.0
 var jump_buffer := 0.0
 var jump_lock := 0.0
+var step_timer := 0.0
 var safe_position := Vector3(0, 0, 7)
 var visual: Node3D
 var body_material: StandardMaterial3D
@@ -38,6 +40,7 @@ func _physics_process(delta: float) -> void:
         velocity = Vector3.ZERO
         weapon.active = false
         return
+    get_node("/root/GameAudio").listener_position = global_position
     var direction := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
     if is_instance_valid(controls):
         mobile_direction = controls.movement
@@ -60,12 +63,17 @@ func _physics_process(delta: float) -> void:
             jump_buffer = 0.0
             jump_lock = 0.3
             print("DEADLIGHT_JUMP")
+            Audio.play(self, "jump")
     else:
         velocity.y -= GRAVITY * delta
     velocity.x = clampf(velocity.x + damage_push.x * delta * 8, -9, 9)
     velocity.z = clampf(velocity.z + damage_push.z * delta * 8, -9, 9)
     damage_push = damage_push.move_toward(Vector3.ZERO, 18 * delta)
     move_and_slide()
+    step_timer -= delta
+    if is_on_floor() and Vector2(velocity.x, velocity.z).length() > 1 and step_timer <= 0:
+        step_timer = 0.28
+        Audio.play(self, "step")
     actor.animate(delta, Vector2(velocity.x, velocity.z).length(), not is_on_floor(), weapon.active)
     if position.y < -6.0:
         position = safe_position + Vector3.UP * 0.2
