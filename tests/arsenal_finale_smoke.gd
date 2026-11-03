@@ -73,7 +73,7 @@ func _run() -> void:
         drag.position = root.get_final_transform() * entry[1]
         Input.parse_input_event(drag)
         Input.flush_buffered_events()
-    var center: Vector2 = district.hud.weapon_buttons[1].get_global_rect().get_center()
+    var center: Vector2 = district.hud.weapon_buttons[0].get_global_rect().get_center()
     touch(2, center, true)
     assert(weapon.selected == 1, "Combat selector waited for finger release")
     touch(2, center, false)

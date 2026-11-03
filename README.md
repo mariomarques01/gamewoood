@@ -9,8 +9,7 @@ Open `project.godot` with Godot 4.3 and run the configured `scenes/main.tscn`.
 Desktop: WASD/arrows, hold left mouse to aim/fire, Space to jump, Escape to pause.
 Mobile: drag the left stick to move and the right stick to aim/fire simultaneously.
 Use the arrow action with a third finger while moving/aiming.
-Select pistol/machine gun with 1/2 or Q; R reloads. On mobile, tap either gun
-above the left stick with a third finger. The pistol carries 12 rounds; the
+Select pistol/machine gun with 1/2 or Q; R reloads. On mobile, tap the circular weapon button on the right with a third finger. The pistol carries 12 rounds; the
 machine gun carries 24. Empty magazines reload automatically. Stand near the current green objective
 for three seconds while no alien is within five metres. Complete arsenal,
 helipad and communications to win. Restart is available after victory/defeat.
@@ -80,3 +79,16 @@ As hordas chegam a 24 alienígenas e incluem corredores e brutamontes, além dos
 soldados e atiradores. As eliminações deixam sangue mais espalhado e persistente.
 O visual inclui novas fontes locais e detalhes de rua. Consulte
 [XP e hordas](docs/XP_AND_HORDES.md) para regras, limites e validação.
+
+
+## HUD e controles da referência
+
+Retrato do Capitão e vida ficam no canto superior esquerdo, com a carga da Fúria
+em cinco segmentos logo abaixo. Objetivo, créditos e munição ocupam o topo; a
+engrenagem abre pausa/configurações. O selo do retrato acompanha o nível de
+Fúria alcançado na partida.
+
+No celular, arraste o controle esquerdo para mover e o direito para mirar/atirar.
+O botão circular pequeno à direita alterna pistola e metralhadora; o botão
+amarelo acima da mira salta. Ambos aceitam um terceiro dedo enquanto os dois
+controles continuam ativos. Teclado e mouse mantêm os atalhos existentes.

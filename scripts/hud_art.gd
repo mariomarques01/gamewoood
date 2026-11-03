@@ -1,46 +1,57 @@
 extends Control
+const Assets = preload("res://scripts/hud_assets.gd")
 var health_ratio := 1.0
+var fury_ratio := 0.0
+var fury_active := false
+var captain_rect := Rect2()
+var fury_rect := Rect2()
 var mission_rect := Rect2()
 var health_rect := Rect2()
 var ammo_rect := Rect2()
 var credit_rect := Rect2()
+var level := 1
 
 func _ready() -> void:
     mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-func panel(rect: Rect2, accent: Color) -> void:
-    var style := StyleBoxFlat.new()
-    style.bg_color = Color(0.035, 0.065, 0.1, 0.78)
-    style.border_color = Color(0.2, 0.31, 0.4)
-    style.set_border_width_all(2)
-    style.set_corner_radius_all(9)
-    style.shadow_color = Color(0, 0, 0, 0.3)
-    style.shadow_size = 2
-    draw_style_box(style, rect)
-    draw_rect(Rect2(rect.position + Vector2(12, 0), Vector2(rect.size.x - 24, 3)), accent)
+func panel(rect: Rect2) -> void:
+    _frame("panel", rect, 14)
 
 func _draw() -> void:
-    panel(health_rect, Color(0.16, 0.85, 0.64))
-    panel(ammo_rect, Color(1, 0.65, 0.1))
-    panel(mission_rect, Color(1, 0.65, 0.1))
-    panel(credit_rect, Color(1, 0.7, 0.15))
-    var origin := health_rect.position
-    var red := Color(0.96, 0.18, 0.23)
-    var center := origin + Vector2(19, 18)
-    draw_circle(center + Vector2(-5, -3), 7, red)
-    draw_circle(center + Vector2(5, -3), 7, red)
-    draw_colored_polygon(PackedVector2Array([center + Vector2(-12, -1), center + Vector2(12, -1), center + Vector2(0, 13)]), red)
-    draw_style_box(_bar(Color(0.19, 0.05, 0.08)), Rect2(origin + Vector2(39, 8), Vector2(141, 23)))
+    draw_texture_rect(Assets.texture("portrait"), captain_rect, false)
+    var badge := Rect2(captain_rect.position + Vector2(0, captain_rect.size.y * 0.62), Vector2(captain_rect.size.x * 0.38, captain_rect.size.y * 0.38))
+    draw_texture_rect(Assets.texture("badge"), badge, false)
+    var font = preload("res://assets/fonts/LilitaOne-Regular.ttf")
+    var number := str(level)
+    var number_size := 20
+    var number_width := font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, number_size).x
+    draw_string(font, badge.position + Vector2((badge.size.x - number_width) * 0.5, badge.size.y * 0.72), number, HORIZONTAL_ALIGNMENT_LEFT, -1, number_size, Color(0.1, 0.12, 0.14))
+    panel(health_rect)
+    var fill := Rect2(health_rect.position + Vector2(29, 5), Vector2(health_rect.size.x - 36, health_rect.size.y - 10))
     if health_ratio > 0:
-        draw_style_box(_bar(red), Rect2(origin + Vector2(39, 8), Vector2(maxf(4, 141 * health_ratio), 23)))
-    draw_line(origin + Vector2(43, 10), origin + Vector2(43 + maxf(0, 133 * health_ratio), 10), Color(1, 0.55, 0.5), 2)
-    var coin := credit_rect.position + Vector2(18, 17)
-    draw_circle(coin, 11, Color(0.6, 0.34, 0.02))
-    draw_circle(coin + Vector2(0, -1), 9, Color(1, 0.76, 0.12))
-    draw_line(coin + Vector2(0, -6), coin + Vector2(0, 5), Color(1, 0.95, 0.5), 3)
+        fill.size.x *= health_ratio
+        _frame("health", fill, 7)
+    draw_texture_rect(Assets.texture("heart"), Rect2(health_rect.position + Vector2(-3, -1), Vector2(36, health_rect.size.y + 3)), false)
+    panel(fury_rect)
+    draw_texture_rect(Assets.texture("bolt"), Rect2(fury_rect.position + Vector2(0, -2), Vector2(27, fury_rect.size.y + 4)), false)
+    var start := fury_rect.position + Vector2(fury_rect.size.x * 0.4, 5)
+    var slot_width := (fury_rect.size.x * 0.58 - 12) / 5
+    var segment := Assets.texture("segment")
+    for index in range(5):
+        var rect := Rect2(start + Vector2(index * (slot_width + 2), 0), Vector2(slot_width, fury_rect.size.y - 10))
+        draw_texture_rect(segment, rect, false, Color(0.16, 0.22, 0.3, 0.9))
+        var amount := clampf(fury_ratio * 5 - index, 0, 1)
+        if amount > 0:
+            var crop := Rect2(0, 0, segment.get_width() * amount, segment.get_height())
+            rect.size.x *= amount
+            draw_texture_rect_region(segment, rect, crop, Color(1, 0.78, 0.16) if fury_active else Color.WHITE)
+    for rect in [ammo_rect, mission_rect, credit_rect]:
+        panel(rect)
+    draw_texture_rect(Assets.texture("crate"), Rect2(mission_rect.position + Vector2(5, -3), Vector2(55, mission_rect.size.y + 8)), false)
+    draw_texture_rect(Assets.texture("coin"), Rect2(credit_rect.position + Vector2(-2, -3), Vector2(40, credit_rect.size.y + 6)), false)
 
-func _bar(color: Color) -> StyleBoxFlat:
-    var style := StyleBoxFlat.new()
-    style.bg_color = color
-    style.set_corner_radius_all(9)
-    return style
+func _frame(key: String, rect: Rect2, margin: float) -> void:
+    # Render nine-slice rims at UI scale rather than keeping the large atlas border.
+    draw_set_transform(rect.position, 0, Vector2.ONE * 0.4)
+    draw_style_box(Assets.style(key, margin), Rect2(Vector2.ZERO, rect.size / 0.4))
+    draw_set_transform(Vector2.ZERO)

@@ -91,7 +91,7 @@ func _run() -> void:
     district.hud.notify("FÚRIA TRANCO! 10s • PODER MÁXIMO")
     player._physics_process(0.01)
     district.hud._process(0)
-    assert(district.hud.xp_text.text.contains("FÚRIA ATIVA"))
+    assert(district.hud.xp_text.tooltip_text.contains("FÚRIA ATIVA"))
     district.hud.power_banner._process(0.2)
     for surge in get_nodes_in_group("power_surges"):
         surge._process(0.2)

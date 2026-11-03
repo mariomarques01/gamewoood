@@ -6,6 +6,7 @@ signal orientation_changed(portrait: bool)
 const MobileControls = preload("res://scripts/mobile_controls.gd")
 const DisplayFont = preload("res://assets/fonts/LilitaOne-Regular.ttf")
 const TextFont = preload("res://assets/fonts/Nunito-ExtraBold.ttf")
+const Assets = preload("res://scripts/hud_assets.gd")
 const HUDArt = preload("res://scripts/hud_art.gd")
 var controls: Control
 var status: Label
@@ -124,7 +125,9 @@ func _ready() -> void:
         bar_style.set_corner_radius_all(3)
         progress.add_theme_stylebox_override(entry[0], bar_style)
     root.add_child(progress)
-    pause_button = _button("II")
+    pause_button = _button("")
+    pause_button.tooltip_text = "Configurações / pausar (Esc)"
+    _art_button(pause_button, "settings")
     pause_button.pressed.connect(func(): pause_requested.emit())
     jump_button = _button("")
     jump_button.tooltip_text = "Saltar (Espaco)"
@@ -133,26 +136,14 @@ func _ready() -> void:
     jump_button.add_theme_font_size_override("font_size", 20)
     jump_button.add_theme_stylebox_override("normal", _style(Color(0.1, 0.24, 0.3, 0.94), Color(0.1, 0.85, 1)))
     jump_button.pressed.connect(_request_jump)
+    _art_button(jump_button, "jump")
     controls.jump_button = jump_button
     controls.jump_requested.connect(_request_jump)
-    for index in range(2):
-        var button := _button("")
-        button.tooltip_text = "Pistola (1)" if index == 0 else "Metralhadora (2)"
-        button.pressed.connect(_request_weapon.bind(index))
-        var icon = preload("res://scripts/weapon_icon.gd").new()
-        icon.weapon_index = index
-        icon.position = Vector2(8, 5)
-        icon.size = Vector2(56, 32)
-        button.add_child(icon)
-        var label := Label.new()
-        label.text = "PISTOLA" if index == 0 else "METRALH."
-        label.add_theme_font_size_override("font_size", 11)
-        label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        label.position = Vector2(0, 43)
-        label.size = Vector2(72, 18)
-        label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        button.add_child(label)
-        weapon_buttons.append(button)
+    var swap := _button("")
+    swap.tooltip_text = "Trocar arma (Q)"
+    swap.pressed.connect(_swap_weapon)
+    _art_button(swap, "swap")
+    weapon_buttons.append(swap)
     controls.weapon_buttons = weapon_buttons
     ammo_icon = preload("res://scripts/weapon_icon.gd").new()
     root.add_child(ammo_icon)
@@ -297,45 +288,59 @@ func _layout() -> void:
     var area := viewport.get_visible_rect().size
     var portrait := area.x < area.y
     portrait_mode = portrait
-    art.health_rect = Rect2(94, 18, 190, 38)
-    art.ammo_rect = Rect2(area.x - 200, 18, 182, 44)
-    art.mission_rect = Rect2(300, 18, minf(240, maxf(160, area.x - 720)), 34)
-    art.credit_rect = Rect2(art.mission_rect.end.x + 12, 18, 92, 34)
-    xp_panel.position = Vector2(300, 63)
-    xp_panel.size = Vector2(240, 48)
-    xp_text.position = xp_panel.position + Vector2(12, 4)
-    xp_text.size = Vector2(216, 24)
-    xp_meter.position = xp_panel.position + Vector2(12, 32)
-    xp_meter.size = Vector2(216, 6)
-    frenzy_text.position = Vector2(270, 118)
-    frenzy_text.size = Vector2(300, 54)
+    var sx := area.x / 1172.0
+    art.captain_rect = Rect2(15 * sx, 8, 95 * sx, 88)
+    art.health_rect = Rect2(128 * sx, 18, 246 * sx, 36)
+    art.fury_rect = Rect2(128 * sx, 57, 223 * sx, 31)
+    art.mission_rect = Rect2(446 * sx, 15, 265 * sx, 44)
+    art.credit_rect = Rect2(744 * sx, 17, 164 * sx, 40)
+    art.ammo_rect = Rect2(925 * sx, 17, 176 * sx, 40)
+    xp_panel.hide()
+    xp_meter.hide()
+    xp_text.position = art.fury_rect.position + Vector2(33, 5)
+    xp_text.size = Vector2(art.fury_rect.size.x * 0.29, 24)
+    xp_text.add_theme_font_size_override("font_size", maxi(12, int(16 * sx)))
+    xp_text.text = "FÚRIA"
+    xp_text.add_theme_color_override("font_color", Color.WHITE)
+    frenzy_text.hide()
     captain.hide()
     kills_text.hide()
-    mission_title.show()
-    mission_title.position = Vector2(96, 65)
-    mission_title.add_theme_font_size_override("font_size", 16)
-    life.position = art.health_rect.position + Vector2(98, 7)
-    life.add_theme_font_size_override("font_size", 19)
+    mission_title.hide()
+    life.position = art.health_rect.position + Vector2(34, 3)
+    life.size = Vector2(art.health_rect.size.x - 42, 30)
+    life.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    life.add_theme_font_override("font", DisplayFont)
+    life.add_theme_font_size_override("font_size", maxi(16, int(23 * sx)))
     life.add_theme_color_override("font_color", Color.WHITE)
-    ammo_icon.position = art.ammo_rect.position + Vector2(9, 6)
-    ammo_icon.size = Vector2(43, 28)
-    reload_meter.position = art.ammo_rect.position + Vector2(9, 38)
-    reload_meter.size = Vector2(art.ammo_rect.size.x - 18, 4)
-    for index in range(weapon_buttons.size()):
-        weapon_buttons[index].position = Vector2(22 + index * 82, area.y - 264)
-        weapon_buttons[index].size = Vector2(72, 68)
-    ammo_text.position = art.ammo_rect.position + Vector2(60, 6)
-    ammo_text.add_theme_font_size_override("font_size", 24)
-    credit_text.position = art.credit_rect.position + Vector2(37, 5)
-    objective.position = art.mission_rect.position + Vector2(10, 5)
-    objective.size = Vector2(art.mission_rect.size.x - 20, 26)
-    objective.add_theme_font_size_override("font_size", 17)
-    progress.position = art.mission_rect.position + Vector2(10, 29)
-    progress.size = Vector2(art.mission_rect.size.x - 20, 4)
-    pause_button.position = Vector2(18, 16)
-    pause_button.size = Vector2(60, 64)
-    jump_button.position = Vector2(area.x - 126, area.y - 264)
-    jump_button.size = Vector2(104, 76)
+    ammo_icon.position = art.ammo_rect.position + Vector2(5, 5)
+    ammo_icon.size = Vector2(58 * sx, 29)
+    ammo_text.position = art.ammo_rect.position + Vector2(57 * sx, 3)
+    ammo_text.size = Vector2(art.ammo_rect.size.x - 65 * sx, 32)
+    ammo_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    ammo_text.add_theme_font_size_override("font_size", maxi(16, int(25 * sx)))
+    ammo_text.add_theme_color_override("font_color", Color.WHITE)
+    reload_meter.position = art.ammo_rect.position + Vector2(12, 34)
+    reload_meter.size = Vector2(art.ammo_rect.size.x - 24, 3)
+    credit_text.position = art.credit_rect.position + Vector2(40 * sx, 3)
+    credit_text.size = Vector2(art.credit_rect.size.x - 46 * sx, 32)
+    credit_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    credit_text.add_theme_font_size_override("font_size", maxi(16, int(25 * sx)))
+    credit_text.add_theme_color_override("font_color", Color.WHITE)
+    objective.position = art.mission_rect.position + Vector2(63 * sx, 6)
+    objective.size = Vector2(art.mission_rect.size.x - 64 * sx, 30)
+    objective.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    objective.add_theme_font_override("font", DisplayFont)
+    objective.add_theme_font_size_override("font_size", maxi(15, int(27 * sx)))
+    objective.autowrap_mode = TextServer.AUTOWRAP_OFF
+    progress.position = art.mission_rect.position + Vector2(45, 36)
+    progress.size = Vector2(art.mission_rect.size.x - 55, 3)
+    pause_button.position = Vector2(area.x - 57 * sx, 14)
+    pause_button.size = Vector2(46 * sx, 46)
+    jump_button.position = Vector2(area.x - 84 * sx - 54, area.y - 219 - 54)
+    jump_button.size = Vector2(108, 108)
+    weapon_buttons[0].position = Vector2(area.x - 196 * sx - 34, area.y - 197 - 34)
+    weapon_buttons[0].size = Vector2(68, 68)
+    call_deferred("_report_touch_controls")
     overlay.position = area * 0.5 - Vector2(minf(460, area.x - 32), 440) * 0.5
     overlay.size = Vector2(minf(460, area.x - 32), 440)
     toast.position = Vector2(20, area.y - 340)
@@ -371,13 +376,17 @@ func _process(delta: float) -> void:
     if is_instance_valid(arcade) and is_instance_valid(player):
         var furious: bool = player.weapon.frenzy_time > 0
         var show_xp := not overlay.visible and not portrait_mode
-        xp_panel.visible = show_xp
-        xp_meter.visible = show_xp
+        xp_panel.hide()
+        xp_meter.hide()
         xp_text.visible = show_xp
         xp_meter.get_theme_stylebox("fill").bg_color = Color(1, 0.68, 0.12) if furious else Color(0.18, 0.84, 0.95)
         xp_meter.max_value = arcade.FRENZY_DURATION if furious else (4 if player.weapon.overdrive_time > 0 else arcade.xp_required)
         xp_meter.value = player.weapon.frenzy_time if furious else (player.weapon.overdrive_time if player.weapon.overdrive_time > 0 else arcade.xp)
-        xp_text.text = "FÚRIA ATIVA  •  %.1fs" % player.weapon.frenzy_time if furious else ("TRANCO TOTAL  •  %.1fs" % player.weapon.overdrive_time if player.weapon.overdrive_time > 0 else "FÚRIA  •  XP %d / %d" % [arcade.xp, arcade.xp_required])
+        xp_text.tooltip_text = "FÚRIA ATIVA  •  %.1fs" % player.weapon.frenzy_time if furious else ("TRANCO TOTAL  •  %.1fs" % player.weapon.overdrive_time if player.weapon.overdrive_time > 0 else "FÚRIA  •  XP %d / %d" % [arcade.xp, arcade.xp_required])
+        art.fury_ratio = xp_meter.value / xp_meter.max_value
+        art.fury_active = furious
+        art.level = arcade.frenzy_level + 1
+        art.queue_redraw()
         frenzy_text.text = "DANO ×3  •  VELOCIDADE ×1,5\nMUNIÇÃO ILIMITADA" if furious else ""
         frenzy_text.visible = false
     kill_time = maxf(0, kill_time - delta)
@@ -398,8 +407,9 @@ func _process(delta: float) -> void:
         return
     navigation_timer = 0.1
     jump_icon.airborne = not player.is_on_floor()
+    jump_button.modulate.a = 0.78 if jump_icon.airborne else 1.0
     jump_icon.queue_redraw()
-    navigation.visible = mission.active and not overlay.visible
+    navigation.visible = false
     if not navigation.visible:
         return
     var target: Vector3 = mission.POSITIONS[mission.current] + Vector3.UP * 2.5
@@ -413,7 +423,7 @@ func _process(delta: float) -> void:
 
 func update_status(hp: float, ammo: int, reload_active: bool, kills: int, current_mission: Node) -> void:
     status.text = "BAIRRO 1 v0.10.0  |  BASE DO CAPITAO"
-    life.text = "%d" % int(ceil(hp))
+    life.text = "%d/100" % int(ceil(hp))
     art.health_ratio = hp / 100.0
     art.queue_redraw()
     ammo_text.text = "REC..." if reload_active else "%02d/%d" % [ammo, player.weapon.capacity]
@@ -495,10 +505,10 @@ func _input(event: InputEvent) -> void:
         return
     if event.pressed:
         for button in [fullscreen_button] if portrait_mode else [pause_button, resume, restart_button, mute_button, results.replay_button] + weapon_buttons:
-            if is_instance_valid(button) and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
+            if is_instance_valid(button) and button.is_visible_in_tree() and (button.get_global_rect().grow(10) if button == pause_button else button.get_global_rect()).has_point(event.position):
                 touch_buttons[event.index] = button
                 if button in weapon_buttons:
-                    _request_weapon(weapon_buttons.find(button))
+                    _swap_weapon()
                 get_viewport().set_input_as_handled()
                 return
     elif touch_buttons.has(event.index):
@@ -563,12 +573,7 @@ func _request_weapon(index: int) -> void:
 func show_weapon(index: int) -> void:
     ammo_icon.weapon_index = index
     ammo_icon.queue_redraw()
-    for slot in range(weapon_buttons.size()):
-        var selected := slot == index
-        var style := _style(Color(0.07, 0.17, 0.22, 0.95), Color(0.15, 0.85, 1) if selected else Color(0.35, 0.46, 0.53))
-        style.set_content_margin_all(2)
-        weapon_buttons[slot].add_theme_stylebox_override("normal", style)
-        weapon_buttons[slot].modulate.a = 1 if selected else 0.65
+    weapon_buttons[0].tooltip_text = "Trocar para pistola (Q)" if index == 1 else "Trocar para metralhadora (Q)"
 
 func _hide_game_ui() -> void:
     for node in [xp_panel, xp_meter, xp_text, frenzy_text, art, captain, life, ammo_text, kills_text, mission_title, objective, progress, pause_button, jump_button, navigation, credit_text, kill_popup, combo_meter, toast, ammo_icon, reload_meter, controls] + weapon_buttons:
@@ -585,3 +590,25 @@ func show_result(summary: Dictionary) -> void:
 func show_power_activation(_duration: float, major: bool) -> void:
     power_banner.player = player
     power_banner.trigger(major)
+
+func _swap_weapon() -> void:
+    if is_instance_valid(player):
+        _request_weapon(1 - player.weapon.selected)
+
+func _art_button(button: Button, asset: String) -> void:
+    for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+        button.add_theme_stylebox_override(state, Assets.style(asset))
+
+func _report_touch_controls() -> void:
+    var area := get_viewport().get_visible_rect().size
+    var positions := {
+        "jump": jump_button.get_global_rect().get_center(),
+        "swap": weapon_buttons[0].get_global_rect().get_center(),
+        "pause": pause_button.get_global_rect().get_center(),
+        "move": controls.move_center(),
+        "aim": controls.aim_center()
+    }
+    var normalized: Dictionary = {}
+    for key in positions:
+        normalized[key] = [positions[key].x / area.x, positions[key].y / area.y]
+    print("DEADLIGHT_HUD_CONTROLS " + JSON.stringify(normalized))
