@@ -45,6 +45,11 @@ func _run() -> void:
     for button in [district.hud.pause_button, district.hud.jump_button, district.hud.weapon_buttons[0]]:
         assert(button.get_global_rect().end.x <= root.get_visible_rect().size.x)
         assert(button.get_global_rect().end.y <= root.get_visible_rect().size.y)
+    district.hud.objective.text = "3/3 COMUNICAÇÃO  !"
+    district.hud._fit_objective_title()
+    var font = district.hud.objective.get_theme_font("font")
+    var font_size: int = district.hud.objective.get_theme_font_size("font_size")
+    assert(font.get_string_size(district.hud.objective.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x <= district.hud.objective.size.x, "Long mission title overlaps adjacent HUD")
     print("DEADLIGHT_HUD_REFERENCE_OK reference layout segmented fury swap settings responsive")
     district.queue_free()
     await process_frame

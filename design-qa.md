@@ -28,7 +28,8 @@ world art, lighting, camera framing and enemy population are outside this change
 ## Fidelity surfaces
 
 - Typography: white heavy display counters and objective title, compact Fury
-  caption, readable health fractions and ammo capacities. No wrapping or truncation.
+  caption, readable health fractions and ammo capacities. No wrapping or truncation. Long objective titles also shrink to the available
+  panel width; the contested communications title is covered by native regression.
 - Layout: portrait/health/Fury grouped at upper left; objective centered above;
   credits/ammo/gear across the upper right; move disk at lower left; aim disk,
   gold jump circle and smaller swap circle at lower right. Positions are normalized

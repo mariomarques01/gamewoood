@@ -332,6 +332,8 @@ func _layout() -> void:
     objective.add_theme_font_override("font", DisplayFont)
     objective.add_theme_font_size_override("font_size", maxi(15, int(27 * sx)))
     objective.autowrap_mode = TextServer.AUTOWRAP_OFF
+    objective.clip_text = true
+    _fit_objective_title()
     progress.position = art.mission_rect.position + Vector2(45, 36)
     progress.size = Vector2(art.mission_rect.size.x - 55, 3)
     pause_button.position = Vector2(area.x - 57 * sx, 14)
@@ -433,6 +435,7 @@ func update_status(hp: float, ammo: int, reload_active: bool, kills: int, curren
     objective.text = "%d/3  %s" % [mini(current_mission.current + 1, 3), short_titles[mini(current_mission.current, 2)]] if current_mission.current < 3 else "3/3  BASE SEGURA"
     if current_mission.contested:
         objective.text += "  !"
+    _fit_objective_title()
     progress.visible = current_mission.progress > 0 or current_mission.contested
     progress.value = current_mission.progress
     details.text = "VIDA %d/100   •   ALIENS %d\n" % [int(ceil(hp)), kills]
@@ -612,3 +615,11 @@ func _report_touch_controls() -> void:
     for key in positions:
         normalized[key] = [positions[key].x / area.x, positions[key].y / area.y]
     print("DEADLIGHT_HUD_CONTROLS " + JSON.stringify(normalized))
+
+func _fit_objective_title() -> void:
+    var sx := get_viewport().get_visible_rect().size.x / 1172.0
+    var available: float = art.mission_rect.size.x - 64 * sx
+    var font_size := maxi(15, int(27 * sx))
+    while font_size > 12 and DisplayFont.get_string_size(objective.text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > available:
+        font_size -= 1
+    objective.add_theme_font_size_override("font_size", font_size)
