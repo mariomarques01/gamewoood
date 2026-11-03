@@ -138,7 +138,7 @@ func _run() -> void:
     await process_frame
     # process_frame resumes before all HUD callbacks on some CI runners.
     district.hud._process(0)
-    assert(player.boost_aura.visible and district.hud.xp_meter.visible and district.hud.xp_text.text.contains("TRANCO TOTAL"), "Boost aura/countdown missing")
+    assert(player.boost_aura.visible and district.hud.art.visible and district.hud.art.fury_ratio > 0 and district.hud.xp_text.tooltip_text.contains("TRANCO TOTAL"), "Boost aura/countdown missing")
     await RenderingServer.frame_post_draw
     root.get_texture().get_image().save_png("res://build/logs/boost-feedback.png")
     player.weapon.overdrive_time = 0

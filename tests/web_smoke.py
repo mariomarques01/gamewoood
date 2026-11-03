@@ -104,6 +104,11 @@ try:
                 expect_log('DEADLIGHT_ORIENTATION landscape')
                 page.wait_for_timeout(500)
             bounds = page.locator('canvas').bounding_box()
+            expect_log('DEADLIGHT_HUD_CONTROLS ')
+            hud_positions = json.loads(next(line.split('DEADLIGHT_HUD_CONTROLS ', 1)[1] for line in reversed(messages) if 'DEADLIGHT_HUD_CONTROLS ' in line))
+            def screen_control(key):
+                point = hud_positions[key]
+                return {'x': bounds['x'] + point[0] * bounds['width'], 'y': bounds['y'] + point[1] * bounds['height']}
             if name == 'impact':
                 # Start grounded and stationary: a projection captured before a
                 # jump/moving follow-camera settles is not a stable aiming target.
@@ -129,8 +134,7 @@ try:
             if mobile:
                 session = context.new_cdp_session(page)
                 x, y, width, height = (bounds[key] for key in ('x', 'y', 'width', 'height'))
-                points = [{'id': 0, 'x': x + 105, 'y': y + height - 100},
-                          {'id': 1, 'x': x + width - 105, 'y': y + height - 100}]
+                points = [{'id': 0, **screen_control('move')}, {'id': 1, **screen_control('aim')}]
                 session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': points})
                 points[0]['x'] += 30
                 points[1]['y'] -= 35
@@ -138,19 +142,18 @@ try:
                 page.wait_for_timeout(300)
                 # HUD uses 540 logical units across in portrait, 540 vertically in landscape.
                 scale = height / 540 if width > height else width / 540
-                jump_point = {'id': 2, 'x': x + width - 74 * scale, 'y': y + height - 226 * scale}
+                jump_point = {'id': 2, **screen_control('jump')}
                 session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': points + [jump_point]})
                 page.wait_for_timeout(250)
                 expect_log('DEADLIGHT_JUMP')
                 session.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
                 # CDP touchEnd releases the full gesture. Re-acquire both sticks
                 # for each third-finger selection instead of faking partial ends.
-                base_points = [{'id': 0, 'x': x + 105, 'y': y + height - 100},
-                               {'id': 1, 'x': x + width - 105, 'y': y + height - 100}]
-                for logical_x, token in [(58, 'pistol'), (140, 'machine')]:
+                base_points = [{'id': 0, **screen_control('move')}, {'id': 1, **screen_control('aim')}]
+                for token in ['pistol', 'machine']:
                     session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': base_points})
                     session.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': points})
-                    selector = {'id': 3, 'x': x + logical_x * scale, 'y': y + height - 230 * scale}
+                    selector = {'id': 3, **screen_control('swap')}
                     session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': points + [selector]})
                     expect_log('DEADLIGHT_WEAPON ' + token)
                     session.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
@@ -177,7 +180,7 @@ try:
             assert any('DEADLIGHT_MOVE' in line for line in messages), messages
             expect_log('DEADLIGHT_FIRE')
             if mobile:
-                page.touchscreen.tap(bounds['x'] + 48 * scale, bounds['y'] + 50 * scale)
+                page.touchscreen.tap(**screen_control('pause'))
             else:
                 page.keyboard.press('Escape', delay=120)
             page.wait_for_timeout(200)
@@ -221,7 +224,7 @@ try:
             print(f'WEB_AUDIO_OK {name} signal={energy:.7f} mute={silent:.7f}')
             page.screenshot(path=f'build/logs/{name}-paused.png')
             if mobile:
-                page.touchscreen.tap(bounds['x'] + 48 * scale, bounds['y'] + 50 * scale)
+                page.touchscreen.tap(**screen_control('pause'))
             else:
                 page.keyboard.press('Escape', delay=120)
             page.wait_for_timeout(200)

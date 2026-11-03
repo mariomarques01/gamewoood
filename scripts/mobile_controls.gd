@@ -1,4 +1,5 @@
 extends Control
+const Assets = preload("res://scripts/hud_assets.gd")
 signal jump_requested
 var jump_button: Button
 var weapon_buttons: Array[Button] = []
@@ -11,12 +12,18 @@ var aim := Vector2.RIGHT
 var aiming := false
 var enabled := true
 var reported_simultaneous := false
-const RADIUS := 62.0
+const RADIUS := 78.0
 
 func _ready() -> void:
     resized.connect(queue_redraw)
     mouse_filter = Control.MOUSE_FILTER_IGNORE
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+func move_center() -> Vector2:
+    return Vector2(128 * size.x / 1172.0, size.y - 114)
+
+func aim_center() -> Vector2:
+    return Vector2(size.x - 133 * size.x / 1172.0, size.y - 97)
 
 func reset() -> void:
     move_id = -1
@@ -41,8 +48,7 @@ func _input(event: InputEvent) -> void:
                 jump_requested.emit()
                 get_viewport().set_input_as_handled()
                 return
-            # Keep the HUD / pause button region clear.
-            if event.position.y < 116:
+            if event.position.y < 105:
                 return
             if event.position.x < size.x * 0.5 and move_id == -1:
                 move_id = event.index
@@ -73,23 +79,10 @@ func _input(event: InputEvent) -> void:
         queue_redraw()
 
 func _draw() -> void:
-    var left := move_start if move_id >= 0 else Vector2(96, size.y - 100)
-    var right := aim_start if aim_id >= 0 else Vector2(size.x - 96, size.y - 100)
-    _stick(left, movement, move_id >= 0)
-    _stick(right, aim if aiming else Vector2.ZERO, aiming)
-
-func _stick(center: Vector2, direction: Vector2, active: bool) -> void:
-    draw_circle(center + Vector2(0, 5), RADIUS + 5, Color(0.02, 0.025, 0.03, 0.25))
-    draw_circle(center, RADIUS + 3, Color(0.75, 0.81, 0.85, 0.4))
-    draw_circle(center, RADIUS, Color(0.33, 0.39, 0.43, 0.38))
-    draw_circle(center, RADIUS - 8, Color(0.61, 0.68, 0.72, 0.15))
-    draw_arc(center, RADIUS - 3, PI, TAU, 32, Color(0.95, 0.98, 1, 0.45), 2, true)
-    if active:
-        draw_arc(center, RADIUS, 0, TAU, 48, Color(0.5, 0.9, 1, 0.55), 2, true)
-    var knob := center + direction * RADIUS * 0.62
-    draw_circle(knob + Vector2(2, 5), 27, Color(0, 0, 0, 0.4))
-    for index in range(8):
-        var radius := 26.0 - index * 2.7
-        var shade := 0.62 - index * 0.06
-        draw_circle(knob + Vector2(0, -index * 0.15), radius, Color(shade, shade + 0.025, shade + 0.045, 0.95))
-    draw_arc(knob + Vector2(0, -2), 20, PI, TAU, 24, Color(0.82, 0.88, 0.92, 0.7), 2, true)
+    var left := move_center()
+    var right := aim_center()
+    draw_texture_rect(Assets.texture("move_base"), Rect2(left - Vector2.ONE * 78, Vector2.ONE * 156), false)
+    var knob := left + movement * 39
+    draw_texture_rect(Assets.texture("move_knob"), Rect2(knob - Vector2.ONE * 33, Vector2.ONE * 66), false)
+    var aim_offset := aim * 8 if aiming else Vector2.ZERO
+    draw_texture_rect(Assets.texture("aim_base"), Rect2(right - Vector2.ONE * 72 + aim_offset, Vector2.ONE * 144), false, Color(1, 1, 1, 1 if aiming else 0.96))
