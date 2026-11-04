@@ -103,3 +103,9 @@ O perímetro tem muralhas, torres e portão; a costa inclui falésias e cachoeir
 Abra **MAPA** (ou **M**) para consultar a visão geral 3D e a legenda. O combate
 fica pausado até voltar ao jogo. As três missões continuam sendo arsenal,
 heliponto e comunicações, agora nas novas posições do bairro.
+
+A geometria estática é unida em malhas por regiões de 16 m, preservando o controle
+de sombras e a visibilidade local. A câmera mantém o personagem enquadrado e
+recupera a posição após grandes deslocamentos. `tests/rendering_smoke.gd` verifica
+21 pontos do bairro; `tests/web_rendering.py` verifica pixels e mudanças de quadro
+em 12 regiões no WebKit com DPR 3, incluindo partículas e sangue de combate.

@@ -34,6 +34,8 @@ run_checked build/logs/hud-reference.log timeout 90 "${DISPLAY_RUNNER[@]}" "$GOD
 grep -q 'DEADLIGHT_HUD_REFERENCE_OK' build/logs/hud-reference.log
 run_checked build/logs/neighborhood.log timeout 90 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/neighborhood_smoke.gd
 grep -q 'DEADLIGHT_NEIGHBORHOOD_OK' build/logs/neighborhood.log
+run_checked build/logs/rendering.log timeout 90 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/rendering_smoke.gd
+grep -q 'DEADLIGHT_RENDERING_OK' build/logs/rendering.log
 if [[ "${1:-}" == '--export' ]]; then
   mkdir -p build/web
   run_checked build/logs/export.log "$GODOT_BIN" --headless --path . --export-release Web build/web/index.html
@@ -43,4 +45,5 @@ if [[ "${1:-}" == '--export' ]]; then
   python3 tools/prepare_pwa.py build/web
   touch build/web/.nojekyll
   GODOT_BIN="$GODOT_BIN" python3 tools/export_finale_fixture.py
+  GODOT_BIN="$GODOT_BIN" python3 tools/export_render_fixture.py
 fi

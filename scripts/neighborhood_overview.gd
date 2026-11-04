@@ -18,7 +18,8 @@ func _ready() -> void:
     camera.keep_aspect = Camera3D.KEEP_WIDTH
     camera.size = 225
     camera.look_at(Vector3(19,0,-4))
-    camera.far = 800
+    camera.near = 10
+    camera.far = 450
     map_button = Button.new()
     map_button.text = "MAPA"
     map_button.tooltip_text = "Visão geral do bairro (M)"
@@ -77,6 +78,9 @@ func _ready() -> void:
     panel.hide()
 
 func _process(_delta: float) -> void:
+    var expected: Camera3D = camera if open else district.player.get_node("Camera3D")
+    if get_viewport().get_camera_3d() != expected:
+        expected.make_current()
     var size := get_viewport().get_visible_rect().size
     if open:
         for i in range(block_labels.size()):

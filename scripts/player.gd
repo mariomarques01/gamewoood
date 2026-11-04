@@ -95,7 +95,7 @@ func _physics_process(delta: float) -> void:
         step_timer = 0.28
         Audio.play(self, "step")
     actor.animate(delta, Vector2(velocity.x, velocity.z).length(), not is_on_floor(), weapon.active)
-    if position.y < -6.0:
+    if position.y < -6.0 or not preload("res://scripts/neighborhood_layout.gd").in_bounds(position):
         position = safe_position + Vector3.UP * 0.2
         velocity = Vector3.ZERO
         receive_damage(15.0)

@@ -118,25 +118,32 @@ func _batch_static_meshes() -> void:
                 break
         if is_marker or mesh.material_override == null:
             continue
-        var key := str(mesh.mesh.get_rid()) + str(mesh.material_override.get_rid())
+        # Keep batches local: a single district-wide AABB defeats frustum/light culling.
+        var cell := Vector2i(floori(mesh.global_position.x / 16.0), floori(mesh.global_position.z / 16.0))
+        var key := str(mesh.material_override.get_rid()) + ":" + str(cell) + ":" + str(mesh.cast_shadow)
         if not groups.has(key):
             groups[key] = []
         groups[key].append(mesh)
     for group in groups.values():
         if group.size() < 3:
             continue
-        var instances := MultiMesh.new()
-        instances.transform_format = MultiMesh.TRANSFORM_3D
-        instances.mesh = group[0].mesh
-        instances.instance_count = group.size()
-        var batch := MultiMeshInstance3D.new()
-        batch.multimesh = instances
+        # Bake static vertices instead of issuing instanced draws on WebKit/Apple GPUs.
+        # Unlike a district-wide MultiMesh, each mesh also has local visibility bounds.
+        var tool := SurfaceTool.new()
+        tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+        for source in group:
+            var transform: Transform3D = global_transform.affine_inverse() * source.global_transform
+            tool.append_from(source.mesh, 0, transform)
+        var batch := MeshInstance3D.new()
+        batch.name = "StaticRegion"
+        batch.mesh = tool.commit()
         batch.material_override = group[0].material_override
+        batch.cast_shadow = group[0].cast_shadow
+        batch.add_to_group("static_regions")
         add_child(batch)
-        for index in range(group.size()):
-            instances.set_instance_transform(index, global_transform.affine_inverse() * group[index].global_transform)
-            group[index].hide()
-            group[index].queue_free()
+        for source in group:
+            source.hide()
+            source.queue_free()
 
 func blood_surface_height(point: Vector3, fallback: float) -> float:
     var height := fallback

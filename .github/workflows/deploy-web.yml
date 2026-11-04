@@ -34,13 +34,14 @@ jobs:
         run: tools/validate.sh --export
       - name: Install browser test tools
         run: |
-          python3 -m pip install playwright==1.58.0
-          python3 -m playwright install --with-deps chromium
+          python3 -m pip install playwright==1.58.0 pillow==11.3.0
+          python3 -m playwright install --with-deps chromium webkit
       - name: Test exported game in browser
         run: |
           python3 tests/web_pwa.py --directory build/web
           python3 tests/web_smoke.py --directory build/web
           python3 tests/web_finale.py --directory build/web-finale
+          python3 tests/web_rendering.py --directory build/web-render --browser webkit
       - uses: actions/upload-artifact@v4
         if: always()
         with:
