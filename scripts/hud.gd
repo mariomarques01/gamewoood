@@ -168,6 +168,11 @@ func _ready() -> void:
     outcome.add_theme_font_size_override("font_size", 26)
     outcome.add_theme_color_override("font_color", Color(1, 0.75, 0.2))
     box.add_child(outcome)
+    var release_label := Label.new()
+    release_label.text = "VERSÃO %s" % ProjectSettings.get_setting("application/config/version")
+    release_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    release_label.add_theme_font_size_override("font_size", 12)
+    box.add_child(release_label)
     status = Label.new()
     status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     status.add_theme_font_size_override("font_size", 16)

@@ -1,11 +1,11 @@
 # PROJECT: DEADLIGHT
 
-Original cartoon 3D twin-stick shooter, Godot **4.3 stable**, GDScript,
+Original cartoon 3D twin-stick shooter, Godot **4.6.3 stable**, GDScript,
 Compatibility renderer (WebGL 2). Captain Tranco defends a coastal military base.
 
 Play: https://mariomarques01.github.io/gamewoood/
 
-Open `project.godot` with Godot 4.3 and run the configured `scenes/main.tscn`.
+Open `project.godot` with Godot 4.6.3 and run the configured `scenes/main.tscn`.
 Desktop: WASD/arrows, hold left mouse to aim/fire, Space to jump, Escape to pause.
 Mobile: drag the left stick to move and the right stick to aim/fire simultaneously.
 Use the arrow action with a third finger while moving/aiming.
@@ -17,7 +17,7 @@ helipad and communications to win. Restart is available after victory/defeat.
 ## Validation and publication
 
 See [weapons and stage finale](docs/ARSENAL_FINALE.md), [tactical combat and references](docs/ARCADE_IMPACT.md), [audio and credits](docs/AUDIO.md), [landscape combat](docs/LANDSCAPE_COMBAT.md), [compact HUD and research](docs/COMPACT_HUD_RESEARCH.md), [cartoon polish](docs/CARTOON_POLISH.md), [HUD and jump changes](docs/HUD_AND_JUMP.md), [recovery diagnosis](docs/RECOVERY.md) and [architecture/status](docs/ARCHITECTURE.md).
-Run `tools/validate.sh --export` with official Godot 4.3, an OpenGL display or Xvfb,
+Run `tools/validate.sh --export` with official Godot 4.6.3, an OpenGL display or Xvfb,
 then `python3 tests/web_smoke.py --directory build/web` with Playwright installed.
 PRs run the same checks. A single workflow `.github/workflows/deploy-web.yml`
 deploys main only after runtime, export and browser checks pass.
@@ -109,3 +109,10 @@ de sombras e a visibilidade local. A câmera mantém o personagem enquadrado e
 recupera a posição após grandes deslocamentos. `tests/rendering_smoke.gd` verifica
 21 pontos do bairro; `tests/web_rendering.py` verifica pixels e mudanças de quadro
 em 12 regiões no WebKit com DPR 3, incluindo partículas e sangue de combate.
+
+Na versão **0.11.0**, o PWA usa Godot **4.6.3** e os alienígenas e efeitos também
+usam malhas comuns, sem MultiMesh na cena ativa. A versão instalada aparece no
+menu de pausa. A instalação de uma atualização revalida os arquivos pela rede;
+o teste `tests/web_update.py` simula uma versão anterior com cache HTTP ainda
+válido e verifica a atualização, a preservação dos dados da origem e o modo offline.
+A verificação WebKit inclui duas voltas contínuas pelo heliponto com combate ativo.

@@ -1,9 +1,10 @@
 extends Node3D
+const MeshParticles = preload("res://scripts/mesh_particles.gd")
 # A short burst follows the Captain; no lights or expensive screen post-processing.
 var major := true
 var age := 0.0
 var ring: MeshInstance3D
-var sparks: MultiMeshInstance3D
+var sparks: MeshParticles
 var material: StandardMaterial3D
 
 func _ready() -> void:
@@ -25,20 +26,14 @@ func _ready() -> void:
     ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
     ring.position.y = 0.14
     add_child(ring)
-    sparks = MultiMeshInstance3D.new()
-    var batch := MultiMesh.new()
-    batch.transform_format = MultiMesh.TRANSFORM_3D
+    sparks = MeshParticles.new()
     var spark := SphereMesh.new()
     spark.radial_segments = 8
     spark.rings = 4
     spark.radius = 0.09
     spark.height = 0.5
-    batch.mesh = spark
-    batch.instance_count = 16
-    sparks.multimesh = batch
-    sparks.material_override = material
-    sparks.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
     add_child(sparks)
+    sparks.configure(spark, 16, material)
     _process(0)
 
 func _process(delta: float) -> void:
@@ -50,6 +45,6 @@ func _process(delta: float) -> void:
         var angle := index * TAU / 16 + age * 2
         var radius := 0.65 + phase * 1.5
         var point := Vector3(cos(angle) * radius, 0.25 + phase * (1.5 + (index % 3) * 0.5), sin(angle) * radius)
-        sparks.multimesh.set_instance_transform(index, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * (1 - phase * 0.75)), point))
+        sparks.set_instance_transform(index, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * (1 - phase * 0.75)), point))
     if age >= 1.15:
         queue_free()

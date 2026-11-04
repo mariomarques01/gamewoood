@@ -76,7 +76,7 @@ func _ready() -> void:
     _update_hud()
     _orientation_changed(hud.portrait_mode)
     hud.notify("RECIPIENTES LARANJA: ATIRE E AFASTE-SE")
-    print("DEADLIGHT_READY district=1 version=0.10.0 objects=%d" % district_map.get_child_count())
+    print("DEADLIGHT_READY district=1 version=%s objects=%d" % [ProjectSettings.get_setting("application/config/version"), district_map.get_child_count()])
 
 func _physics_process(delta: float) -> void:
     if not ended:

@@ -65,7 +65,7 @@ func _run() -> void:
     assert(get_nodes_in_group("combat_fx").size() <= 10, "Explosion effects exceeded budget")
     var effect = get_nodes_in_group("combat_fx")[0]
     effect._physics_process(0.2)
-    assert(effect.fragments.multimesh.instance_count == 18 and effect.stain.visible, "Burst or alien blood missing")
+    assert(effect.fragments.instance_count == 18 and effect.stain.visible, "Burst or alien blood missing")
     await RenderingServer.frame_post_draw
     root.get_texture().get_image().save_png("res://build/logs/combat-feedback.png")
     effect._physics_process(8.0)
