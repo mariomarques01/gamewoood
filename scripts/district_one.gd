@@ -18,11 +18,12 @@ var arcade: Node
 var last_hp := 100.0
 var orientation_blocked := false
 var manually_paused := false
+var map_open := false
 var run_seconds := 0.0
 var last_result: Dictionary = {}
 
 func _ready() -> void:
-    player.position = Vector3(0, 0, 7)
+    player.position = preload("res://scripts/neighborhood_layout.gd").PLAYER_START
     district_map = DistrictMap.new()
     add_child(district_map)
     district_map.build()
@@ -44,6 +45,9 @@ func _ready() -> void:
     add_child(save)
     hud = HUD.new()
     add_child(hud)
+    var overview = preload("res://scripts/neighborhood_overview.gd").new()
+    overview.district = self
+    add_child(overview)
     hud.player = player
     player.weapon.power_activated.connect(hud.show_power_activation)
     hud.mission = missions
@@ -129,7 +133,7 @@ func _orientation_changed(portrait: bool) -> void:
     print("DEADLIGHT_ORIENTATION %s" % ("portrait" if portrait else "landscape"))
 
 func _sync_pause() -> void:
-    get_tree().paused = orientation_blocked or manually_paused
+    get_tree().paused = orientation_blocked or manually_paused or map_open
     audio.set_game_state(not ended, get_tree().paused, orientation_blocked)
 
 func _restart() -> void:

@@ -119,7 +119,7 @@ func _run() -> void:
     wall_shot.shooter = player
     wall_shot.material = player.weapon.shot_material
     district.add_child(wall_shot)
-    wall_shot.global_position = Vector3(0, 1, 2)
+    wall_shot.global_position = Vector3(0, 1, -15)
     for frame in range(12):
         await physics_frame
     assert(not is_instance_valid(wall_shot), "Projectile passed through headquarters")
@@ -173,7 +173,7 @@ func _run() -> void:
         stress_enemy.player = player
         stress_enemy.ranged = index % 3 == 0
         district.add_child(stress_enemy)
-        stress_enemy.position = Vector3(-20 + (index % 8) * 5, 0, 10 + (index / 8) * 2)
+        stress_enemy.position = Vector3(-35 + (index % 8) * 10, 0, -2 + (index / 8) * 1.5)
     district.spawner.active = true
     district.spawner.timer = 0.0
     for frame in range(120):

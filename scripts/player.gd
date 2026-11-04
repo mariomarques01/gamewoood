@@ -16,7 +16,7 @@ const JUMP_SPEED := 8.0
 var jump_buffer := 0.0
 var jump_lock := 0.0
 var step_timer := 0.0
-var safe_position := Vector3(0, 0, 7)
+var safe_position := preload("res://scripts/neighborhood_layout.gd").PLAYER_START
 var visual: Node3D
 var body_material: StandardMaterial3D
 var actor: Node3D
@@ -76,7 +76,7 @@ func _physics_process(delta: float) -> void:
     jump_buffer = maxf(0.0, jump_buffer - delta)
     if is_on_floor():
         velocity.y = -0.5
-        if position.y < 0.2 and absf(position.x) < 25 and absf(position.z) < 25:
+        if position.y < 0.2 and preload("res://scripts/neighborhood_layout.gd").in_bounds(position):
             safe_position = position
         if jump_buffer > 0.0 and jump_lock <= 0.0:
             velocity.y = JUMP_SPEED

@@ -1,7 +1,7 @@
 extends Node
 signal updated
 signal victory
-const POSITIONS := [Vector3(-17, 0, -7), Vector3(17, 0, -9), Vector3(0, 0, -18)]
+const POSITIONS = preload("res://scripts/neighborhood_layout.gd").OBJECTIVES
 const TITLES := ["LIBERE O ARSENAL", "PROTEJA E ATIVE O HELIPONTO", "RESTABELECA A COMUNICACAO"]
 var player: CharacterBody3D
 var current := 0

@@ -92,3 +92,14 @@ No celular, arraste o controle esquerdo para mover e o direito para mirar/atirar
 O botão circular pequeno à direita alterna pistola e metralhadora; o botão
 amarelo acima da mira salta. Ambos aceitam um terceiro dedo enquanto os dois
 controles continuam ativos. Teclado e mouse mantêm os atalhos existentes.
+
+## Bairro 1 expandido
+
+O mapa jogável mede 148 × 128 metros e segue a disposição da referência:
+arsenal, base do capitão e heliponto ao norte; oficina, quartel general e centro
+de suprimentos ao sul. Ruas asfaltadas conectam os seis quarteirões. As áreas
+internas são pavimentadas, com grama restrita aos canteiros cercados das árvores.
+O perímetro tem muralhas, torres e portão; a costa inclui falésias e cachoeiras.
+Abra **MAPA** (ou **M**) para consultar a visão geral 3D e a legenda. O combate
+fica pausado até voltar ao jogo. As três missões continuam sendo arsenal,
+heliponto e comunicações, agora nas novas posições do bairro.
