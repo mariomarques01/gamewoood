@@ -55,6 +55,11 @@ func _physics_process(delta: float) -> void:
         velocity = Vector3.ZERO
         weapon.active = false
         return
+    # Recover before physics and camera-relative input consume an invalid position.
+    if not position.is_finite():
+        position = safe_position + Vector3.UP * 0.2
+        velocity = Vector3.ZERO
+        damage_push = Vector3.ZERO
     get_node("/root/GameAudio").listener_position = global_position
     boost_aura.visible = weapon.overdrive_time > 0 or weapon.frenzy_time > 0
     boost_aura.material_override = preload("res://scripts/visual_kit.gd").material(Color(1, 0.64, 0.07) if weapon.frenzy_time > 0 else Color(0.1, 0.85, 1), true)

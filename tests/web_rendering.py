@@ -38,7 +38,7 @@ try:
         page.on('console', lambda message: logs.append(message.text))
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(f'http://127.0.0.1:{server.server_port}', wait_until='load', timeout=120000)
-        for index in range(12):
+        for index in range(13):
             sentinel = f'DEADLIGHT_RENDER_CASE {index}'
             for _ in range(180):
                 if sentinel in logs:
@@ -62,7 +62,7 @@ try:
                              for r, g, b in pixels) / len(pixels)
             print(f'RENDER_FRAME {args.browser} case={index} blue_background={background:.4f}', flush=True)
             assert background < .8, f'3D scene disappeared in region {index}'
-            if index < 11:
+            if index < 12:
                 page.keyboard.press('n')
         page.keyboard.press('r')
         deadline = time.monotonic() + 300
@@ -87,7 +87,7 @@ try:
         errors += [line for line in logs if 'SCRIPT ERROR:' in line or line.startswith('ERROR:')
                    or ('WebGL' in line and 'INVALID_OPERATION' in line and known_copy_warning not in line)]
         assert not errors, errors
-        print(f'WEB_RENDERING_OK {args.browser} 12 regions/edges at DPR 3 with live combat effects')
+        print(f'WEB_RENDERING_OK {args.browser} 13 regions/recovery cases at DPR 3 with live combat effects')
         browser.close()
 finally:
     server.shutdown()

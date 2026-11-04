@@ -1,5 +1,5 @@
 extends Node
-const POINTS := [Vector3(0,0,1),Vector3(21,0,0),Vector3(-21,0,0),Vector3(-42,0,-14),Vector3(42,0,-10),Vector3(-16,0,-32),Vector3(-63,0,-48),Vector3(63,0,-48),Vector3(-63,0,48),Vector3(63,0,48),Vector3(0,0,53),Vector3(0,0,-50)]
+const POINTS := [Vector3(0,0,1),Vector3(21,0,0),Vector3(-21,0,0),Vector3(-42,0,-14),Vector3(42,0,-10),Vector3(-16,0,-32),Vector3(-63,0,-48),Vector3(63,0,-48),Vector3(-63,0,48),Vector3(63,0,48),Vector3(0,0,53),Vector3(0,0,-50),Vector3(-21,0,24)]
 var district: Node3D
 var index := 0
 func _ready() -> void:
@@ -15,7 +15,15 @@ func _ready() -> void:
 func _position() -> void:
     district.player.position = POINTS[index]
     var camera = district.player.get_node("Camera3D")
+    if index == POINTS.size() - 1:
+        # Simulate a transient invalid physics position and a view already poisoned
+        # by it; the following rendered case must recover without a scene reload.
+        district.player.position.x = NAN
+        camera._process(0.1)
+        district.player.position = POINTS[index]
+        camera.rotation = Vector3(NAN, NAN, NAN)
     camera._process(0.1)
+    assert(camera.global_transform.is_finite(), "Camera failed to recover before rendering")
     # Exercise live death particles, blood, drops and power effects at every region.
     var alien = district.spawner.spawn()
     assert(alien != null)

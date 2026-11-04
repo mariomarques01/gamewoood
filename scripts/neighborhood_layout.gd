@@ -11,4 +11,4 @@ const CANISTERS := [Vector3(-10, 0, -3), Vector3(10, 0, -3), Vector3(-22, 0, -14
 const SPAWN_POINTS := [Vector3(-21, 0, 1), Vector3(21, 0, 1), Vector3(-42, 0, 1), Vector3(42, 0, 1), Vector3(0, 0, -48), Vector3(0, 0, 48), Vector3(-21, 0, -24), Vector3(21, 0, -24), Vector3(-21, 0, 24), Vector3(21, 0, 24), Vector3(-63, 0, -24), Vector3(63, 0, -24), Vector3(-63, 0, 24), Vector3(63, 0, 24), Vector3(0, 0, -10), Vector3(-13, 0, -30)]
 
 static func in_bounds(point: Vector3) -> bool:
-    return absf(point.x) < HALF_SIZE.x - 1 and absf(point.z) < HALF_SIZE.y - 1
+    return point.is_finite() and absf(point.x) < HALF_SIZE.x - 1 and absf(point.z) < HALF_SIZE.y - 1
