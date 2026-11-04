@@ -7,6 +7,7 @@ import hashlib
 import io
 from pathlib import Path
 import threading
+import time
 
 from PIL import Image
 from playwright.sync_api import sync_playwright
@@ -63,7 +64,23 @@ try:
             assert background < .8, f'3D scene disappeared in region {index}'
             if index < 11:
                 page.keyboard.press('n')
-        # Godot 4.3's final canvas blit emits this warning on headless WPE even
+        page.keyboard.press('r')
+        deadline = time.monotonic() + 300
+        samples = 0
+        while not any('DEADLIGHT_RENDER_ROUTE_OK' in line for line in logs):
+            assert time.monotonic() < deadline, logs[-20:]
+            page.wait_for_timeout(1000)
+            screenshot = page.screenshot(timeout=60000)
+            image = Image.open(io.BytesIO(screenshot)).convert('RGB')
+            crop = image.crop((image.width*.2,image.height*.3,image.width*.8,image.height*.7))
+            pixels = list(crop.resize((96,64),Image.Resampling.BOX).getdata())
+            assert Counter(pixels).most_common(1)[0][1]/len(pixels) < .9, 'Blank frame during continuous helipad route'
+            samples += 1
+            if samples % 10 == 0:
+                Path(f'build/logs/{args.browser}-helipad-live.png').write_bytes(screenshot)
+        assert samples >= 10, 'Continuous route did not exercise enough live frames'
+        print('WEB_CONTINUOUS_RENDER_OK',args.browser,samples,'live samples over two helipad laps')
+        # Emscripten's final canvas blit emits this warning on headless WPE even
         # when successive 3D frames render correctly; pixels and frame hashes above
         # verify presentation independently. Fail all other WebGL errors.
         known_copy_warning = 'glBlitFramebuffer: Read and write color attachments cannot be the same image.'

@@ -56,10 +56,10 @@ try:
             response = page.goto(target, wait_until='load', timeout=120000)
             assert response.ok
             for _ in range(240):
-                if any('DEADLIGHT_READY district=1 version=0.10.0' in m for m in messages):
+                if any('DEADLIGHT_READY district=1 version=0.11.0' in m for m in messages):
                     break
                 page.wait_for_timeout(250)
-            assert any('DEADLIGHT_READY district=1 version=0.10.0' in m for m in messages), messages
+            assert any('DEADLIGHT_READY district=1 version=0.11.0' in m for m in messages), messages
             assert page.locator('canvas').is_visible()
             print(f'PWA_OFFLINE_START_OK {target}', flush=True)
         assert not errors, errors

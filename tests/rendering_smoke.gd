@@ -42,6 +42,16 @@ func _run() -> void:
         assert(bounds.size.x < 40 and bounds.size.z < 40, "Static batch spans distant city regions")
         if bounds.size.y < 0.06 and bounds.position.y <= 0.2:
             assert(batch.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "Ground batches regained expensive self shadows")
+    var alien = district.spawner.spawn()
+    assert(alien != null)
+    alien.receive_damage(999)
+    preload("res://scripts/hit_spark.gd").spawn(district,district.player.position,Vector3.UP,true)
+    district.player.weapon.activate_frenzy(10)
+    var celebration = preload("res://scripts/stage_finale.gd").new()
+    celebration.player = district.player
+    district.add_child(celebration)
+    await process_frame
+    assert(district.find_children("*","MultiMeshInstance3D",true,false).is_empty(), "Actors or effects still use GPU instancing")
     var safe: Vector3 = district.player.safe_position
     district.player.position = Vector3(100,0,100)
     district.player._physics_process(0)

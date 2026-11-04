@@ -12,7 +12,7 @@ run_checked() {
     exit 1
   fi
 }
-"$GODOT_BIN" --version | grep -q '^4\.3\.stable\.'
+"$GODOT_BIN" --version | grep -q '^4\.6\.3\.stable\.'
 run_checked build/logs/import.log "$GODOT_BIN" --headless --editor --path . --quit
 DISPLAY_RUNNER=()
 if [[ -z "${DISPLAY:-}" ]]; then DISPLAY_RUNNER=(xvfb-run -a); fi

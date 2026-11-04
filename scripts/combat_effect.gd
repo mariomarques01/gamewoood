@@ -1,9 +1,10 @@
 extends Node3D
+const MeshParticles = preload("res://scripts/mesh_particles.gd")
 const Kit = preload("res://scripts/visual_kit.gd")
 const MAX_EFFECTS := 10
 var alien_color := Color(0.2, 0.65, 0.08)
 var age := 0.0
-var fragments: MultiMeshInstance3D
+var fragments: MeshParticles
 var ring: MeshInstance3D
 var stain: MeshInstance3D
 var positions: Array[Vector3] = []
@@ -24,20 +25,13 @@ func _ready() -> void:
     add_to_group("combat_fx")
     var random := RandomNumberGenerator.new()
     random.seed = get_instance_id()
-    fragments = MultiMeshInstance3D.new()
-    var batch := MultiMesh.new()
-    batch.transform_format = MultiMesh.TRANSFORM_3D
-    batch.mesh = Kit.bevel(Vector3(0.17, 0.16, 0.24))
-    batch.use_colors = true
-    batch.instance_count = 18
-    fragments.multimesh = batch
+    fragments = MeshParticles.new()
     var spray_material := StandardMaterial3D.new()
-    spray_material.vertex_color_use_as_albedo = true
     spray_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-    fragments.material_override = spray_material
     add_child(fragments)
+    fragments.configure(Kit.bevel(Vector3(0.17, 0.16, 0.24)), 18, spray_material)
     for index in range(18):
-        batch.set_instance_color(index, Color(0.6, 0.025, 0.055) if index < 12 else alien_color.lightened(0.18))
+        fragments.set_instance_color(index, Color(0.6, 0.025, 0.055) if index < 12 else alien_color.lightened(0.18))
         positions.append(Vector3(0, 0.8, 0))
         var angle := random.randf() * TAU
         velocities.append(Vector3(cos(angle) * random.randf_range(2, 5), random.randf_range(2, 5), sin(angle) * random.randf_range(2, 5)))
@@ -85,7 +79,7 @@ func _physics_process(delta: float) -> void:
                 velocities[index] *= 0.35
                 velocities[index].y = absf(velocities[index].y)
             var basis := Basis.from_euler(Vector3(age * (index + 1), age * 4, 0)).scaled(Vector3.ONE * maxf(0.01, 1 - age))
-            fragments.multimesh.set_instance_transform(index, Transform3D(basis, positions[index]))
+            fragments.set_instance_transform(index, Transform3D(basis, positions[index]))
     else:
         fragments.hide()
     if age > 6:

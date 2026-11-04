@@ -1,4 +1,4 @@
-"""Complete Godot 4.3's PWA export, including offline directory navigation."""
+"""Complete Godot's PWA export, including offline directory navigation."""
 import json
 import re
 from pathlib import Path
@@ -18,9 +18,10 @@ manifest['icons'].append({'src': 'index.192x192.png', 'sizes': '192x192', 'type'
 manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
 worker_path = output / 'index.service.worker.js'
 worker = worker_path.read_text()
-# The 4.3 exporter lists a thread worker even for thread_support=false.
+# Some export templates list a thread worker even for thread_support=false.
 # Missing optional files would reject addAll and prevent SW installation.
-for constant in ('CACHED_FILES', 'CACHABLE_FILES'):
+optional = 'CACHEABLE_FILES' if 'const CACHEABLE_FILES =' in worker else 'CACHABLE_FILES'
+for constant in ('CACHED_FILES', optional):
     pattern = rf'const {constant} = (\[.*?\]);'
     match = re.search(pattern, worker)
     if match is None:
@@ -33,7 +34,7 @@ for constant in ('CACHED_FILES', 'CACHABLE_FILES'):
 # WASM/PCK, so on-demand caching alone cannot guarantee offline play after it loads.
 worker = worker.replace('cache.addAll(CACHED_FILES)',
     "cache.addAll(FULL_CACHE.concat(['index.manifest.json', 'index.192x192.png', "
-    "'index.144x144.png', 'index.180x180.png', 'index.512x512.png']))")
+    "'index.144x144.png', 'index.180x180.png', 'index.512x512.png']).map(file => new Request(file, {cache: 'reload'})))")
 # Navigation preload is optional; failure must not reject SW activation.
 worker = worker.replace('self.registration.navigationPreload.enable()',
                         'self.registration.navigationPreload.enable().catch(() => {})')

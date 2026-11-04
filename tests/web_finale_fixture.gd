@@ -1,7 +1,7 @@
 extends Node
 # Exported only by tools/export_finale_fixture.py, never in the shipped game.
 func _ready() -> void:
-    var district = preload("res://scenes/main.tscn").instantiate()
+    var district = load("res://scenes/main.tscn").instantiate()
     get_tree().root.add_child.call_deferred(district)
     await get_tree().process_frame
     await get_tree().physics_frame

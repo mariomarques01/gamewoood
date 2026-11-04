@@ -14,16 +14,16 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Install Godot 4.3 and Web templates
+      - name: Install Godot 4.6.3 and Web templates
         run: |
           set -euo pipefail
-          curl -fL --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          curl -fL --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_linux.x86_64.zip
           unzip -q /tmp/godot.zip -d /tmp/godot
-          sudo install /tmp/godot/Godot_v4.3-stable_linux.x86_64 /usr/local/bin/godot
-          curl -fL --retry 3 -o /tmp/templates.tpz https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
+          sudo install /tmp/godot/Godot_v4.6.3-stable_linux.x86_64 /usr/local/bin/godot
+          curl -fL --retry 3 -o /tmp/templates.tpz https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_export_templates.tpz
           python3 - <<'PY'
           import os, zipfile
-          target = os.path.expanduser('~/.local/share/godot/export_templates/4.3.stable')
+          target = os.path.expanduser('~/.local/share/godot/export_templates/4.6.3.stable')
           os.makedirs(target, exist_ok=True)
           with zipfile.ZipFile('/tmp/templates.tpz') as archive:
               for name in ('web_release.zip', 'web_debug.zip', 'web_nothreads_release.zip', 'web_nothreads_debug.zip', 'version.txt'):
@@ -39,6 +39,7 @@ jobs:
       - name: Test exported game in browser
         run: |
           python3 tests/web_pwa.py --directory build/web
+          python3 tests/web_update.py --directory build/web
           python3 tests/web_smoke.py --directory build/web
           python3 tests/web_finale.py --directory build/web-finale
           python3 tests/web_rendering.py --directory build/web-render --browser webkit

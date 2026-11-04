@@ -64,21 +64,20 @@ func _batch_body() -> void:
     for child in get_children():
         if not child is MeshInstance3D or feet.has(child):
             continue
-        var key := str(child.mesh.get_rid()) + str(child.material_override.get_rid())
+        var key := str(child.material_override.get_rid())
         if not groups.has(key):
             groups[key] = []
         groups[key].append(child)
     for group in groups.values():
         if group.size() < 2:
             continue
-        var batch := MultiMesh.new()
-        batch.transform_format = MultiMesh.TRANSFORM_3D
-        batch.mesh = group[0].mesh
-        batch.instance_count = group.size()
-        var visual := MultiMeshInstance3D.new()
-        visual.multimesh = batch
+        var tool := SurfaceTool.new()
+        tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+        for source in group:
+            tool.append_from(source.mesh, 0, source.transform)
+        var visual := MeshInstance3D.new()
+        visual.mesh = tool.commit()
         visual.material_override = group[0].material_override
         add_child(visual)
-        for index in range(group.size()):
-            batch.set_instance_transform(index, group[index].transform)
-            group[index].free()
+        for source in group:
+            source.free()
