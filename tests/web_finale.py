@@ -35,10 +35,10 @@ try:
         bounds = page.locator('canvas').bounding_box()
         page.touchscreen.tap(bounds['x'] + info['replay'][0] * bounds['width'], bounds['y'] + info['replay'][1] * bounds['height'])
         for _ in range(120):
-            if sum('DEADLIGHT_READY district=1 version=0.11.0' in line for line in messages) >= 2:
+            if sum('DEADLIGHT_READY district=1 version=0.11.1' in line for line in messages) >= 2:
                 break
             page.wait_for_timeout(100)
-        assert sum('DEADLIGHT_READY district=1 version=0.11.0' in line for line in messages) >= 2, messages
+        assert sum('DEADLIGHT_READY district=1 version=0.11.1' in line for line in messages) >= 2, messages
         assert sum('DEADLIGHT_FINALE ' in line for line in messages) == 1, 'Replay reran the fixture instead of the game'
         errors += [line for line in messages if 'SCRIPT ERROR:' in line or line.startswith('ERROR:')]
         Path('build/logs/web-finale-console.json').write_text(json.dumps(messages, indent=2))
