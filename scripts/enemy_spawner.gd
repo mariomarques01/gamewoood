@@ -7,10 +7,14 @@ const MAX_ENEMIES := 24
 var timer := 1.5
 var sequence := 0
 var last_elimination_position := Vector3.ZERO
-var points := [Vector3(-19, 0, -3), Vector3(22, 0, 5), Vector3(-9, 0, 15), Vector3(10, 0, 16), Vector3(0, 0, -22)]
+var points = preload("res://scripts/neighborhood_layout.gd").SPAWN_POINTS
 
 func _physics_process(delta: float) -> void:
     timer -= delta
+    if active and timer <= 0:
+        for enemy in get_tree().get_nodes_in_group("enemies"):
+            if enemy.global_position.distance_to(player.global_position) > 55:
+                enemy.queue_free()
     if not active or timer > 0.0 or get_tree().get_nodes_in_group("enemies").size() >= MAX_ENEMIES:
         return
     timer = maxf(2.0, 3.2 - sequence * 0.025)
@@ -21,7 +25,7 @@ func _physics_process(delta: float) -> void:
 func spawn() -> CharacterBody3D:
     for offset in range(points.size()):
         var point: Vector3 = points[(sequence + offset) % points.size()]
-        if point.distance_to(player.global_position) < 7.0:
+        if point.distance_to(player.global_position) < 7.0 or point.distance_to(player.global_position) > 34.0:
             continue
         var shape := SphereShape3D.new()
         shape.radius = 0.65

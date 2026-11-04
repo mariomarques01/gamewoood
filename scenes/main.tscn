@@ -1,7 +1,14 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1"]
 [ext_resource type="Script" path="res://scripts/district_one.gd" id="2"]
+
+[sub_resource type="Environment" id="Environment_neighborhood"]
+background_mode = 1
+background_color = Color(0.035, 0.11, 0.18, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.45, 0.58, 0.75, 1)
+ambient_light_energy = 0.5
 
 [node name="Main" type="Node3D"]
 script = ExtResource("2")
@@ -13,8 +20,11 @@ rotation = Vector3(-0.785398, -0.523599, 0)
 light_color = Color(1, 0.88, 0.69, 1)
 light_energy = 1.35
 shadow_enabled = true
-directional_shadow_mode = 1
+directional_shadow_mode = 2
 directional_shadow_blend_splits = true
 shadow_bias = 0.06
 shadow_normal_bias = 1.0
-directional_shadow_max_distance = 48.0
+directional_shadow_max_distance = 240.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_neighborhood")

@@ -10,6 +10,7 @@ func _walk(destination: Vector3) -> void:
         var offset := destination - player.position
         offset.y = 0
         if offset.length() < 0.6:
+            print("DEADLIGHT_WAYPOINT %s" % destination)
             district.hud.controls.movement = Vector2.ZERO
             return
         district.hud.controls.movement = Vector2(offset.dot(player.screen_to_world(Vector2.RIGHT)), offset.dot(player.screen_to_world(Vector2.DOWN))).normalized()
@@ -24,20 +25,16 @@ func _run() -> void:
     current_scene = district
     district.spawner.active = false
     await physics_frame
-    await _walk(Vector3(-10, 0, 7))
-    await _walk(Vector3(-17, 0, 3))
-    await _walk(Vector3(-17, 0, -7))
+    for point in [Vector3(-21,0,1),Vector3(-42,0,1),Vector3(-42,0,-14)]:
+        await _walk(point)
     district.missions._physics_process(3.1)
     assert(district.missions.current == 1, "Arsenal inaccessible")
-    await _walk(Vector3(-15, 0, -7))
-    await _walk(Vector3(-15, 0, -10))
-    await _walk(Vector3(0, 0, -10))
-    await _walk(Vector3(17, 0, -9))
+    for point in [Vector3(-42,0,1),Vector3(-21,0,1),Vector3(0,0,1),Vector3(21,0,1),Vector3(42,0,1),Vector3(42,0,-10)]:
+        await _walk(point)
     district.missions._physics_process(3.1)
     assert(district.missions.current == 2, "Helipad inaccessible")
-    await _walk(Vector3(7, 0, -10))
-    await _walk(Vector3(0, 0, -13))
-    await _walk(Vector3(0, 0, -18))
+    for point in [Vector3(42,0,1),Vector3(21,0,1),Vector3(0,0,1),Vector3(0,0,-7),Vector3(-16,0,-7),Vector3(-16,0,-31),Vector3(-12,0,-34)]:
+        await _walk(point)
     district.missions._physics_process(3.1)
     assert(district.missions.current == 3 and district.ended, "Communications inaccessible")
     print("DEADLIGHT_NAVIGATION_OK collision-respecting route to all three objectives")

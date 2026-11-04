@@ -80,7 +80,7 @@ func _run() -> void:
     for index in range(52):
         preload("res://scripts/blood_stain.gd").spread(district, Vector3(2 + index % 4, 0, 7 + index % 5), false)
     assert(get_nodes_in_group("blood_stains").size() <= 32)
-    preload("res://scripts/blood_stain.gd").spread(district, Vector3(17, 0, -9), false)
+    preload("res://scripts/blood_stain.gd").spread(district, Vector3(42, 0, -14), false)
     var raised = get_nodes_in_group("blood_stains")[-1]
     assert(raised.mesh.get_faces()[0].y > 0.11, "Blood is hidden below the raised helipad")
     for existing in get_nodes_in_group("blood_stains"):
@@ -99,10 +99,10 @@ func _run() -> void:
     root.get_texture().get_image().save_png("res://build/logs/evolution-frenzy.png")
     assert(district.hud.power_banner.title.size.x <= 288 and district.hud.power_banner.title.size.y <= 32, "Activation badge is oversized")
     assert(not district.hud.kill_popup.visible and not district.hud.frenzy_text.visible, "Redundant ability text obscures combat")
-    assert(get_nodes_in_group("tree_grass").size() == 6, "Tree lawns missing")
-    assert(get_nodes_in_group("tree_fences").size() == 6, "Each tree needs a fenced bed")
+    assert(get_nodes_in_group("tree_grass").size() == 12, "Tree lawns missing")
+    assert(get_nodes_in_group("tree_fences").size() == 12, "Each tree needs a fenced bed")
     for lawn in get_nodes_in_group("tree_grass"):
-        assert(lawn.mesh.get_aabb().size.x <= 2.5 and lawn.mesh.get_aabb().size.z <= 2.5, "Grass extends beyond the small bed")
+        assert(lawn.get_meta("bed_size") == Vector2(3.6, 3.6), "Grass extends beyond the small bed")
     district.hud.power_banner.remaining = 0
     district.hud.power_banner.hide()
     player.position = Vector3(18, 0, 6)

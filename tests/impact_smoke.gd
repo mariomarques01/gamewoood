@@ -36,11 +36,11 @@ func _run() -> void:
         query.exclude = [canister.get_rid()]
         query.collision_mask = 1
         assert(player.get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty(), "Canister embedded in base geometry: %s" % canister.position)
-    player.position = Vector3(0, 0, 14)
+    player.position = Vector3(0, 0, 2)
     var hurt = Enemy.new()
     hurt.player = player
     district.add_child(hurt)
-    hurt.position = Vector3(3, 0, 14)
+    hurt.position = Vector3(3, 0, 2)
     await physics_frame
     hurt.receive_damage(25)
     assert(hurt.health.current == 10 and hurt.hit_bar.visible, "Hit health feedback missing")
@@ -97,11 +97,11 @@ func _run() -> void:
     var protected = Enemy.new()
     protected.player = player
     district.add_child(protected)
-    protected.position = Vector3(1, 0, 17)
+    protected.position = Vector3(1, 0, 2)
     protected.set_physics_process(false)
     var blocker := StaticBody3D.new()
     district.add_child(blocker)
-    blocker.position = Vector3(2.5, 1.5, 17)
+    blocker.position = Vector3(2.5, 1.5, 2)
     var collider := CollisionShape3D.new()
     var box := BoxShape3D.new()
     box.size = Vector3(0.3, 3, 4)
@@ -109,7 +109,7 @@ func _run() -> void:
     blocker.add_child(collider)
     var blocked = Canister.new()
     district.add_child(blocked)
-    blocked.position = Vector3(4, 0, 17)
+    blocked.position = Vector3(4, 0, 2)
     player.position = Vector3(0, 0, 7)
     await physics_frame
     await physics_frame
@@ -117,8 +117,8 @@ func _run() -> void:
     for frame in range(45):
         await physics_frame
     assert(protected.health.current == protected.health.maximum, "Blast penetrated a wall")
-    player.position = Vector3(1, 0, 17)
-    var credit = district.arcade.spawn_supply(Vector3(3, 0, 17), "credit")
+    player.position = Vector3(1, 0, 2)
+    var credit = district.arcade.spawn_supply(Vector3(3, 0, 2), "credit")
     var supply_start: Vector3 = credit.position
     var credits_before: int = district.arcade.credits
     for frame in range(8):
