@@ -19,10 +19,10 @@ func _run() -> void:
             node._process(0)
     assert(camera.is_current(), "Gameplay resumed with a different active camera")
     stray.queue_free()
+    camera.rotation = Vector3(NAN, NAN, NAN)
     for z in [-48,0,48]:
         for x in [-63,-42,-21,0,21,42,63]:
             district.player.position = Vector3(x,0,z)
-            camera.global_rotation = Vector3.ZERO
             camera._process(1.0/60.0)
             var focus: Vector3 = district.player.position+Vector3.UP*0.8
             assert(not camera.is_position_behind(focus), "Camera lost the player after crossing regions")
@@ -52,6 +52,13 @@ func _run() -> void:
     district.add_child(celebration)
     await process_frame
     assert(district.find_children("*","MultiMeshInstance3D",true,false).is_empty(), "Actors or effects still use GPU instancing")
+    # Recover corrupt physics coordinates before move_and_slide or aiming sees them.
+    district.player.position.y = NAN
+    district.player._physics_process(0)
+    assert(district.player.position.is_finite(), "Invalid player height bypassed recovery")
+    camera.rotation = Vector3(NAN, NAN, NAN)
+    camera._process(1.0/60.0)
+    assert(camera.global_transform.is_finite(), "Camera could not repair a poisoned view matrix")
     var safe: Vector3 = district.player.safe_position
     district.player.position = Vector3(100,0,100)
     district.player._physics_process(0)

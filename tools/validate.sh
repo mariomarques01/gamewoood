@@ -36,6 +36,8 @@ run_checked build/logs/neighborhood.log timeout 90 "${DISPLAY_RUNNER[@]}" "$GODO
 grep -q 'DEADLIGHT_NEIGHBORHOOD_OK' build/logs/neighborhood.log
 run_checked build/logs/rendering.log timeout 90 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/rendering_smoke.gd
 grep -q 'DEADLIGHT_RENDERING_OK' build/logs/rendering.log
+run_checked build/logs/camera-recovery.log timeout 15 "$GODOT_BIN" --headless --audio-driver Dummy --path . --script tests/camera_recovery_smoke.gd
+grep -q 'DEADLIGHT_CAMERA_RECOVERY_OK' build/logs/camera-recovery.log
 if [[ "${1:-}" == '--export' ]]; then
   mkdir -p build/web
   run_checked build/logs/export.log "$GODOT_BIN" --headless --path . --export-release Web build/web/index.html
