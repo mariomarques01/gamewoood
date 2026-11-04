@@ -182,6 +182,10 @@ static func _lamp(m: Node3D,p: Vector3) -> void:
     var bulb: Node3D = m._box(m,p+Vector3(0,4.9,0),Vector3(0.9,0.6,0.9),GOLD)
     bulb.get_child(0).material_override = m._material(GOLD,true)
     m._box(m,p+Vector3(0,5.3,0),Vector3(1.2,0.18,1.2),BLUE)
+    if p.x != 15 and p.x != -27:
+        return
+    if p.x == -27 and p.z > 0:
+        return
     var light := OmniLight3D.new()
     light.light_color = GOLD
     light.light_energy = 1.6

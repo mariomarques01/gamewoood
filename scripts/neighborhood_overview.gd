@@ -111,6 +111,8 @@ func toggle() -> void:
     district.hud.controls.enabled = not open and not district.orientation_blocked
     district._sync_pause()
     if open:
+        district.get_node("DirectionalLight3D").directional_shadow_max_distance = 200
         camera.current = true
     else:
+        district.get_node("DirectionalLight3D").directional_shadow_max_distance = 48
         district.player.get_node("Camera3D").current = true
