@@ -17,6 +17,9 @@ window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=0
 
+[editor]
+import/use_multiple_threads=false
+
 [rendering]
 lights_and_shadows/directional_shadow/size=1024
 renderer/rendering_method="gl_compatibility"
