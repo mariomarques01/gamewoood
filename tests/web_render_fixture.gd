@@ -4,7 +4,7 @@ var district: Node3D
 var index := 0
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
-    district = preload("res://scenes/main.tscn").instantiate()
+    district = load("res://scenes/main.tscn").instantiate()
     get_tree().root.add_child.call_deferred(district)
     await get_tree().process_frame
     await get_tree().physics_frame
