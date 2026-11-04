@@ -1,5 +1,6 @@
 """Check actual 3D pixels across the map on a high-DPR mobile WebGL viewport."""
 import argparse
+from collections import Counter
 import functools
 import http.server
 import hashlib
@@ -54,6 +55,8 @@ try:
             assert digest not in frames, f'3D scene froze in region {index}'
             frames.add(digest)
             pixels = list(crop.resize((96, 64), Image.Resampling.BOX).getdata())
+            dominant = Counter(pixels).most_common(1)[0][1] / len(pixels)
+            assert dominant < .9, f'3D scene became a solid color in region {index}'
             background = sum(abs(r - 9) + abs(g - 28) + abs(b - 46) < 12
                              for r, g, b in pixels) / len(pixels)
             print(f'RENDER_FRAME {args.browser} case={index} blue_background={background:.4f}', flush=True)

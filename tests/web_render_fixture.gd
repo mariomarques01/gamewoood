@@ -21,6 +21,7 @@ func _position() -> void:
     assert(alien != null)
     alien.position = district.player.position + Vector3(2,0,-1)
     alien.receive_damage(999)
+    district.player.receive_damage(8)
     print("DEADLIGHT_RENDER_CASE ",index)
 func _input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and event.keycode == KEY_N:
