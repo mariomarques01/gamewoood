@@ -49,5 +49,8 @@ func _run() -> void:
     camera._process(1.0/60.0)
     assert(camera.global_position.distance_to(district.player.position*Vector3(1,0,1)+camera.offset) < 0.01)
     print("DEADLIGHT_RENDERING_OK 21 regions, camera recovery, ground shadows and local visibility bounds")
+    district.queue_free()
+    await process_frame
     root.get_node("GameAudio").shutdown()
+    await create_timer(0.4).timeout
     quit()
