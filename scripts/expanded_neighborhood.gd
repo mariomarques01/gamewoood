@@ -89,12 +89,13 @@ static func _parcel(m: Node3D,c: Vector3) -> void:
     for x in [-11,11]:
         _fence(m,c+Vector3(x,0,19),12,false)
 
-static func _fence(m: Node3D,p: Vector3,length: float,vertical: bool) -> void:
+static func _fence(m: Node3D,p: Vector3,length: float,vertical: bool,parent: Node3D = null) -> void:
+    var host: Node3D = m if parent == null else parent
     for h in [0.65,1.2]:
-        m._box(m,p+Vector3(0,h,0),Vector3(0.13,0.12,length) if vertical else Vector3(length,0.12,0.13),WHITE)
+        m._box(host,p+Vector3(0,h,0),Vector3(0.13,0.12,length) if vertical else Vector3(length,0.12,0.13),WHITE)
     for n in range(int(length/3)+1):
         var d: float = -length/2+n*3
-        m._box(m,p+Vector3(0,0.7,d) if vertical else p+Vector3(d,0.7,0),Vector3(0.18,1.4,0.18),WHITE,true)
+        m._box(host,p+Vector3(0,0.7,d) if vertical else p+Vector3(d,0.7,0),Vector3(0.18,1.4,0.18),WHITE,true)
 
 static func _garden(m: Node3D,p: Vector3) -> void:
     var lawn: Node3D = m._box(m,p+Vector3(0,0.18,0),Vector3(3.6,0.12,3.6),Color(0.19,0.4,0.13))
@@ -104,8 +105,8 @@ static func _garden(m: Node3D,p: Vector3) -> void:
     m.add_child(fence_group)
     fence_group.add_to_group("tree_fences")
     for offset in [-1.9,1.9]:
-        _fence(m,p+Vector3(offset,0,0),3.8,true)
-        _fence(m,p+Vector3(0,0,offset),3.8,false)
+        _fence(m,p+Vector3(offset,0,0),3.8,true,fence_group)
+        _fence(m,p+Vector3(0,0,offset),3.8,false,fence_group)
     _tree(m,p)
     m.add_to_group("expanded_neighborhood")
 
