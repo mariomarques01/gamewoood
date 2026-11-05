@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import threading
 from playwright.sync_api import sync_playwright
+from web_geometry import game_bounds
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory', required=True)
@@ -32,13 +33,13 @@ try:
         info = json.loads(fixture)
         assert info['stars'] == 3 and info['earned'] == 185
         page.screenshot(path='build/logs/web-stage-complete-mobile.png')
-        bounds = page.locator('canvas').bounding_box()
+        bounds = game_bounds(page)
         page.touchscreen.tap(bounds['x'] + info['replay'][0] * bounds['width'], bounds['y'] + info['replay'][1] * bounds['height'])
         for _ in range(120):
-            if sum('DEADLIGHT_READY district=1 version=0.12.0' in line for line in messages) >= 2:
+            if sum('DEADLIGHT_READY district=1 version=0.13.0' in line for line in messages) >= 2:
                 break
             page.wait_for_timeout(100)
-        assert sum('DEADLIGHT_READY district=1 version=0.12.0' in line for line in messages) >= 2, messages
+        assert sum('DEADLIGHT_READY district=1 version=0.13.0' in line for line in messages) >= 2, messages
         assert sum('DEADLIGHT_FINALE ' in line for line in messages) == 1, 'Replay reran the fixture instead of the game'
         errors += [line for line in messages if 'SCRIPT ERROR:' in line or line.startswith('ERROR:')]
         Path('build/logs/web-finale-console.json').write_text(json.dumps(messages, indent=2))

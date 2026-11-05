@@ -3,10 +3,14 @@ import argparse
 import functools
 import http.server
 import json
+import io
+from PIL import Image, ImageChops, ImageStat
 import os
+import re
 from pathlib import Path
 import threading
 from playwright.sync_api import sync_playwright
+from web_geometry import game_bounds, point
 
 AUDIO_PROBE_JS = r"""
 (() => {
@@ -54,6 +58,7 @@ ENERGY_JS = r"""async () => {
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory')
 parser.add_argument('--url')
+parser.add_argument('--menu-only', action='store_true')
 args = parser.parse_args()
 server = None
 if args.directory:
@@ -90,20 +95,49 @@ try:
 
             response = page.goto(url, wait_until='networkidle', timeout=120000)
             assert response.ok, response.status
-            # A printed sentinel originates in the executed GDScript, not the HTML shell.
-            for _ in range(120):
-                if any('DEADLIGHT_READY district=1 version=0.12.0' in line for line in messages):
-                    break
-                page.wait_for_timeout(500)
-            assert any('DEADLIGHT_READY district=1 version=0.12.0' in line for line in messages), messages
-            page.wait_for_timeout(1000)
+            # The supplied artwork is the actual first screen, with no hidden combat.
+            expect_log('DEADLIGHT_MENU_READY version=0.13.0', attempts=600)
+            assert not any('DEADLIGHT_READY district=1' in line for line in messages)
+            bounds = game_bounds(page)
+            screenshot = page.screenshot(timeout=60000)
+            Path(f'build/logs/{name}-start-menu.png').write_bytes(screenshot)
+            image = Image.open(io.BytesIO(screenshot)).convert('RGB')
+            crop = image.crop((bounds['x'], bounds['y'], bounds['x'] + bounds['width'], bounds['y'] + bounds['height']))
+            reference = Image.open('assets/menu/start-screen.jpg').convert('RGB').resize((160,90))
+            difference = ImageChops.difference(crop.resize((160,90)), reference)
+            assert sum(ImageStat.Stat(difference).mean) / 3 < 12, 'Startup artwork was cropped, distorted or replaced'
+            def tap_menu(normalized):
+                target = point(game_bounds(page), normalized)
+                if mobile:
+                    page.touchscreen.tap(**target)
+                else:
+                    page.mouse.click(**target)
+            tap_menu((0.25, 650 / 720))  # Reserved arsenal button stays inactive.
+            assert not any('DEADLIGHT_MENU_PLAY' in line for line in messages)
+            tap_menu((960 / 1280, 650 / 720))
+            expect_log('DEADLIGHT_MENU_AUDIO_CONTROLS ')
+            menu_controls = json.loads(next(line.split('DEADLIGHT_MENU_AUDIO_CONTROLS ',1)[1] for line in reversed(messages) if 'DEADLIGHT_MENU_AUDIO_CONTROLS ' in line))
+            for key, value in [('music', .31), ('effects', .59)]:
+                rect = menu_controls[key]
+                tap_menu((rect[0] + rect[2] * value, rect[1] + rect[3] * .5))
+            tap_menu(menu_controls['back'])
+            expect_log('DEADLIGHT_MENU_SETTINGS_SAVED ')
+            saved = next(line for line in reversed(messages) if 'DEADLIGHT_MENU_SETTINGS_SAVED ' in line)
+            levels = re.search(r'music=([0-9.]+) effects=([0-9.]+)', saved)
+            assert levels and abs(float(levels[1]) - .31) < .03 and abs(float(levels[2]) - .59) < .03, saved
+            assert not any('DEADLIGHT_READY district=1' in line for line in messages)
+            tap_menu((.5, 525 / 720))
+            expect_log('DEADLIGHT_READY district=1 version=0.13.0', attempts=600)
+            expect_log('DEADLIGHT_ORIENTATION landscape')
+            assert not any('DEADLIGHT_ORIENTATION portrait' in line for line in messages)
             if name == 'portrait':
-                expect_log('DEADLIGHT_ORIENTATION portrait')
-                page.screenshot(path='build/logs/portrait-rotate.png')
-                page.set_viewport_size({'width': 844, 'height': 390})
-                expect_log('DEADLIGHT_ORIENTATION landscape')
-                page.wait_for_timeout(500)
-            bounds = page.locator('canvas').bounding_box()
+                page.screenshot(path='build/logs/portrait-landscape-game.png')
+            page.wait_for_timeout(500)
+            bounds = game_bounds(page)
+            print(f'WEB_START_MENU_OK {name} artwork, settings, inactive arsenal and landscape play', flush=True)
+            if args.menu_only:
+                context.close()
+                continue
             expect_log('DEADLIGHT_HUD_CONTROLS ')
             hud_positions = json.loads(next(line.split('DEADLIGHT_HUD_CONTROLS ', 1)[1] for line in reversed(messages) if 'DEADLIGHT_HUD_CONTROLS ' in line))
             def screen_control(key):
@@ -140,7 +174,7 @@ try:
                 points[1]['y'] -= 35
                 session.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': points})
                 page.wait_for_timeout(300)
-                # HUD uses 540 logical units across in portrait, 540 vertically in landscape.
+                # Input coordinates use the landscape content, including in portrait windows.
                 scale = height / 540 if width > height else width / 540
                 jump_point = {'id': 2, **screen_control('jump')}
                 session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': points + [jump_point]})

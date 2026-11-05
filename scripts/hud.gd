@@ -286,8 +286,8 @@ func _ready() -> void:
 
 func _layout() -> void:
     var viewport := get_viewport()
-    var pixels := viewport.get_window().size
-    var desired := Vector2i(540, 960) if pixels.x < pixels.y else Vector2i(960, 540)
+    # Keep a landscape game canvas even when a browser cannot lock the device.
+    var desired := Vector2i(960, 540)
     if viewport.content_scale_size != desired:
         viewport.content_scale_size = desired
     var area := viewport.get_visible_rect().size
