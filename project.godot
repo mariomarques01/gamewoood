@@ -5,16 +5,16 @@ GameAudio="*res://scripts/audio_director.gd"
 
 [application]
 config/name="PROJECT DEADLIGHT"
-config/version="0.12.0"
+config/version="0.13.0"
 config/icon="res://assets/pwa/icon-512.png"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/start_menu.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 
 [display]
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
-window/stretch/aspect="expand"
+window/stretch/aspect="keep"
 window/handheld/orientation=0
 
 [editor]

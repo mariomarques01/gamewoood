@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import threading
 from playwright.sync_api import sync_playwright
+from web_geometry import game_bounds, point
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory', required=True)
@@ -56,10 +57,17 @@ try:
             response = page.goto(target, wait_until='load', timeout=120000)
             assert response.ok
             for _ in range(240):
-                if any('DEADLIGHT_READY district=1 version=0.12.0' in m for m in messages):
+                if any('DEADLIGHT_MENU_READY version=0.13.0' in m for m in messages):
                     break
                 page.wait_for_timeout(250)
-            assert any('DEADLIGHT_READY district=1 version=0.12.0' in m for m in messages), messages
+            assert any('DEADLIGHT_MENU_READY version=0.13.0' in m for m in messages), messages
+            assert not any('DEADLIGHT_READY district=1' in m for m in messages), 'Combat started before Jogar'
+            page.mouse.click(**point(game_bounds(page), (0.5, 525 / 720)))
+            for _ in range(240):
+                if any('DEADLIGHT_READY district=1 version=0.13.0' in m for m in messages):
+                    break
+                page.wait_for_timeout(250)
+            assert any('DEADLIGHT_READY district=1 version=0.13.0' in m for m in messages), messages
             assert page.locator('canvas').is_visible()
             print(f'PWA_OFFLINE_START_OK {target}', flush=True)
         assert not errors, errors

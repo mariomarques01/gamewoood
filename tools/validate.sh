@@ -16,6 +16,8 @@ run_checked() {
 run_checked build/logs/import.log "$GODOT_BIN" --headless --editor --path . --quit
 DISPLAY_RUNNER=()
 if [[ -z "${DISPLAY:-}" ]]; then DISPLAY_RUNNER=(xvfb-run -a); fi
+run_checked build/logs/start-menu.log timeout 45 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/start_menu_smoke.gd
+grep -q 'DEADLIGHT_START_MENU_OK' build/logs/start-menu.log
 run_checked build/logs/smoke.log timeout 45 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/district_smoke.gd
 grep -q 'DEADLIGHT_SMOKE_OK' build/logs/smoke.log
 run_checked build/logs/audio.log timeout 45 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/audio_smoke.gd

@@ -18,7 +18,7 @@ with tempfile.TemporaryDirectory(prefix='deadlight-finale-') as temporary:
     (staging / 'tests').mkdir()
     for name in ('web_finale_fixture.gd', 'web_finale_fixture.tscn'):
         shutil.copy2(root / 'tests' / name, staging / 'tests' / name)
-    project = (root / 'project.godot').read_text().replace('res://scenes/main.tscn', 'res://tests/web_finale_fixture.tscn')
+    project = (root / 'project.godot').read_text().replace('res://scenes/start_menu.tscn', 'res://tests/web_finale_fixture.tscn')
     (staging / 'project.godot').write_text(project)
     presets = (root / 'export_presets.cfg').read_text().replace('tests/*,', '')
     (staging / 'export_presets.cfg').write_text(presets)

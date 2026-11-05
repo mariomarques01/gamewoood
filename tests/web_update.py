@@ -6,6 +6,7 @@ import re
 import shutil
 import tempfile
 import threading
+import time
 from playwright.sync_api import sync_playwright
 
 parser = argparse.ArgumentParser()
@@ -52,9 +53,24 @@ with tempfile.TemporaryDirectory(prefix='deadlight-update-') as temporary:
             print('PWA_PREVIOUS_ACTIVE',flush=True)
             state['directory'] = current
             page.evaluate('async () => { const registration = await navigator.serviceWorker.getRegistration(); await registration.update(); }')
-            page.wait_for_function("async () => { const r = await navigator.serviceWorker.getRegistration(); const keys = await caches.keys(); return !r.installing && keys.some(k => !k.endsWith('previous-test-release')); }", timeout=120000)
+            # Cache creation precedes installation. Evaluate and post atomically
+            # to an installed waiting worker, rather than reloading the old one.
+            deadline = time.monotonic() + 120
+            while True:
+                ready = page.evaluate("""async () => {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    const keys = await caches.keys();
+                    const update = registration.waiting;
+                    if (registration.installing || update?.state !== 'installed' ||
+                        !keys.some(key => !key.endsWith('previous-test-release'))) return false;
+                    update.postMessage('update');
+                    return true;
+                }""")
+                if ready:
+                    break
+                assert time.monotonic() < deadline, 'New worker never finished installing'
+                page.wait_for_timeout(100)
             print('PWA_NEW_CACHE_READY',flush=True)
-            page.evaluate("async () => { const registration = await navigator.serviceWorker.getRegistration(); if (registration.waiting) registration.waiting.postMessage('update'); else location.reload(); }")
             page.wait_for_function('!window.__previous_bundle && !!navigator.serviceWorker.controller', timeout=120000)
             assert page.evaluate("localStorage.getItem('upgrade-preserved')") == 'yes'
             cached = page.evaluate("async () => await (await caches.match('index.js')).text()")

@@ -194,7 +194,8 @@ func _run() -> void:
     root.size = Vector2i(390, 844)
     await process_frame
     await process_frame
-    assert(paused and district.hud.rotation_panel.visible, "Portrait orientation did not pause/show rotate prompt")
+    assert(not paused and not district.hud.rotation_panel.visible, "Landscape canvas was blocked in a portrait browser")
+    assert(root.get_visible_rect().size.x > root.get_visible_rect().size.y, "Game canvas stopped being landscape")
     assert(district.hud.details.text.contains("ARSENAL"), "Pause objective details missing")
     root.size = Vector2i(1280, 720)
     await process_frame

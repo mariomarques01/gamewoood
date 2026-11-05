@@ -128,3 +128,22 @@ ataques, receber dano e morrer. Sons distantes são descartados; até três voze
 de criaturas dividem as 12 vozes do mixer, com prioridade para disparos e interface.
 Créditos e licenças: [assets/audio/CREDITS.md](assets/audio/CREDITS.md).
 O limite de inimigos simultâneos foi reduzido para **20**.
+
+## Tela inicial e formato horizontal — 0.13.0
+
+A abertura usa a imagem fornecida pelo usuário, sem alterações. **Jogar** cria a
+partida; nenhum mapa, inimigo ou cronômetro roda atrás do menu. **Configurações**
+abre os volumes de música/efeitos e o mute, usando as mesmas preferências salvas
+da partida. Arsenal, Upgrades e Conquistas permanecem sem ação nesta versão.
+
+O canvas permanece em 16:9, com enquadramento horizontal e áreas de toque alinhadas
+à imagem. Em celulares e no PWA instalado, a orientação solicitada é horizontal.
+Ao tocar em Jogar, a versão web tenta tela cheia e o bloqueio de orientação quando
+o navegador permite. Navegadores que não permitem esse bloqueio apresentam o jogo
+horizontal com barras de enquadramento, inclusive com o aparelho na vertical;
+a partida não fica presa na antiga tela de rotação.
+
+`tests/start_menu_smoke.gd` verifica imagem, botões, sliders por toque,
+persistência e entrada no jogo em uma janela vertical. `tests/web_smoke.py`
+compara os pixels da abertura com a imagem original e testa o fluxo em desktop,
+mobile e retrato. `--menu-only` executa apenas esse fluxo inicial.
