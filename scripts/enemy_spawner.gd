@@ -3,7 +3,7 @@ signal eliminated
 const Enemy = preload("res://scripts/enemy_controller.gd")
 var player: CharacterBody3D
 var active := true
-const MAX_ENEMIES := 24
+const MAX_ENEMIES := 20
 var timer := 1.5
 var sequence := 0
 var last_elimination_position := Vector3.ZERO

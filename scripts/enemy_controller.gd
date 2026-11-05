@@ -23,9 +23,11 @@ var knockback := Vector3.ZERO
 var hit_bar: Node3D
 var hit_fill: MeshInstance3D
 var hit_time := 0.0
+var voice_timer := 0.0
 
 func _ready() -> void:
     add_to_group("enemies")
+    voice_timer = 1.5 + fmod(get_instance_id(), 41) * 0.12
     collision_layer = 2
     collision_mask = 1 | 4
     health = Health.new()
@@ -88,6 +90,10 @@ func _physics_process(delta: float) -> void:
     var distance := toward.length()
     if distance > 38.0:
         return
+    voice_timer -= delta
+    if distance < 18.0 and voice_timer <= 0.0:
+        voice_timer = randf_range(5.0, 9.0)
+        Audio.play(self, "alien_idle", global_position)
     if knockback.length_squared() > 0.04:
         velocity = knockback
         move_and_slide()
@@ -136,6 +142,7 @@ func _physics_process(delta: float) -> void:
     if distance > 0.1:
         visual.rotation.y = atan2(-toward.x, -toward.z)
     if attack_timer <= 0.0 and ((ranged and distance < 13.0) or (not ranged and distance < 1.6)):
+        Audio.play(self, "alien_attack", global_position)
         winding_up = true
         windup = 0.55 if ranged else 0.42
         warning_ring.show()
@@ -166,6 +173,7 @@ func receive_damage(amount: float) -> void:
             knockback = away.normalized() * 3.5
     health.damage(amount)
     if not dead:
+        Audio.play(self, "alien_hurt", global_position)
         hit_time = 1.5
         hit_bar.show()
         hit_fill.scale.x = health.current / health.maximum
@@ -178,7 +186,7 @@ func _die() -> void:
     collision_layer = 0
     collision_mask = 0
     eliminated.emit()
-    Audio.play(self, "explosion", global_position)
+    Audio.play(self, "alien_death", global_position)
     Audio.play(self, "splatter", global_position)
     CombatEffect.burst(get_parent(), global_position, ranged)
     visual.hide()

@@ -6,4 +6,5 @@ extends Resource
 @export var reload_seconds := 1.2
 @export var spread := 0.0
 @export var sound := "shot"
+@export var reload_sound := "pistol_reload"
 @export var tracer_color := Color(1, 0.8, 0.15)

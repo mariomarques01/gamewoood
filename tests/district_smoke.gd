@@ -186,7 +186,7 @@ func _run() -> void:
     for shot in get_nodes_in_group("projectiles"):
         shot.queue_free()
     await process_frame
-    print("DEADLIGHT_STRESS_OK 24 mixed enemies for 120 physics frames")
+    print("DEADLIGHT_STRESS_OK %d mixed enemies for 120 physics frames" % district.spawner.MAX_ENEMIES)
     pause_key()
     assert(paused and district.hud.overlay.visible, "Pause failed")
     pause_key()
