@@ -56,7 +56,7 @@ func _hotspot(label: String) -> Button:
     button.text = label
     button.tooltip_text = label
     # The original artwork already contains the typography and button surfaces.
-    for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_disabled_color"]:
+    for state in ["font_color", "font_hover_color", "font_pressed_color", "font_hover_pressed_color", "font_focus_color", "font_disabled_color"]:
         button.add_theme_color_override(state, Color.TRANSPARENT)
     button.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
     for state in ["hover", "pressed", "focus"]:
