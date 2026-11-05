@@ -75,7 +75,7 @@ rápido e munição ilimitada. A barra no topo mostra a próxima ativação e su
 contagem regressiva. Cada ativação aumenta a exigência de XP; reiniciar zera a
 progressão da partida.
 
-As hordas chegam a 24 alienígenas e incluem corredores e brutamontes, além dos
+As hordas chegam a 20 alienígenas e incluem corredores e brutamontes, além dos
 soldados e atiradores. As eliminações deixam sangue mais espalhado e persistente.
 O visual inclui novas fontes locais e detalhes de rua. Consulte
 [XP e hordas](docs/XP_AND_HORDES.md) para regras, limites e validação.
@@ -108,7 +108,7 @@ A geometria estática é unida em malhas por regiões de 16 m, preservando o con
 de sombras e a visibilidade local. A câmera mantém o personagem enquadrado e
 recupera a posição após grandes deslocamentos. `tests/rendering_smoke.gd` verifica
 21 pontos do bairro; `tests/web_rendering.py` verifica pixels e mudanças de quadro
-em 12 regiões no WebKit com DPR 3, incluindo partículas e sangue de combate.
+em 13 casos de regiões/recuperação no WebKit com DPR 3, incluindo partículas e sangue de combate.
 
 Na versão **0.11.0**, o PWA usa Godot **4.6.3** e os alienígenas e efeitos também
 usam malhas comuns, sem MultiMesh na cena ativa. A versão instalada aparece no
@@ -116,3 +116,15 @@ menu de pausa. A instalação de uma atualização revalida os arquivos pela red
 o teste `tests/web_update.py` simula uma versão anterior com cache HTTP ainda
 válido e verifica a atualização, a preservação dos dados da origem e o modo offline.
 A verificação WebKit inclui duas voltas contínuas pelo heliponto com combate ativo.
+
+
+## Áudio de combate — 0.12.0
+
+A trilha é **Battle of the Void (Loop)**, de Marcelo Fernandez: 158 segundos de
+música de ação, com loop musical e volume condicionado. A pistola usa gravações
+de uma 1911 e a metralhadora de uma Carl Gustav M45, com três variações reais por
+arma e recargas distintas. Os alienígenas vocalizam ao se aproximar, preparar
+ataques, receber dano e morrer. Sons distantes são descartados; até três vozes
+de criaturas dividem as 12 vozes do mixer, com prioridade para disparos e interface.
+Créditos e licenças: [assets/audio/CREDITS.md](assets/audio/CREDITS.md).
+O limite de inimigos simultâneos foi reduzido para **20**.

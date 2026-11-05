@@ -27,7 +27,7 @@ a duração ativa, sem textos grandes repetidos sobre o combate.
 ## Inimigos e custo de renderização
 
 Hordas de dois a quatro alienígenas surgem em intervalos de 3,2 a 2 segundos, com
-limite de **24 inimigos simultâneos**. Os tipos são soldado, atirador, corredor
+limite de **20 inimigos simultâneos**. Os tipos são soldado, atirador, corredor
 (mais rápido e frágil) e brutamontes (mais lento e resistente). Separação local
 reduz a sobreposição. Os corpos agrupam peças de geometria/material iguais em
 MultiMeshes, mantendo pés animados e materiais de dano independentes.
@@ -52,7 +52,7 @@ nos alienígenas e filtragem com mipmaps no asfalto.
 `tools/validate.sh --export` inclui `tests/evolution_smoke.gd`: morte real e XP
 único, limiar da habilidade, dano, cadência, munição, movimento, pausa, expiração,
 variantes e orçamento/duração de sangue. O teste de estresse existente exercita
-24 inimigos. Os testes web existentes verificam controles desktop/mobile e PWA.
+20 inimigos. Os testes web existentes verificam controles desktop/mobile e PWA.
 A aparência e o desempenho em aparelhos físicos ainda precisam de validação.
 
 As ruas usam asfalto escuro uniforme, sem a textura que criava listras. Áreas

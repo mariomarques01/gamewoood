@@ -92,10 +92,10 @@ try:
             assert response.ok, response.status
             # A printed sentinel originates in the executed GDScript, not the HTML shell.
             for _ in range(120):
-                if any('DEADLIGHT_READY district=1 version=0.11.1' in line for line in messages):
+                if any('DEADLIGHT_READY district=1 version=0.12.0' in line for line in messages):
                     break
                 page.wait_for_timeout(500)
-            assert any('DEADLIGHT_READY district=1 version=0.11.1' in line for line in messages), messages
+            assert any('DEADLIGHT_READY district=1 version=0.12.0' in line for line in messages), messages
             page.wait_for_timeout(1000)
             if name == 'portrait':
                 expect_log('DEADLIGHT_ORIENTATION portrait')

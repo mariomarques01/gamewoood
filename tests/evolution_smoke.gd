@@ -8,6 +8,7 @@ func _run() -> void:
     root.add_child(district)
     current_scene = district
     district.spawner.active = false
+    assert(district.spawner.MAX_ENEMIES == 20)
     var player = district.player
     player.set_physics_process(false)
     player.weapon.set_physics_process(false)

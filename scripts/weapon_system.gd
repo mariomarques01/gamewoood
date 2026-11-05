@@ -126,7 +126,7 @@ func reload() -> void:
     if not enabled or ammo == capacity or reload_time > 0:
         return
     reload_time = WEAPONS[selected].reload_seconds
-    Audio.play(self, "reload", owner_body.global_position)
+    Audio.play(self, WEAPONS[selected].reload_sound, owner_body.global_position)
     ammo_changed.emit(ammo, true)
 
 func resupply(all_weapons: bool = false) -> void:

@@ -9,4 +9,5 @@ interval = 0.12
 reload_seconds = 1.2
 spread = 0.018
 sound = "machine_shot"
+reload_sound = "machine_reload"
 tracer_color = Color(0.15, 0.9, 1, 1)

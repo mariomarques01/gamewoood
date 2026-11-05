@@ -21,6 +21,49 @@ func _run() -> void:
     for cue in mixer.clips:
         for clip in mixer.clips[cue]:
             assert(clip != null and clip.get_length() > 0.03, "Empty audio resource: " + cue)
+    assert(mixer.CLIP_PATHS.shot != mixer.CLIP_PATHS.machine_shot, "Weapons share generic shot clips")
+    # Verify the production weapon and creature code actually reaches the new cues.
+    var weapon = district.player.weapon
+    weapon.set_physics_process(false)
+    for index in [0, 1]:
+        weapon.select_weapon(index)
+        var definition = weapon.WEAPONS[index]
+        mixer.last_played.erase(definition.sound)
+        var shots_before: int = mixer.event_counts.get(definition.sound, 0)
+        weapon.cooldown = 0
+        weapon.active = true
+        weapon.direction = Vector3.RIGHT
+        weapon._physics_process(0)
+        assert(mixer.event_counts.get(definition.sound, 0) == shots_before + 1)
+        mixer.last_played.erase(definition.reload_sound)
+        weapon.reload()
+        assert(mixer.event_counts.get(definition.reload_sound, 0) > 0)
+        weapon.reload_time = 0
+        weapon.active = false
+    for voice in mixer.voices:
+        voice.stop()
+    var alien = district.spawner.spawn()
+    assert(alien != null)
+    alien.set_physics_process(false)
+    alien.position = district.player.position + Vector3(0, 0, 1.4)
+    alien.voice_timer = 0
+    alien._physics_process(0)
+    assert(mixer.event_counts.get("alien_idle", 0) > 0)
+    assert(mixer.event_counts.get("alien_attack", 0) > 0)
+    alien.receive_damage(1)
+    assert(mixer.event_counts.get("alien_hurt", 0) > 0)
+    alien.receive_damage(999)
+    assert(mixer.event_counts.get("alien_death", 0) > 0)
+    var creature_voices := 0
+    for index in range(mixer.voices.size()):
+        if mixer.voices[index].playing and mixer.voice_cues[index].begins_with("alien_"):
+            creature_voices += 1
+    assert(creature_voices <= 3, "Creature voices exceeded the mobile mix budget")
+    for cue in ["alien_idle", "alien_attack", "alien_hurt", "alien_death"]:
+        mixer.last_played.erase(cue)
+        assert(not mixer.play(cue, Vector3(100, 0, 0)), "Distant alien vocal played")
+    for voice in mixer.voices:
+        voice.stop()
     assert(mixer.voices.size() == 12 and mixer.get_child_count() == 13, "Mixer allocated unexpected players")
     assert(mixer.play("not_a_cue") == false, "Unknown sound accepted")
     mixer.last_played.erase("shot")

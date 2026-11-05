@@ -1,18 +1,27 @@
 {
   "sfx/shot_a.wav": {
-    "source": "laserSmall_000.ogg",
-    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
-    "sha256": "d318cd61a60f96cca39ae3f2bf8ebe319883219e11765c42a554dbab35896ba7"
+    "source": "firearms/Prepared SFX Library/1911/A_42P.wav",
+    "source_url": "https://opengameart.org/content/the-free-firearm-sound-library",
+    "author": "Ben Jaszczak, Brian Nelson, Kevin Heras, Matthew Nanney",
+    "license": "CC0-1.0",
+    "processing": "start=0.937s duration=0.62; highpass=f=65,lowpass=f=15500; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "86ec10ec5d352f55fec87a987fb1eb67e64c7582a3aa336b5bda18ee063ee96a"
   },
   "sfx/shot_b.wav": {
-    "source": "laserSmall_001.ogg",
-    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
-    "sha256": "5b558ce6ba300f55ce86617c231d3a7dc369618eef04c4db388f9bdf5e61b531"
+    "source": "firearms/Prepared SFX Library/1911/A_42P.wav",
+    "source_url": "https://opengameart.org/content/the-free-firearm-sound-library",
+    "author": "Ben Jaszczak, Brian Nelson, Kevin Heras, Matthew Nanney",
+    "license": "CC0-1.0",
+    "processing": "start=4.997s duration=0.62; highpass=f=65,lowpass=f=15500; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "2702916366d02298e56b5ce78ba80d1d67557cb4e2f5e8ea63d7f5c91422a96a"
   },
   "sfx/shot_c.wav": {
-    "source": "laserSmall_002.ogg",
-    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
-    "sha256": "5b451ddca7819d530e68491ed5d3f64841d91238b2d2e8f3ea90ad2a3d46c29c"
+    "source": "firearms/Prepared SFX Library/1911/A_34P.wav",
+    "source_url": "https://opengameart.org/content/the-free-firearm-sound-library",
+    "author": "Ben Jaszczak, Brian Nelson, Kevin Heras, Matthew Nanney",
+    "license": "CC0-1.0",
+    "processing": "start=1.537s duration=0.62; highpass=f=65,lowpass=f=15500; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "e29c691ebdafe2cb4ef445e798f9e7ca6e6a7ecb40fbca39a8da35c81cad0db3"
   },
   "sfx/plasma.wav": {
     "source": "laserLarge_000.ogg",
@@ -33,11 +42,6 @@
     "source": "slime_000.ogg",
     "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
     "sha256": "e9ad13763e6c0666f2b3b5d96bb322d1f44383cad760c69e7b3a91ba5438ea45"
-  },
-  "sfx/reload.wav": {
-    "source": "doorClose_001.ogg",
-    "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
-    "sha256": "dd94436fec8ede6f9ccaee02fbe5fa9f32d194ed2d67bd4b5126171f7a36c571"
   },
   "sfx/jump.wav": {
     "source": "thrusterFire_001.ogg",
@@ -79,9 +83,100 @@
     "processing": "44.1kHz mono PCM, high/low-pass EQ, 3ms attack/soft release, -20 LUFS / -4dBTP target",
     "sha256": "24a5e40c66c51d26ed3a027080a2c7503d01ea4094e90b3f7a124dffae7fbb0e"
   },
-  "music/coastal_patrol.ogg": {
-    "source": "SRG774 \u2014 Sector (sector_0.mp3)",
-    "processing": "full ambient track with 2s wrap crossfade, 44.1kHz stereo Vorbis, gentle EQ, -20 LUFS / -4dBTP target",
-    "sha256": "98a3f0362426aab52cb931b1a91ea56cc08ad073f9f750d72ca128e783e4b28e"
+  "sfx/machine_a.wav": {
+    "source": "firearms/Prepared SFX Library/Carl Gustav M45/G_20P.wav",
+    "source_url": "https://opengameart.org/content/the-free-firearm-sound-library",
+    "author": "Ben Jaszczak, Brian Nelson, Kevin Heras, Matthew Nanney",
+    "license": "CC0-1.0",
+    "processing": "start=0.337s duration=0.3; highpass=f=85,lowpass=f=14500; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "583280c6b97a8ecbc6962f1568c40c2b7eee0bdf30282cc5fe3eb9a6108cc4ba"
+  },
+  "sfx/machine_b.wav": {
+    "source": "firearms/Prepared SFX Library/Carl Gustav M45/G_20P.wav",
+    "source_url": "https://opengameart.org/content/the-free-firearm-sound-library",
+    "author": "Ben Jaszczak, Brian Nelson, Kevin Heras, Matthew Nanney",
+    "license": "CC0-1.0",
+    "processing": "start=2.247s duration=0.3; highpass=f=85,lowpass=f=14500; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "e522d228625a0521734e90cbb036f96c9da587335774c2ff767b6ada88a90117"
+  },
+  "sfx/machine_c.wav": {
+    "source": "firearms/Prepared SFX Library/Carl Gustav M45/G_20P.wav",
+    "source_url": "https://opengameart.org/content/the-free-firearm-sound-library",
+    "author": "Ben Jaszczak, Brian Nelson, Kevin Heras, Matthew Nanney",
+    "license": "CC0-1.0",
+    "processing": "start=5.257s duration=0.3; highpass=f=85,lowpass=f=14500; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "0f123a4be2874919f9bf5baba7b6dba8def92a1a7567be502de38199b9c5c102"
+  },
+  "sfx/pistol_reload.wav": {
+    "source": "reload-source.wav",
+    "source_url": "https://opengameart.org/content/handgun-reload-sound-effect",
+    "author": "zer0_sol",
+    "license": "CC0-1.0",
+    "processing": "start=0s duration=full; atempo=1.85,highpass=f=140; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "59dd16f9a8167884b1bfb724db191fb3356b5a1f279e7e48c74dd3c10a54ccce"
+  },
+  "sfx/machine_reload.wav": {
+    "source": "reload-source.wav",
+    "source_url": "https://opengameart.org/content/handgun-reload-sound-effect",
+    "author": "zer0_sol",
+    "license": "CC0-1.0",
+    "processing": "start=0s duration=full; atempo=1.38,highpass=f=140; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "c0d3eefd7a789a43c65a2f40043a7129b283f85fc3813b7d1929dc2be0c11f74"
+  },
+  "sfx/alien_idle_a.wav": {
+    "source": "monsters/monster/grunt1.wav",
+    "source_url": "https://opengameart.org/content/15-monster-gruntpaindeath-sounds",
+    "author": "Michel Baradari",
+    "license": "CC-BY-3.0",
+    "processing": "start=0s duration=full; highpass=f=85,lowpass=f=11000; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "cfcfca995ebb62cdd84f9d44430fa34ddba7113117e3c67863f80f1036c5404d"
+  },
+  "sfx/alien_idle_b.wav": {
+    "source": "monsters/monster/grunt2.wav",
+    "source_url": "https://opengameart.org/content/15-monster-gruntpaindeath-sounds",
+    "author": "Michel Baradari",
+    "license": "CC-BY-3.0",
+    "processing": "start=0s duration=full; highpass=f=85,lowpass=f=11000; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "0f0f5be9f5fbb389d01e6437c33b892b177e4ed017c1741dfdb913d1d4b91018"
+  },
+  "sfx/alien_attack.wav": {
+    "source": "monsters/monster/piggrunt1.wav",
+    "source_url": "https://opengameart.org/content/15-monster-gruntpaindeath-sounds",
+    "author": "Michel Baradari",
+    "license": "CC-BY-3.0",
+    "processing": "start=0s duration=full; highpass=f=85,lowpass=f=11000; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "824e2255437dde51fdda7029813645de5a22081d82caeebf2882f896de2aa612"
+  },
+  "sfx/alien_hurt.wav": {
+    "source": "monsters/monster/painr.wav",
+    "source_url": "https://opengameart.org/content/15-monster-gruntpaindeath-sounds",
+    "author": "Michel Baradari",
+    "license": "CC-BY-3.0",
+    "processing": "start=0s duration=full; highpass=f=85,lowpass=f=11000; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "b78e96cc1a6a96ab466d5404edffc1cc6e7c98ebacd65026fe4277c02e69d227"
+  },
+  "sfx/alien_death_a.wav": {
+    "source": "monsters/monster/deathb.wav",
+    "source_url": "https://opengameart.org/content/15-monster-gruntpaindeath-sounds",
+    "author": "Michel Baradari",
+    "license": "CC-BY-3.0",
+    "processing": "start=0s duration=full; highpass=f=85,lowpass=f=11000; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "eb94a0dc213aacca43c1a61900761cece530cb48e83cd6167f392a4dc8f8d96f"
+  },
+  "sfx/alien_death_b.wav": {
+    "source": "monsters/monster/deathr.wav",
+    "source_url": "https://opengameart.org/content/15-monster-gruntpaindeath-sounds",
+    "author": "Michel Baradari",
+    "license": "CC-BY-3.0",
+    "processing": "start=0s duration=full; highpass=f=85,lowpass=f=11000; mono 44.1kHz PCM; DC removal; -4dBFS peak; 0.25ms attack/25ms release",
+    "sha256": "aadb41693c99716085e07917dafd64765cd31649809e5cbee3df018868642e73"
+  },
+  "music/combat_patrol.ogg": {
+    "source": "Battle of the Void Loop.ogg / Action Music Pack",
+    "source_url": "https://opengameart.org/content/action-music-pack",
+    "author": "Marcelo Fernandez",
+    "license": "CC-BY-4.0 (author attribution notice)",
+    "processing": "Original 158.35s musical loop; stereo 44.1kHz Vorbis q2; -18 LUFS / -3dBTP / LRA8",
+    "sha256": "f6a36fbae2ad91bc9f7d3541ac8a4c42bd49527bb5b305be48150beb5b73e2ea"
   }
 }

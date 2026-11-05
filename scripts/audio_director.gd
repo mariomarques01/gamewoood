@@ -2,15 +2,20 @@ extends Node
 # One persistent mixer, real curated samples, bounded voice count and no sound backlog.
 signal settings_changed
 const SETTINGS := "user://deadlight_audio.cfg"
-const MUSIC_PATH := "res://assets/audio/music/coastal_patrol.ogg"
+const MUSIC_PATH := "res://assets/audio/music/combat_patrol.ogg"
 const CLIP_PATHS := {
     "shot": ["res://assets/audio/sfx/shot_a.wav", "res://assets/audio/sfx/shot_b.wav", "res://assets/audio/sfx/shot_c.wav"],
-    "machine_shot": ["res://assets/audio/sfx/shot_c.wav", "res://assets/audio/sfx/shot_b.wav", "res://assets/audio/sfx/shot_a.wav"],
+    "machine_shot": ["res://assets/audio/sfx/machine_a.wav", "res://assets/audio/sfx/machine_b.wav", "res://assets/audio/sfx/machine_c.wav"],
+    "pistol_reload": ["res://assets/audio/sfx/pistol_reload.wav"],
+    "machine_reload": ["res://assets/audio/sfx/machine_reload.wav"],
+    "alien_idle": ["res://assets/audio/sfx/alien_idle_a.wav", "res://assets/audio/sfx/alien_idle_b.wav"],
+    "alien_attack": ["res://assets/audio/sfx/alien_attack.wav"],
+    "alien_hurt": ["res://assets/audio/sfx/alien_hurt.wav"],
+    "alien_death": ["res://assets/audio/sfx/alien_death_a.wav", "res://assets/audio/sfx/alien_death_b.wav"],
     "plasma": ["res://assets/audio/sfx/plasma.wav"],
     "impact": ["res://assets/audio/sfx/impact.wav"],
     "explosion": ["res://assets/audio/sfx/explosion.wav"],
     "splatter": ["res://assets/audio/sfx/splatter.wav"],
-    "reload": ["res://assets/audio/sfx/reload.wav"],
     "jump": ["res://assets/audio/sfx/jump.wav"],
     "step": ["res://assets/audio/sfx/step.wav"],
     "hurt": ["res://assets/audio/sfx/hurt.wav"],
@@ -20,8 +25,9 @@ const CLIP_PATHS := {
     "victory": ["res://assets/audio/sfx/victory.wav"],
     "defeat": ["res://assets/audio/sfx/defeat.wav"],
 }
-const GAINS := {"machine_shot": -10.0, "shot": -7.0, "plasma": -11.0, "impact": -13.0, "explosion": -8.0, "splatter": -16.0, "reload": -12.0, "jump": -17.0, "step": -22.0, "hurt": -13.0, "pickup": -13.0, "ui": -16.0, "mission": -10.0, "victory": -8.0, "defeat": -12.0}
-const INTERVALS := {"machine_shot": 0.065, "shot": 0.065, "plasma": 0.12, "impact": 0.065, "explosion": 0.09, "splatter": 0.09, "step": 0.18, "pickup": 0.08, "ui": 0.1}
+const GAINS := {"pistol_reload": -9.0, "machine_reload": -9.0, "alien_idle": -9.0, "alien_attack": -6.0, "alien_hurt": -9.0, "alien_death": -8.0, "machine_shot": -10.0, "shot": -7.0, "plasma": -11.0, "impact": -13.0, "explosion": -8.0, "splatter": -16.0, "jump": -17.0, "step": -22.0, "hurt": -13.0, "pickup": -13.0, "ui": -16.0, "mission": -10.0, "victory": -8.0, "defeat": -12.0}
+const PRIORITIES := {"shot": 3, "machine_shot": 3, "pistol_reload": 3, "machine_reload": 3, "explosion": 3, "hurt": 3, "alien_idle": 0, "alien_hurt": 1, "alien_attack": 2, "alien_death": 2}
+const INTERVALS := {"alien_idle": 1.8, "alien_attack": 0.35, "alien_hurt": 0.2, "alien_death": 0.18, "machine_shot": 0.065, "shot": 0.065, "plasma": 0.12, "impact": 0.065, "explosion": 0.09, "splatter": 0.09, "step": 0.18, "pickup": 0.08, "ui": 0.1}
 var clips: Dictionary = {}
 var music_volume := 0.22
 var effects_volume := 0.7
@@ -34,6 +40,7 @@ var orientation_blocked := false
 var music_player: AudioStreamPlayer
 var voices: Array[AudioStreamPlayer] = []
 var priorities: Array[int] = []
+var voice_cues: Array[String] = []
 var started: Array[int] = []
 var last_played: Dictionary = {}
 var variants: Dictionary = {}
@@ -81,6 +88,7 @@ func _ready() -> void:
         add_child(voice)
         voices.append(voice)
         priorities.append(0)
+        voice_cues.append("")
         started.append(0)
     unlocked = not OS.has_feature("web")
     print("DEADLIGHT_AUDIO_READY music=22pct voices=12")
@@ -153,15 +161,29 @@ func play(cue: String, position: Vector3 = Vector3.INF) -> bool:
     var distance_gain := 0.0
     if position != Vector3.INF:
         var distance := position.distance_to(listener_position)
-        if distance > 36:
+        if distance > (18.0 if cue.begins_with("alien_") else 36.0):
             return false
         distance_gain = -minf(18, distance * 0.5)
-    var priority := 3 if is_ui else (2 if cue in ["explosion", "hurt"] else 1)
+    var priority := 4 if is_ui else int(PRIORITIES.get(cue, 1))
     var slot := -1
-    for index in range(voices.size()):
-        if not voices[index].playing:
-            slot = index
-            break
+    if cue.begins_with("alien_"):
+        var creature_voices := 0
+        var oldest_creature := now + 1
+        for index in range(voices.size()):
+            if voices[index].playing and voice_cues[index].begins_with("alien_"):
+                creature_voices += 1
+                if priorities[index] < priority and started[index] < oldest_creature:
+                    oldest_creature = started[index]
+                    slot = index
+        if creature_voices < 3:
+            slot = -1
+        elif slot == -1:
+            return false
+    if slot == -1:
+        for index in range(voices.size()):
+            if not voices[index].playing:
+                slot = index
+                break
     if slot == -1:
         var oldest := now + 1
         for index in range(voices.size()):
@@ -178,7 +200,8 @@ func play(cue: String, position: Vector3 = Vector3.INF) -> bool:
     voice.stream = clips[cue][choice % clips[cue].size()]
     voice.bus = "DeadlightUI" if is_ui else "DeadlightEffects"
     voice.volume_db = float(GAINS[cue]) + distance_gain
-    voice.pitch_scale = (0.93 if cue == "machine_shot" else 1.0) + sin(float(choice) * 2.3) * (0.025 if cue != "step" else 0.045)
+    voice.pitch_scale = 1.0 + sin(float(choice) * 2.3) * (0.025 if cue != "step" else 0.045)
+    voice_cues[slot] = cue
     priorities[slot] = priority
     started[slot] = now
     voice.play()
