@@ -217,11 +217,6 @@ func _ready() -> void:
         mute_button.text = "MUDO" if audio.muted else "SOM")
     music_slider.value_changed.connect(func(value: float): audio.set_levels(value / 100, effects_slider.value / 100))
     effects_slider.value_changed.connect(func(value: float): audio.set_levels(music_slider.value / 100, value / 100))
-    var audio_credits := Label.new()
-    audio_credits.text = "Música: Marcelo Fernandez • CC BY 4.0\nCriaturas: Michel Baradari • CC BY 3.0\nArmas: Free Firearm Sound Library / zer0_sol • CC0"
-    audio_credits.add_theme_font_size_override("font_size", 11)
-    audio_credits.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    box.add_child(audio_credits)
     resume = _button("CONTINUAR")
     resume.reparent(box)
     resume.custom_minimum_size.y = 64

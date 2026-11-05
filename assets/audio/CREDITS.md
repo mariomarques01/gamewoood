@@ -61,5 +61,4 @@ Retained for plasma, impacts, explosions, splatter, movement and UI cues.
 The former Sector soundtrack and generic door-close reload are removed.
 
 `manifest.json` records each delivered file's source, processing and SHA-256.
-Credits are also displayed in the game's audio settings. License texts are
-included in this directory and in exported builds.
+Credits and license texts are included in this directory and in exported builds.
