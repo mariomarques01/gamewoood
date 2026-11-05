@@ -1,7 +1,7 @@
 extends Control
 
 const Audio = preload("res://scripts/audio_api.gd")
-const ART = preload("res://assets/menu/start-screen.jpg")
+const ART = preload("res://assets/menu/start-screen.png")
 const REFERENCE := Vector2(1280, 720)
 const PLAY_RECT := Rect2(437, 470, 404, 112)
 const SETTINGS_RECT := Rect2(877, 608, 175, 90)
@@ -139,8 +139,8 @@ func _slider() -> HSlider:
 
 func _layout() -> void:
     var area := get_viewport_rect().size
-    var factor := minf(area.x / REFERENCE.x, area.y / REFERENCE.y)
-    var origin := (area - REFERENCE * factor) * 0.5
+    var factor := area / REFERENCE
+    var origin := Vector2.ZERO
     art.position = origin
     art.size = REFERENCE * factor
     play_button.position = origin + PLAY_RECT.position * factor

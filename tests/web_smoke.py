@@ -59,6 +59,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--directory')
 parser.add_argument('--url')
 parser.add_argument('--menu-only', action='store_true')
+parser.add_argument('--profiles', nargs='+', choices=['impact','desktop','mobile','portrait'], default=['impact','desktop','mobile','portrait'])
 args = parser.parse_args()
 server = None
 if args.directory:
@@ -80,8 +81,14 @@ try:
                                    ('desktop', {'width': 1280, 'height': 720}, False),
                                    ('mobile', {'width': 844, 'height': 390}, True),
                                    ('portrait', {'width': 390, 'height': 844}, True)]:
+            if name not in args.profiles:
+                continue
             context = browser.new_context(viewport=size, is_mobile=mobile, has_touch=mobile)
             context.add_init_script(AUDIO_PROBE_JS)
+            if name == 'portrait':
+                # Exercise the real fallback required on browsers without fullscreen
+                # or orientation-lock APIs, rather than relying on an OS rotation.
+                context.add_init_script("Element.prototype.requestFullscreen = undefined; if (screen.orientation) screen.orientation.lock = () => Promise.reject(new Error('Unsupported orientation lock'));")
             page = context.new_page()
             messages, errors = [], []
             page.on('console', lambda msg: messages.append(msg.text))
@@ -96,14 +103,22 @@ try:
             response = page.goto(url, wait_until='networkidle', timeout=120000)
             assert response.ok, response.status
             # The supplied artwork is the actual first screen, with no hidden combat.
-            expect_log('DEADLIGHT_MENU_READY version=0.13.0', attempts=600)
+            expect_log('DEADLIGHT_MENU_READY version=0.14.0', attempts=600)
             assert not any('DEADLIGHT_READY district=1' in line for line in messages)
             bounds = game_bounds(page)
             screenshot = page.screenshot(timeout=60000)
             Path(f'build/logs/{name}-start-menu.png').write_bytes(screenshot)
             image = Image.open(io.BytesIO(screenshot)).convert('RGB')
             crop = image.crop((bounds['x'], bounds['y'], bounds['x'] + bounds['width'], bounds['y'] + bounds['height']))
-            reference = Image.open('assets/menu/start-screen.jpg').convert('RGB').resize((160,90))
+            if bounds['rotated']:
+                crop = crop.transpose(Image.Transpose.ROTATE_90)
+            assert abs(bounds['width'] - page.viewport_size['width']) < 2 and abs(bounds['height'] - page.viewport_size['height']) < 2, 'Game has borders'
+            assert page.locator('canvas').evaluate('(c) => c.width > c.height'), 'Render surface is portrait'
+            assert bounds['rotated'] == (page.viewport_size['height'] > page.viewport_size['width']), 'Portrait browser was not rotated'
+            badge_area = crop.crop((crop.width * .29, crop.height * .815, crop.width * .33, crop.height * .89))
+            badge_pixels = list(badge_area.getdata())
+            assert sum(r > 160 and r > g * 1.8 and r > b * 1.8 for r,g,b in badge_pixels) / len(badge_pixels) < .1, 'Arsenal notification badge is still visible'
+            reference = Image.open('assets/menu/start-screen.png').convert('RGB').resize((160,90))
             difference = ImageChops.difference(crop.resize((160,90)), reference)
             assert sum(ImageStat.Stat(difference).mean) / 3 < 12, 'Startup artwork was cropped, distorted or replaced'
             def tap_menu(normalized):
@@ -127,10 +142,17 @@ try:
             assert levels and abs(float(levels[1]) - .31) < .03 and abs(float(levels[2]) - .59) < .03, saved
             assert not any('DEADLIGHT_READY district=1' in line for line in messages)
             tap_menu((.5, 525 / 720))
-            expect_log('DEADLIGHT_READY district=1 version=0.13.0', attempts=600)
+            expect_log('DEADLIGHT_READY district=1 version=0.14.0', attempts=600)
             expect_log('DEADLIGHT_ORIENTATION landscape')
             assert not any('DEADLIGHT_ORIENTATION portrait' in line for line in messages)
             if name == 'portrait':
+                assert not page.evaluate('!!document.fullscreenElement'), 'Fallback depends on fullscreen'
+                for rotated_size in [{'width': 844, 'height': 390}, {'width': 390, 'height': 844}]:
+                    page.set_viewport_size(rotated_size)
+                    page.wait_for_timeout(300)
+                    assert page.locator('canvas').evaluate('(c) => c.width > c.height'), 'Rotation returned to portrait rendering'
+                    resized = game_bounds(page)
+                    assert abs(resized['width'] - rotated_size['width']) < 2 and abs(resized['height'] - rotated_size['height']) < 2, 'Rotation introduced borders'
                 page.screenshot(path='build/logs/portrait-landscape-game.png')
             page.wait_for_timeout(500)
             bounds = game_bounds(page)
@@ -141,8 +163,7 @@ try:
             expect_log('DEADLIGHT_HUD_CONTROLS ')
             hud_positions = json.loads(next(line.split('DEADLIGHT_HUD_CONTROLS ', 1)[1] for line in reversed(messages) if 'DEADLIGHT_HUD_CONTROLS ' in line))
             def screen_control(key):
-                point = hud_positions[key]
-                return {'x': bounds['x'] + point[0] * bounds['width'], 'y': bounds['y'] + point[1] * bounds['height']}
+                return point(bounds, hud_positions[key])
             if name == 'impact':
                 # Start grounded and stationary: a projection captured before a
                 # jump/moving follow-camera settles is not a stable aiming target.
@@ -151,7 +172,7 @@ try:
                 target = json.loads(next(line.split('DEADLIGHT_COMBAT_TARGET ', 1)[1] for line in reversed(messages) if 'DEADLIGHT_COMBAT_TARGET ' in line))
                 page.keyboard.press('Escape', delay=120)
                 expect_log('DEADLIGHT_PAUSE false')
-                page.mouse.move(bounds['x'] + target[0] * bounds['width'], bounds['y'] + target[1] * bounds['height'])
+                page.mouse.move(**point(bounds, target))
                 page.mouse.down()
                 # Software WebGL may advance game time slowly; native tests verify
                 # the 0.65s fuse, this gate verifies actual browser execution.
@@ -170,8 +191,8 @@ try:
                 x, y, width, height = (bounds[key] for key in ('x', 'y', 'width', 'height'))
                 points = [{'id': 0, **screen_control('move')}, {'id': 1, **screen_control('aim')}]
                 session.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': points})
-                points[0]['x'] += 30
-                points[1]['y'] -= 35
+                points[0].update(point(bounds, (hud_positions['move'][0] + .05, hud_positions['move'][1])))
+                points[1].update(point(bounds, (hud_positions['aim'][0], hud_positions['aim'][1] - .1)))
                 session.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': points})
                 page.wait_for_timeout(300)
                 # Input coordinates use the landscape content, including in portrait windows.
@@ -201,7 +222,7 @@ try:
                 page.keyboard.press('Space')
                 page.keyboard.press('1')
                 expect_log('DEADLIGHT_WEAPON pistol')
-                page.mouse.move(bounds['x'] + bounds['width'] * 0.75, bounds['y'] + bounds['height'] * 0.6)
+                page.mouse.move(**point(bounds, (.75, .6)))
                 page.mouse.down()
                 expect_log('DEADLIGHT_FIRE')
                 page.wait_for_timeout(300)
@@ -232,9 +253,9 @@ try:
             assert energy > 1e-6, ('Audio graph was silent after gesture', energy, page.evaluate('window.__deadlightAudio.map(ctx => ({state: ctx.state, rate: ctx.sampleRate}))'), messages)
             page.screenshot(path=f'build/logs/{name}-audio-menu.png')
             controls = json.loads(next(line.split('DEADLIGHT_AUDIO_CONTROLS ', 1)[1] for line in reversed(messages) if 'DEADLIGHT_AUDIO_CONTROLS ' in line))
-            def tap_audio_control(point):
-                px = bounds['x'] + point[0] * bounds['width']
-                py = bounds['y'] + point[1] * bounds['height']
+            def tap_audio_control(normalized):
+                target = point(bounds, normalized)
+                px, py = target['x'], target['y']
                 if mobile:
                     page.touchscreen.tap(px, py)
                 else:

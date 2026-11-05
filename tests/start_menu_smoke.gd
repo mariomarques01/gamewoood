@@ -18,8 +18,9 @@ func _run() -> void:
     current_scene = menu
     await process_frame
     await process_frame
+    assert(ProjectSettings.get_setting("display/window/handheld/orientation") == DisplayServer.SCREEN_SENSOR_LANDSCAPE)
     assert(get_nodes_in_group("player").is_empty() and get_nodes_in_group("enemies").is_empty(), "Combat started behind the menu")
-    assert(menu.art.texture.get_size() == Vector2(1280,720))
+    assert(absf(menu.art.texture.get_size().aspect() - 16.0/9.0) < 0.01)
     assert(menu.play_button.get_global_rect().has_point(Vector2(640,525)))
     assert(menu.settings_button.get_global_rect().has_point(Vector2(960,650)))
     touch(Vector2(320,650))
@@ -45,6 +46,8 @@ func _run() -> void:
     await process_frame
     assert(root.get_visible_rect().size.x > root.get_visible_rect().size.y, "Startup is not landscape in portrait window")
     await RenderingServer.frame_post_draw
+    assert(absf(root.get_visible_rect().size.aspect() - Vector2(root.size).aspect()) < 0.01, "Native view still has borders")
+    assert(menu.art.size.is_equal_approx(root.get_visible_rect().size), "Menu does not fill the viewport")
     root.get_texture().get_image().save_png("res://build/logs/start-menu-portrait.png")
     touch(menu.play_button.get_global_rect().get_center())
     for frame in range(30):

@@ -2,10 +2,11 @@ config_version=5
 
 [autoload]
 GameAudio="*res://scripts/audio_director.gd"
+LandscapeDisplay="*res://scripts/landscape_display.gd"
 
 [application]
 config/name="PROJECT DEADLIGHT"
-config/version="0.13.0"
+config/version="0.14.0"
 config/icon="res://assets/pwa/icon-512.png"
 run/main_scene="res://scenes/start_menu.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
@@ -14,8 +15,8 @@ config/features=PackedStringArray("4.6", "Mobile")
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
-window/stretch/aspect="keep"
-window/handheld/orientation=0
+window/stretch/aspect="expand"
+window/handheld/orientation=4
 
 [editor]
 import/use_multiple_threads=false
