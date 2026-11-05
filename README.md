@@ -147,3 +147,23 @@ a partida não fica presa na antiga tela de rotação.
 persistência e entrada no jogo em uma janela vertical. `tests/web_smoke.py`
 compara os pixels da abertura com a imagem original e testa o fluxo em desktop,
 mobile e retrato. `--menu-only` executa apenas esse fluxo inicial.
+
+
+## Horizontal obrigatório e tela inteira — 0.14.0
+
+A apresentação não fica mais centralizada com barras em uma janela vertical.
+O adaptador web gira o canvas inteiro 90° antes do primeiro frame quando a janela
+está na vertical, usa uma superfície de renderização horizontal e ocupa toda a
+área disponível. Ao girar o celular, o canvas se reajusta, mantendo a orientação
+horizontal e sem bordas. Toque, arraste e mouse passam pela transformação inversa;
+as áreas clicáveis acompanham a imagem e os controles da partida.
+
+A versão nativa solicita `SCREEN_SENSOR_LANDSCAPE`, permitindo as duas posições
+horizontais. O menu preenche a superfície disponível com todos os botões visíveis.
+A arte inicial foi editada para remover o aviso vermelho do Arsenal.
+
+O adaptador é incorporado em `tools/prepare_pwa.py`. Os dois pontos de entrada de
+coordenadas do runtime Godot 4.6.3 são verificados durante a exportação; a build
+falha se a versão do template mudar esses pontos, evitando publicar toques com
+coordenadas incorretas. Os testes web cobrem retrato, horizontal, giro durante a
+partida, preenchimento da tela e interações após o giro.

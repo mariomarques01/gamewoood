@@ -16,6 +16,34 @@ shutil.copyfile(root / 'assets/pwa/icon-192.png', output / 'index.192x192.png')
 manifest['icons'] = [icon for icon in manifest['icons'] if icon['src'] != 'index.192x192.png']
 manifest['icons'].append({'src': 'index.192x192.png', 'sizes': '192x192', 'type': 'image/png'})
 manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
+# A portrait browser still presents a full-size landscape surface, rotated 90°.
+# CSS alone breaks Godot's pointer math, so adapt the pinned runtime's shared
+# mouse/touch coordinate conversion as well. Fail export if its hooks change.
+html_path = output / 'index.html'
+html = html_path.read_text()
+if 'viewport-fit=cover' not in html:
+    html = re.sub(r'(<meta name="viewport" content=")([^"]+)(")',
+                  r'\1\2, viewport-fit=cover\3', html, count=1)
+if 'data-deadlight-landscape' not in html:
+    runtime = (root / 'resources/landscape.js').read_text()
+    html = html.replace('</head>', '<script data-deadlight-landscape>\n' + runtime + '\n</script>\n</head>')
+if '/* deadlight-landscape-start */' not in html:
+    if html.count('engine.startGame({') != 1:
+        raise RuntimeError('Unsupported Godot shell: missing startup hook')
+    html = html.replace('engine.startGame({',
+                        'window.deadlightLandscape.apply(); /* deadlight-landscape-start */\n\t\tengine.startGame({', 1)
+html_path.write_text(html)
+engine_path = output / 'index.js'
+engine = engine_path.read_text()
+position = 'computePosition:function(evt,rect){const canvas=GodotConfig.canvas;'
+position_hook = 'if(window.deadlightLandscape){return window.deadlightLandscape.position(evt,canvas,rect)}'
+relative = 'const rel_pos_x=evt.movementX*rw;const rel_pos_y=evt.movementY*rh;'
+relative_hook = 'const rel=window.deadlightLandscape?window.deadlightLandscape.relative(evt,canvas,rect):[evt.movementX*rw,evt.movementY*rh];const rel_pos_x=rel[0];const rel_pos_y=rel[1];'
+if position_hook not in engine:
+    if engine.count(position) != 1 or engine.count(relative) != 1:
+        raise RuntimeError('Unsupported Godot runtime: landscape input hooks changed')
+    engine = engine.replace(position, position + position_hook, 1).replace(relative, relative_hook, 1)
+    engine_path.write_text(engine)
 worker_path = output / 'index.service.worker.js'
 worker = worker_path.read_text()
 # Some export templates list a thread worker even for thread_support=false.

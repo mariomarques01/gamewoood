@@ -1,13 +1,13 @@
-"""Map Godot's landscape content through the canvas's letterboxed presentation."""
+"""Map logical landscape controls onto the full-screen, possibly rotated canvas."""
 def game_bounds(page):
     canvas = page.locator('canvas').bounding_box()
-    width = min(canvas['width'], canvas['height'] * 16 / 9)
-    height = width * 9 / 16
-    return {'x': canvas['x'] + (canvas['width'] - width) / 2,
-            'y': canvas['y'] + (canvas['height'] - height) / 2,
-            'width': width, 'height': height}
+    canvas['rotated'] = page.locator('canvas').get_attribute('data-landscape-rotation') == '90'
+    return canvas
 
 
 def point(bounds, normalized):
+    if bounds.get('rotated'):
+        return {'x': bounds['x'] + (1 - normalized[1]) * bounds['width'],
+                'y': bounds['y'] + normalized[0] * bounds['height']}
     return {'x': bounds['x'] + normalized[0] * bounds['width'],
             'y': bounds['y'] + normalized[1] * bounds['height']}
