@@ -6,6 +6,8 @@ signal ammo_changed(remaining: int, reloading: bool)
 signal weapon_changed(index: int)
 signal power_activated(duration: float, major: bool)
 var selected := 1
+var damage_levels: Array[int] = [0, 0]
+var reload_levels: Array[int] = [0, 0]
 var magazines: Array[int] = [12, 24]
 var reloads: Array[float] = [0.0, 0.0]
 var ammo: int:
@@ -105,14 +107,11 @@ func _physics_process(delta: float) -> void:
         reported_fire = true
         print("DEADLIGHT_FIRE")
     var definition = WEAPONS[selected]
-    var shot = Projectile.new()
-    shot.direction = direction.normalized().rotated(Vector3.UP, random.randf_range(-definition.spread, definition.spread))
-    shot.damage = definition.damage * (3.0 if frenzy_time > 0 else (1.5 if overdrive_time > 0 else 1.0))
-    shot.shooter = owner_body
-    shot.material = frenzy_material if frenzy_time > 0 else shot_material
-    shot.empowered = frenzy_time > 0
-    owner_body.get_parent().add_child(shot)
-    shot.global_position = owner_body.global_position + Vector3.UP * 1.05 + shot.direction * 0.75
+    var heading := direction.normalized().rotated(Vector3.UP, random.randf_range(-definition.spread, definition.spread))
+    var amount: float = definition.damage * (1.0 + damage_levels[selected] * 0.1) * (3.0 if frenzy_time > 0 else (1.5 if overdrive_time > 0 else 1.0))
+    var shot = Projectile.fire(owner_body.get_parent(), owner_body.global_position + Vector3.UP * 1.05 + heading * 0.75, heading, owner_body, frenzy_material if frenzy_time > 0 else shot_material, amount, false, frenzy_time > 0)
+    if shot == null:
+        return
     owner_body.actor.fire()
     Audio.play(self, definition.sound, owner_body.global_position)
     cooldown = definition.interval * (0.45 if frenzy_time > 0 else (0.75 if overdrive_time > 0 else 1.0))
@@ -125,7 +124,7 @@ func _physics_process(delta: float) -> void:
 func reload() -> void:
     if not enabled or ammo == capacity or reload_time > 0:
         return
-    reload_time = WEAPONS[selected].reload_seconds
+    reload_time = WEAPONS[selected].reload_seconds * (1.0 - reload_levels[selected] * 0.1)
     Audio.play(self, WEAPONS[selected].reload_sound, owner_body.global_position)
     ammo_changed.emit(ammo, true)
 
@@ -141,3 +140,12 @@ func stop() -> void:
     overdrive_time = 0
     enabled = false
     active = false
+
+func apply_loadout(progress: Node) -> void:
+    for index in range(WEAPONS.size()):
+        damage_levels[index] = progress.upgrade_level(index, "damage")
+        reload_levels[index] = progress.upgrade_level(index, "reload")
+    selected = progress.equipped
+    shot_material = materials[selected]
+    owner_body.actor.equip_weapon(selected)
+    print("DEADLIGHT_LOADOUT " + JSON.stringify({"weapon": selected, "damage": damage_levels, "reload": reload_levels}))

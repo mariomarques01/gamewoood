@@ -8,11 +8,15 @@ var empowered := false
 var life := 1.8
 var shooter: CollisionObject3D
 var material: Material
+var pooled := false
+var in_use := true
+var visual: MeshInstance3D
+var trail: MeshInstance3D
 static var tracer_mesh: BoxMesh
 static var point_mesh: SphereMesh
 
 func _ready() -> void:
-    var visual := MeshInstance3D.new()
+    visual = MeshInstance3D.new()
     if point_mesh == null:
         point_mesh = SphereMesh.new()
         point_mesh.radius = 0.1
@@ -25,7 +29,7 @@ func _ready() -> void:
     visual.material_override = material
     visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
     add_child(visual)
-    var trail := MeshInstance3D.new()
+    trail = MeshInstance3D.new()
     trail.mesh = tracer_mesh
     trail.material_override = material
     trail.rotation.y = atan2(-direction.x, -direction.z)
@@ -34,12 +38,54 @@ func _ready() -> void:
     if empowered:
         visual.scale = Vector3.ONE * 1.8
         trail.scale = Vector3(2.5, 2.5, 1.8)
-    add_to_group("projectiles")
+    if pooled:
+        release()
+    else:
+        add_to_group("projectiles")
+
+static func fire(world: Node3D, point: Vector3, heading: Vector3, source: CollisionObject3D, shot_material: Material, amount: float, enemy: bool = false, power: bool = false) -> Node3D:
+    var shot = preload("res://scripts/combat_pool.gd").ensure(world).acquire("projectile")
+    if shot == null:
+        return null
+    shot.direction = heading.normalized()
+    shot.speed = 10.0 if enemy else 24.0
+    shot.damage = amount
+    shot.hostile = enemy
+    shot.empowered = power
+    shot.shooter = source
+    shot.material = shot_material
+    shot.life = 1.8
+    shot.global_position = point
+    shot.visual.material_override = shot_material
+    shot.trail.material_override = shot_material
+    shot.visual.scale = Vector3.ONE * (1.8 if power else 1.0)
+    shot.trail.scale = Vector3(2.5, 2.5, 1.8) if power else Vector3.ONE
+    shot.trail.rotation.y = atan2(-shot.direction.x, -shot.direction.z)
+    shot.in_use = true
+    shot.show()
+    shot.set_physics_process(true)
+    shot.add_to_group("projectiles")
+    return shot
+
+func release() -> void:
+    if not pooled:
+        queue_free()
+        return
+    in_use = false
+    hide()
+    set_physics_process(false)
+    remove_from_group("projectiles")
+    shooter = null
+    material = null
+    visual.material_override = null
+    trail.material_override = null
 
 func _physics_process(delta: float) -> void:
+    if not in_use:
+        return
     life -= delta
     if life <= 0.0:
-        queue_free()
+        release()
         return
     var destination := global_position + direction * speed * delta
     var query := PhysicsRayQueryParameters3D.create(global_position, destination, 1 | (4 if hostile else 2))
@@ -53,6 +99,6 @@ func _physics_process(delta: float) -> void:
         preload("res://scripts/hit_spark.gd").spawn(get_parent(), hit.position, hit.normal, alien, target.ranged if alien else false)
         if target.has_method("receive_damage"):
             target.receive_damage(damage)
-        queue_free()
+        release()
     else:
         global_position = destination

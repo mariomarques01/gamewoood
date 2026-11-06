@@ -24,7 +24,11 @@ func _run() -> void:
     assert(menu.play_button.get_global_rect().has_point(Vector2(640,525)))
     assert(menu.settings_button.get_global_rect().has_point(Vector2(960,650)))
     touch(Vector2(320,650))
-    assert(not menu.starting and not menu.settings.visible, "Reserved button started an action")
+    assert(not menu.starting and menu.progression.visible, "Arsenal did not open")
+    await process_frame
+    await process_frame
+    touch(menu.progression.close_button.get_global_rect().get_center())
+    assert(not menu.progression.visible)
     touch(menu.settings_button.get_global_rect().get_center())
     assert(menu.settings.visible)
     await process_frame
@@ -66,5 +70,5 @@ func _run() -> void:
     await process_frame
     mixer.shutdown()
     await create_timer(0.4).timeout
-    print("DEADLIGHT_START_MENU_OK artwork, reserved buttons, touch settings, persistence and landscape play")
+    print("DEADLIGHT_START_MENU_OK artwork, arsenal, touch settings, persistence and landscape play")
     quit()

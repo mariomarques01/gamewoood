@@ -8,6 +8,7 @@ var muzzle_flash: MeshInstance3D
 var flash_time := 0.0
 var phase := 0.0
 var recoil := 0.0
+var equipped := 1
 var weapon_models: Array[Node3D] = []
 
 func _ready() -> void:
@@ -54,6 +55,8 @@ func _ready() -> void:
     equip_weapon(1)
 
 func equip_weapon(index: int) -> void:
+    equipped = index
+    recoil = 0
     for slot in range(weapon_models.size()):
         weapon_models[slot].visible = slot == index
         weapon_models[slot].flash.hide()
@@ -68,7 +71,7 @@ func celebrate(time: float) -> void:
         arms[index].rotation.x = -2.6 + sin(time * 5 + index) * 0.15
     chest.position.y = 1.04 + sin(time * 6) * 0.035
 
-func animate(delta: float, speed: float, airborne: bool, firing: bool) -> void:
+func animate(delta: float, speed: float, airborne: bool, firing: bool, reloading: bool = false) -> void:
     flash_time = maxf(0, flash_time - delta)
     muzzle_flash.visible = flash_time > 0
     phase += delta * (10 if speed > 0.2 else 2)
@@ -79,8 +82,14 @@ func animate(delta: float, speed: float, airborne: bool, firing: bool) -> void:
     chest.position.y = 1.04 + absf(sin(phase)) * stride * 0.045
     recoil = maxf(0, recoil - delta * 7)
     muzzle.scale = Vector3.ONE * (1 + recoil * 0.8)
+    for index in range(weapon_models.size()):
+        weapon_models[index].position.z = -0.45 + (recoil * 0.1 if index == equipped else 0.0)
+        weapon_models[index].rotation.x = 0.35 if reloading and index == equipped else -recoil * 0.08
+    if reloading:
+        arms[0].rotation.x = -0.4
+        arms[1].rotation.x = -1.2
 
 func fire() -> void:
-    recoil = 1.0
+    recoil = 1.0 if equipped == 0 else 0.6
     flash_time = 0.055
     muzzle_flash.show()

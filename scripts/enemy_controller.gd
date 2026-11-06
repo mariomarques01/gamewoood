@@ -149,15 +149,7 @@ func _physics_process(delta: float) -> void:
 
 func _shoot(direction: Vector3) -> void:
     Audio.play(self, "plasma", global_position)
-    var shot = Projectile.new()
-    shot.direction = direction
-    shot.speed = 10.0
-    shot.damage = 12.0
-    shot.hostile = true
-    shot.shooter = self
-    shot.material = plasma_material
-    get_parent().add_child(shot)
-    shot.global_position = global_position + Vector3.UP * 1.05 + direction * 0.8
+    Projectile.fire(get_parent(), global_position + Vector3.UP * 1.05 + direction * 0.8, direction, self, plasma_material, 12.0, true)
 
 func receive_damage(amount: float) -> void:
     if dead or amount <= 0:

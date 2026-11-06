@@ -9,6 +9,7 @@ const TextFont = preload("res://assets/fonts/Nunito-ExtraBold.ttf")
 const Assets = preload("res://scripts/hud_assets.gd")
 const HUDArt = preload("res://scripts/hud_art.gd")
 var controls: Control
+var wave_status: Label
 var status: Label
 var objective: Label
 var progress: ProgressBar
@@ -226,6 +227,9 @@ func _ready() -> void:
     restart_button.custom_minimum_size.y = 64
     restart_button.pressed.connect(func(): restart_requested.emit())
     overlay.hide()
+    wave_status = _label("", 14, Color(0.6, 0.94, 1))
+    wave_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    wave_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
     toast = _label("", 21, Color(1, 0.8, 0.3))
     toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     toast.add_theme_color_override("font_shadow_color", Color.BLACK)
@@ -348,6 +352,8 @@ func _layout() -> void:
     weapon_buttons[0].position = Vector2(area.x - 196 * sx - 34, area.y - 197 - 34)
     weapon_buttons[0].size = Vector2(68, 68)
     call_deferred("_report_touch_controls")
+    wave_status.position = Vector2(area.x * 0.25, 65)
+    wave_status.size = Vector2(area.x * 0.5, 24)
     overlay.position = area * 0.5 - Vector2(minf(460, area.x - 32), 440) * 0.5
     overlay.size = Vector2(minf(460, area.x - 32), 440)
     toast.position = Vector2(20, area.y - 340)
@@ -375,6 +381,7 @@ func _request_jump() -> void:
         player.request_jump()
 
 func _process(delta: float) -> void:
+    wave_status.visible = not overlay.visible and not results.visible and not portrait_mode
     if results.visible:
         return
     if is_instance_valid(player):
@@ -429,7 +436,7 @@ func _process(delta: float) -> void:
     navigation.text = "%dm" % int(player.global_position.distance_to(target))
 
 func update_status(hp: float, ammo: int, reload_active: bool, kills: int, current_mission: Node) -> void:
-    status.text = "BAIRRO 1 v0.10.0  |  BASE DO CAPITAO"
+    status.text = "BAIRRO 1 v%s  |  BASE DO CAPITAO" % ProjectSettings.get_setting("application/config/version")
     life.text = "%d/100" % int(ceil(hp))
     art.health_ratio = hp / 100.0
     art.queue_redraw()
@@ -512,7 +519,7 @@ func _input(event: InputEvent) -> void:
     if not event is InputEventScreenTouch:
         return
     if event.pressed:
-        for button in [fullscreen_button] if portrait_mode else [pause_button, resume, restart_button, mute_button, results.replay_button] + weapon_buttons:
+        for button in [fullscreen_button] if portrait_mode else [pause_button, resume, restart_button, mute_button, results.replay_button, results.menu_button] + weapon_buttons:
             if is_instance_valid(button) and button.is_visible_in_tree() and (button.get_global_rect().grow(10) if button == pause_button else button.get_global_rect()).has_point(event.position):
                 touch_buttons[event.index] = button
                 if button in weapon_buttons:
@@ -584,7 +591,7 @@ func show_weapon(index: int) -> void:
     weapon_buttons[0].tooltip_text = "Trocar para pistola (Q)" if index == 1 else "Trocar para metralhadora (Q)"
 
 func _hide_game_ui() -> void:
-    for node in [xp_panel, xp_meter, xp_text, frenzy_text, art, captain, life, ammo_text, kills_text, mission_title, objective, progress, pause_button, jump_button, navigation, credit_text, kill_popup, combo_meter, toast, ammo_icon, reload_meter, controls] + weapon_buttons:
+    for node in [wave_status, xp_panel, xp_meter, xp_text, frenzy_text, art, captain, life, ammo_text, kills_text, mission_title, objective, progress, pause_button, jump_button, navigation, credit_text, kill_popup, combo_meter, toast, ammo_icon, reload_meter, controls] + weapon_buttons:
         node.hide()
     controls.enabled = false
     controls.reset()
