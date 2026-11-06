@@ -1,5 +1,8 @@
 """Render the real completion UI and replay in WebGL using the isolated QA export."""
 import argparse
+from collections import Counter
+import io
+from PIL import Image
 import functools
 import http.server
 import json
@@ -32,7 +35,11 @@ try:
         assert fixture, messages
         info = json.loads(fixture)
         assert info['stars'] == 3 and info['earned'] == 185
-        page.screenshot(path='build/logs/web-stage-complete-mobile.png')
+        screenshot = page.screenshot(path='build/logs/web-stage-complete-mobile.png')
+        frame = Image.open(io.BytesIO(screenshot)).convert('RGB')
+        scene = frame.crop((frame.width * .05, frame.height * .35, frame.width * .5, frame.height * .95)).resize((64, 32))
+        assert Counter(scene.getdata()).most_common(1)[0][1] / (64 * 32) < .9, 'Victory camera is occluded'
+
         bounds = game_bounds(page)
         page.touchscreen.tap(**point(bounds, info['replay']))
         for _ in range(120):

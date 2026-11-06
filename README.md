@@ -174,6 +174,7 @@ partida, preenchimento da tela e interações após o giro.
 - Cada onda concluída concede 25/50/75 créditos, cura 5 pontos e repõe as duas armas. As recompensas entram no relatório e são salvas ao terminar a partida, inclusive na derrota. A conclusão das ondas é opcional: capturar os objetivos antes continua sendo uma estratégia válida.
 - Arsenal e Upgrades permitem escolher a arma inicial e comprar até três níveis de dano (+10% por nível) e recarga (-10% por nível), separadamente para cada arma. Preços por nível: 75/150/225 créditos. As duas armas permanecem disponíveis durante o combate.
 - Conquistas apresenta os recordes já existentes e a melhor quantidade de ondas concluídas. O resultado agora oferece retorno ao menu para gastar os créditos. Compras e equipamento são salvos imediatamente com substituição do arquivo temporário; falhas não descontam o saldo nem alteram o equipamento.
+- Câmera da comemoração enquadrada na rua inicial, evitando oclusão pelo prédio da comunicação. Testes verificam os pixels do cenário atrás do resultado.
 - Orientação curta no primeiro jogo, recuo visual distinto por arma e postura de recarga. Os sons específicos e as variantes de alienígenas existentes são preservados.
 - Tiros e faíscas usam pools pertencentes à cena, com 24/8 entradas preparadas e limites rígidos de 64/12. Entradas inativas ficam invisíveis, sem física e fora dos grupos de combate. Todas as propriedades são reinicializadas ao reutilizar; trocar/reiniciar a cena libera o pool inteiro.
 

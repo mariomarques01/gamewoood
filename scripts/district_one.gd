@@ -128,7 +128,14 @@ func _finish(won: bool) -> void:
     preload("res://scripts/combat_pool.gd").ensure(self).clear()
     hud.show_result(last_result)
     if won:
-        player.get_node("Camera3D").finale = true
+        # The communication objective sits next to a tall building. Frame the
+        # celebration in the open starting street instead of moving the close-up
+        # camera into that building when victory is triggered.
+        player.position = preload("res://scripts/neighborhood_layout.gd").PLAYER_START
+        var camera: Camera3D = player.get_node("Camera3D")
+        camera.finale = true
+        camera.follow_position = player.global_position + camera.offset * 0.52
+        camera._process(0.0)
         var celebration = preload("res://scripts/stage_finale.gd").new()
         celebration.player = player
         add_child(celebration)

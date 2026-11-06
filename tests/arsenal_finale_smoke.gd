@@ -145,7 +145,14 @@ func _run() -> void:
     await process_frame
     await RenderingServer.frame_post_draw
     assert(result.card.get_global_rect().end.x < root.get_visible_rect().size.x, "Mobile results overflow horizontally")
-    root.get_texture().get_image().save_png("res://build/logs/stage-complete-mobile.png")
+    var finale_frame := root.get_texture().get_image()
+    var colors := {}
+    for x in range(16):
+        for y in range(16):
+            var pixel := finale_frame.get_pixel(int(finale_frame.get_width() * (0.05 + x * 0.025)), int(finale_frame.get_height() * (0.4 + y * 0.035)))
+            colors[pixel] = true
+    assert(colors.size() > 12, "Victory camera is occluded by the communication building")
+    finale_frame.save_png("res://build/logs/stage-complete-mobile.png")
     var replay_center: Vector2 = result.replay_button.get_global_rect().get_center()
     touch(5, replay_center, true)
     touch(5, replay_center, false)
