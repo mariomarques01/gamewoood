@@ -162,4 +162,6 @@ func _report() -> void:
     for pair in [["back", close_button], ["equip", equip_button], ["damage", damage_button], ["reload", reload_button], ["pistol", selectors[0]], ["machine", selectors[1]]]:
         var center: Vector2 = pair[1].get_global_rect().get_center() / area
         controls[pair[0]] = [center.x, center.y]
+    var rectangle := panel.get_global_rect()
+    controls["panel"] = [rectangle.position.x / area.x, rectangle.position.y / area.y, rectangle.size.x / area.x, rectangle.size.y / area.y]
     print("DEADLIGHT_PROGRESSION_CONTROLS ", JSON.stringify(controls))

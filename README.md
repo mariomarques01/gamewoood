@@ -179,3 +179,7 @@ partida, preenchimento da tela e interações após o giro.
 - Tiros e faíscas usam pools pertencentes à cena, com 24/8 entradas preparadas e limites rígidos de 64/12. Entradas inativas ficam invisíveis, sem física e fora dos grupos de combate. Todas as propriedades são reinicializadas ao reutilizar; trocar/reiniciar a cena libera o pool inteiro.
 
 Validação adicional: `tests/progression_smoke.gd` cobre migração do salvamento, compras inválidas/saldo/limites, falha de escrita com reversão, equipamento e dano/recarga reais, 2.500 ciclos de reutilização sem criar novos tiros/faíscas, teto de objetos, três ondas reais e recompensas. Isso verifica limites e redução de alocações; não representa uma medição de FPS em aparelho físico.
+
+### Correção de retorno ao menu — 0.15.1
+
+O menu restaura sua escala lógica de 1280×720 após a partida. Isso mantém Arsenal/Upgrades inteiros ao voltar do HUD de 960×540, inclusive em telas largas de celular. O teste de menu inicia explicitamente com a escala herdada do combate e verifica os limites do painel.

@@ -6,7 +6,7 @@ LandscapeDisplay="*res://scripts/landscape_display.gd"
 
 [application]
 config/name="PROJECT DEADLIGHT"
-config/version="0.15.0"
+config/version="0.15.1"
 config/icon="res://assets/pwa/icon-512.png"
 run/main_scene="res://scenes/start_menu.tscn"
 config/features=PackedStringArray("4.6", "Mobile")

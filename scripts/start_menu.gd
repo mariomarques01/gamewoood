@@ -29,6 +29,9 @@ var drag_slider: HSlider
 @onready var audio: Node = get_node("/root/GameAudio")
 
 func _ready() -> void:
+    # Gameplay uses a smaller logical HUD canvas. Restore the menu canvas when
+    # returning from results, so shop/settings minimum sizes still fit on mobile.
+    get_viewport().content_scale_size = Vector2i(1280, 720)
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     audio.set_game_state(true, false)
     art = TextureRect.new()

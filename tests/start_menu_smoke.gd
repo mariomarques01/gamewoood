@@ -11,6 +11,7 @@ func touch(point: Vector2) -> void:
         Input.flush_buffered_events()
 func _run() -> void:
     root.size = Vector2i(1280,720)
+    root.content_scale_size = Vector2i(960,540) # Simulate returning from gameplay.
     var mixer = root.get_node("GameAudio")
     var original := [mixer.music_volume, mixer.effects_volume, mixer.muted]
     var menu = load("res://scenes/start_menu.tscn").instantiate()
@@ -27,6 +28,8 @@ func _run() -> void:
     assert(not menu.starting and menu.progression.visible, "Arsenal did not open")
     await process_frame
     await process_frame
+    assert(root.content_scale_size == Vector2i(1280,720), "Menu inherited the HUD canvas")
+    assert(menu.progression.panel.get_global_rect().position.y >= 0 and menu.progression.panel.get_global_rect().end.y <= root.get_visible_rect().size.y, "Arsenal is cropped after returning from gameplay")
     touch(menu.progression.close_button.get_global_rect().get_center())
     assert(not menu.progression.visible)
     touch(menu.settings_button.get_global_rect().get_center())
