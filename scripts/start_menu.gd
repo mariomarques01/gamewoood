@@ -8,6 +8,11 @@ const SETTINGS_RECT := Rect2(877, 608, 175, 90)
 const FONT = preload("res://assets/fonts/LilitaOne-Regular.ttf")
 var art: TextureRect
 var play_button: Button
+var arsenal_button: Button
+var upgrades_button: Button
+var achievements_button: Button
+var progression: Control
+var save: Node
 var settings_button: Button
 var settings: Control
 var panel: PanelContainer
@@ -35,7 +40,17 @@ func _ready() -> void:
     play_button.pressed.connect(_play)
     settings_button = _hotspot("Configurações")
     settings_button.pressed.connect(_open_settings)
+    save = preload("res://scripts/save_manager.gd").new()
+    add_child(save)
+    arsenal_button = _hotspot("Arsenal")
+    upgrades_button = _hotspot("Upgrades")
+    achievements_button = _hotspot("Conquistas")
+    for entry in [[arsenal_button, "arsenal"], [upgrades_button, "upgrades"], [achievements_button, "achievements"]]:
+        entry[0].pressed.connect(func(): _open_progression(entry[1]))
     _build_settings()
+    progression = preload("res://scripts/progression_panel.gd").new()
+    progression.progress = save
+    add_child(progression)
     loading = Label.new()
     loading.text = "CARREGANDO…"
     loading.add_theme_font_override("font", FONT)
@@ -147,6 +162,9 @@ func _layout() -> void:
     play_button.size = PLAY_RECT.size * factor
     settings_button.position = origin + SETTINGS_RECT.position * factor
     settings_button.size = SETTINGS_RECT.size * factor
+    for entry in [[arsenal_button, Rect2(228, 608, 185, 90)], [upgrades_button, Rect2(447, 608, 180, 90)], [achievements_button, Rect2(660, 608, 180, 90)]]:
+        entry[0].position = entry[1].position * factor
+        entry[0].size = entry[1].size * factor
     panel.size = Vector2(580, 440)
     panel.position = (area - panel.size) * 0.5
     loading.position = Vector2(0, area.y * 0.52)
@@ -179,7 +197,7 @@ func _close_settings() -> void:
     Audio.play(self, "ui")
 
 func _play() -> void:
-    if starting or settings.visible:
+    if starting or settings.visible or progression.visible:
         return
     starting = true
     audio.activate()
@@ -195,7 +213,7 @@ func _play() -> void:
     get_tree().change_scene_to_file("res://scenes/main.tscn")
 
 func _input(event: InputEvent) -> void:
-    if starting:
+    if starting or progression.visible:
         return
     if event is InputEventKey and event.pressed and not event.echo:
         if event.keycode == KEY_ESCAPE and settings.visible:
@@ -225,6 +243,11 @@ func _input(event: InputEvent) -> void:
             _play()
         elif settings_button.get_global_rect().has_point(event.position):
             _open_settings()
+        else:
+            for entry in [[arsenal_button, "arsenal"], [upgrades_button, "upgrades"], [achievements_button, "achievements"]]:
+                if entry[0].get_global_rect().has_point(event.position):
+                    _open_progression(entry[1])
+                    break
         get_viewport().set_input_as_handled()
     elif event is InputEventScreenDrag and event.index == drag_index and drag_slider != null:
         _touch_volume(event.position)
@@ -244,3 +267,10 @@ func _report_settings() -> void:
     var center := back_button.get_global_rect().get_center() / area
     values["back"] = [center.x, center.y]
     print("DEADLIGHT_MENU_AUDIO_CONTROLS ", JSON.stringify(values))
+
+func _open_progression(section: String) -> void:
+    if starting or settings.visible:
+        return
+    audio.activate()
+    Audio.play(self, "ui")
+    progression.open(section)

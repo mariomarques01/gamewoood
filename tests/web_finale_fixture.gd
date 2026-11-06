@@ -27,7 +27,7 @@ func _ready() -> void:
     var result = district.hud.results
     assert(result.card.get_global_rect().end.y < view.y)
     var center: Vector2 = result.replay_button.get_global_rect().get_center() / view
-    print("DEADLIGHT_WEB_FINALE_FIXTURE " + JSON.stringify({"replay": [center.x, center.y], "stars": 3, "earned": 185}))
+    print("DEADLIGHT_WEB_FINALE_FIXTURE " + JSON.stringify({"menu": [result.menu_button.get_global_rect().get_center().x / view.x, result.menu_button.get_global_rect().get_center().y / view.y], "replay": [center.x, center.y], "stars": 3, "earned": 185}))
     # Replaying reloads the real main scene, not this deterministic fixture.
     get_tree().current_scene = district
     queue_free()

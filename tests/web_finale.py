@@ -20,8 +20,8 @@ try:
         browser = p.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN'), args=['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
         context = browser.new_context(viewport={'width': 844, 'height': 390}, is_mobile=True, has_touch=True)
         page = context.new_page()
-        messages, errors = [], []
-        page.on('console', lambda message: messages.append(message.text))
+        messages, errors, all_messages = [], [], []
+        page.on('console', lambda message: (messages.append(message.text), all_messages.append(message.text)))
         page.on('pageerror', lambda error: errors.append(str(error)))
         page.goto(f'http://127.0.0.1:{server.server_port}/', wait_until='networkidle', timeout=120000)
         for _ in range(240):
@@ -36,15 +36,50 @@ try:
         bounds = game_bounds(page)
         page.touchscreen.tap(**point(bounds, info['replay']))
         for _ in range(120):
-            if sum('DEADLIGHT_READY district=1 version=0.14.0' in line for line in messages) >= 2:
+            if sum('DEADLIGHT_READY district=1 version=0.15.0' in line for line in messages) >= 2:
                 break
             page.wait_for_timeout(100)
-        assert sum('DEADLIGHT_READY district=1 version=0.14.0' in line for line in messages) >= 2, messages
+        assert sum('DEADLIGHT_READY district=1 version=0.15.0' in line for line in messages) >= 2, messages
         assert sum('DEADLIGHT_FINALE ' in line for line in messages) == 1, 'Replay reran the fixture instead of the game'
-        errors += [line for line in messages if 'SCRIPT ERROR:' in line or line.startswith('ERROR:')]
-        Path('build/logs/web-finale-console.json').write_text(json.dumps(messages, indent=2))
+        # Return from a real earned reward to the menu, buy and persist a loadout.
+        def wait_log(prefix):
+            for _ in range(600):
+                matches = [line.split(prefix,1)[1] for line in messages if prefix in line]
+                if matches:
+                    return matches[-1]
+                page.wait_for_timeout(100)
+            raise AssertionError(messages[-20:])
+        def tap(normalized):
+            page.touchscreen.tap(**point(game_bounds(page), normalized))
+        fixture_url = page.url
+        messages.clear()
+        page.goto(fixture_url, wait_until='networkidle', timeout=120000)
+        info = json.loads(wait_log('DEADLIGHT_WEB_FINALE_FIXTURE '))
+        tap(info['menu'])
+        wait_log('DEADLIGHT_MENU_READY version=0.15.0')
+        tap((320 / 1280, 650 / 720))
+        controls = json.loads(wait_log('DEADLIGHT_PROGRESSION_CONTROLS '))
+        tap(controls['pistol'])
+        page.wait_for_timeout(250)
+        tap(controls['damage'])
+        tap(controls['equip'])
+        page.wait_for_timeout(500)
+        page.screenshot(path='build/logs/web-arsenal-purchased-mobile.png')
+        tap(controls['back'])
+        messages.clear()
+        tap((.5, 525 / 720))
+        loadout = json.loads(wait_log('DEADLIGHT_LOADOUT '))
+        assert loadout['weapon'] == 0 and loadout['damage'][0] == 1, loadout
+        # A new page/engine must read the same purchased loadout from IndexedDB.
+        page.wait_for_timeout(1000)
+        messages.clear()
+        page.reload(wait_until='networkidle', timeout=120000)
+        loadout = json.loads(wait_log('DEADLIGHT_LOADOUT '))
+        assert loadout['weapon'] == 0 and loadout['damage'][0] == 1, loadout
+        errors += [line for line in all_messages if 'SCRIPT ERROR:' in line or line.startswith('ERROR:')]
+        Path('build/logs/web-finale-console.json').write_text(json.dumps(all_messages, indent=2))
         assert not errors, errors
-        print('WEB_FINALE_OK actual mission triggers, reward save, WebGL results and touch replay')
+        print('WEB_FINALE_OK actual mission triggers, reward save, WebGL results, touch replay, menu purchase and persistent loadout')
         browser.close()
 finally:
     server.shutdown()

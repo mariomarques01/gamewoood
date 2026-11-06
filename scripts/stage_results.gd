@@ -1,6 +1,7 @@
 extends Control
 signal replay_requested
 var summary: Dictionary = {}
+var menu_button: Button
 var replay_button: Button
 var title: Label
 var subtitle: Label
@@ -55,6 +56,14 @@ func _ready() -> void:
     replay_button.add_theme_stylebox_override("normal", style)
     box.add_child(replay_button)
     replay_button.pressed.connect(func(): replay_requested.emit())
+    menu_button = Button.new()
+    menu_button.text = "MENU / ARSENAL"
+    menu_button.custom_minimum_size.y = 44
+    menu_button.add_theme_font_size_override("font_size", 20)
+    box.add_child(menu_button)
+    menu_button.pressed.connect(func():
+        get_tree().paused = false
+        get_tree().change_scene_to_file("res://scenes/start_menu.tscn"))
     resized.connect(_layout)
     hide()
 
@@ -63,10 +72,13 @@ func present(result: Dictionary) -> void:
     age = 0
     title.text = "MISSAO\nCONCLUIDA!" if summary.won else "BASE\nINVADIDA!"
     subtitle.text = "BAIRRO 1  •  PROGRESSO SALVO" if summary.won else "O CAPITAO VOLTA JA..."
+    if not summary.get("saved", true):
+        subtitle.text = "FALHA AO SALVAR O PROGRESSO"
     stars.stars = summary.stars
     stars.queue_redraw()
     var seconds := int(summary.seconds)
     stats.text = "OBJETIVOS   %d/3\nALIENS       %d\nTEMPO        %02d:%02d\nCOLETADOS    +%d" % [summary.objectives, summary.kills, seconds / 60, seconds % 60, summary.collected]
+    stats.text += "\nONDAS        %d/3" % summary.get("waves", 0)
     _update_rewards()
     show()
     _layout()
@@ -93,7 +105,7 @@ func _layout() -> void:
     title.size = Vector2(size.x * 0.47, 136)
     subtitle.position = Vector2(30, 26)
     card.position = Vector2(size.x * 0.54, 30)
-    card.size = Vector2(size.x * 0.43 - 16, 420)
+    card.size = Vector2(size.x * 0.43 - 16, 490)
 
 func _draw() -> void:
     draw_rect(Rect2(Vector2.ZERO, size), Color(0.015, 0.035, 0.065, 0.25))

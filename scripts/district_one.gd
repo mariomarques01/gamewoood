@@ -41,8 +41,10 @@ func _ready() -> void:
         score += 1
         arcade.register_kill(spawner.last_elimination_position)
         _update_hud())
+    preload("res://scripts/combat_pool.gd").ensure(self).warm_up()
     save = Save.new()
     add_child(save)
+    player.weapon.apply_loadout(save)
     hud = HUD.new()
     add_child(hud)
     var overview = preload("res://scripts/neighborhood_overview.gd").new()
@@ -56,6 +58,15 @@ func _ready() -> void:
     arcade.player = player
     add_child(arcade)
     hud.arcade = arcade
+    spawner.wave_changed.connect(_update_wave)
+    spawner.wave_cleared.connect(func(number: int):
+        arcade.credits += number * 25
+        arcade.credits_changed.emit(arcade.credits)
+        player.health.heal(5)
+        player.weapon.resupply(true)
+        hud.notify("ONDA %d CONCLUÍDA! +%d CRÉDITOS" % [number, number * 25])
+        print("DEADLIGHT_WAVE_CLEARED %d" % number))
+    _update_wave()
     arcade.notice.connect(hud.notify)
     hud.show_credits(save.credits)
     arcade.credits_changed.connect(func(value: int): hud.show_credits(save.credits + value))
@@ -75,7 +86,12 @@ func _ready() -> void:
     hud.show_weapon(player.weapon.selected)
     _update_hud()
     _orientation_changed(hud.portrait_mode)
-    hud.notify("RECIPIENTES LARANJA: ATIRE E AFASTE-SE")
+    if not save.tutorial_seen:
+        hud.notify("MOVA À ESQUERDA • MIRE E ATIRE À DIREITA • SIGA A SETA")
+        hud.toast_time = 8.0
+        save.mark_tutorial_seen()
+    else:
+        hud.notify("3 ONDAS DE DEFESA • CAPTURE OS 3 OBJETIVOS")
     print("DEADLIGHT_READY district=1 version=%s objects=%d" % [ProjectSettings.get_setting("application/config/version"), district_map.get_child_count()])
 
 func _physics_process(delta: float) -> void:
@@ -104,9 +120,12 @@ func _finish(won: bool) -> void:
     for canister in get_tree().get_nodes_in_group("explosives"):
         canister.deactivate()
     for shot in get_tree().get_nodes_in_group("projectiles"):
-        shot.queue_free()
+        shot.release()
     last_result = preload("res://scripts/run_result.gd").calculate(won, score, run_seconds, player.health.current, arcade.credits, missions.current)
-    save.record(score, won, last_result.earned, last_result.stars)
+    last_result["waves"] = spawner.waves_completed
+    save.best_wave = maxi(save.best_wave, spawner.waves_completed)
+    last_result["saved"] = save.record(score, won, last_result.earned, last_result.stars)
+    preload("res://scripts/combat_pool.gd").ensure(self).clear()
     hud.show_result(last_result)
     if won:
         player.get_node("Camera3D").finale = true
@@ -139,3 +158,13 @@ func _sync_pause() -> void:
 func _restart() -> void:
     get_tree().paused = false
     get_tree().reload_current_scene()
+
+func _update_wave() -> void:
+    if not is_instance_valid(hud):
+        return
+    if spawner.waves_completed == 3:
+        hud.wave_status.text = "ONDAS CONCLUÍDAS • CAPTURE OS OBJETIVOS"
+    elif spawner.resting:
+        hud.wave_status.text = "ONDA %d/3 CONCLUÍDA • RESPIRE E RECARREGUE" % spawner.wave
+    else:
+        hud.wave_status.text = "ONDA %d/3  •  ALIENS %d/%d" % [spawner.wave, spawner.wave_kills, spawner.WAVE_SIZES[spawner.wave - 1]]

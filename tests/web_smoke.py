@@ -103,7 +103,7 @@ try:
             response = page.goto(url, wait_until='networkidle', timeout=120000)
             assert response.ok, response.status
             # The supplied artwork is the actual first screen, with no hidden combat.
-            expect_log('DEADLIGHT_MENU_READY version=0.14.0', attempts=600)
+            expect_log('DEADLIGHT_MENU_READY version=0.15.0', attempts=600)
             assert not any('DEADLIGHT_READY district=1' in line for line in messages)
             bounds = game_bounds(page)
             screenshot = page.screenshot(timeout=60000)
@@ -127,7 +127,11 @@ try:
                     page.touchscreen.tap(**target)
                 else:
                     page.mouse.click(**target)
-            tap_menu((0.25, 650 / 720))  # Reserved arsenal button stays inactive.
+            tap_menu((0.25, 650 / 720))
+            expect_log('DEADLIGHT_MENU_PROGRESSION arsenal')
+            expect_log('DEADLIGHT_PROGRESSION_CONTROLS ')
+            panel_controls = json.loads(next(line.split('DEADLIGHT_PROGRESSION_CONTROLS ',1)[1] for line in reversed(messages) if 'DEADLIGHT_PROGRESSION_CONTROLS ' in line))
+            tap_menu(panel_controls['back'])
             assert not any('DEADLIGHT_MENU_PLAY' in line for line in messages)
             tap_menu((960 / 1280, 650 / 720))
             expect_log('DEADLIGHT_MENU_AUDIO_CONTROLS ')
@@ -142,7 +146,7 @@ try:
             assert levels and abs(float(levels[1]) - .31) < .03 and abs(float(levels[2]) - .59) < .03, saved
             assert not any('DEADLIGHT_READY district=1' in line for line in messages)
             tap_menu((.5, 525 / 720))
-            expect_log('DEADLIGHT_READY district=1 version=0.14.0', attempts=600)
+            expect_log('DEADLIGHT_READY district=1 version=0.15.0', attempts=600)
             expect_log('DEADLIGHT_ORIENTATION landscape')
             assert not any('DEADLIGHT_ORIENTATION portrait' in line for line in messages)
             if name == 'portrait':
@@ -156,7 +160,7 @@ try:
                 page.screenshot(path='build/logs/portrait-landscape-game.png')
             page.wait_for_timeout(500)
             bounds = game_bounds(page)
-            print(f'WEB_START_MENU_OK {name} artwork, settings, inactive arsenal and landscape play', flush=True)
+            print(f'WEB_START_MENU_OK {name} artwork, settings, arsenal and landscape play', flush=True)
             if args.menu_only:
                 context.close()
                 continue
