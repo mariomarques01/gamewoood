@@ -6,7 +6,11 @@ var panel: Control
 var open := false
 var map_button: Button
 var close_button: Button
-var block_labels: Array[Label] = []
+var objective_labels: Array[Label] = []
+var task_labels: Array[Label] = []
+var current_task: Label
+var legend: PanelContainer
+var player_label: Label
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
@@ -39,34 +43,45 @@ func _ready() -> void:
     title.add_theme_constant_override("shadow_offset_x",2)
     title.add_theme_constant_override("shadow_offset_y",2)
     panel.add_child(title)
-    var legend := PanelContainer.new()
+    legend = PanelContainer.new()
     legend.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
-    legend.offset_left = -240
+    legend.offset_left = -330
     legend.offset_right = -12
     legend.offset_top = 20
     legend.offset_bottom = -62
+    var style := StyleBoxFlat.new()
+    style.bg_color = Color(0.02, 0.055, 0.085, 0.97)
+    style.border_color = Color(0.2, 0.9, 0.65)
+    style.set_border_width_all(2)
+    style.set_content_margin_all(14)
+    style.set_corner_radius_all(12)
+    legend.add_theme_stylebox_override("panel", style)
     panel.add_child(legend)
-    var text := Label.new()
-    text.text = "QUARTEIRÕES DO BAIRRO 1\n\n"
-    for i in range(6):
-        text.text += "%d  %s\n%s\n\n" % [i+1,L.BLOCK_NAMES[i],L.BLOCK_DESCRIPTIONS[i]]
-    text.text += "PERÍMETRO FORTIFICADO\nTorres de vigia e portão principal\n\nCOSTA\nFalésias, floresta e cachoeiras"
-    text.add_theme_font_override("font",preload("res://assets/fonts/LilitaOne-Regular.ttf"))
-    text.add_theme_font_size_override("font_size",14)
-    text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-    legend.add_child(text)
-    for i in range(6):
+    var box := VBoxContainer.new()
+    box.add_theme_constant_override("separation", 12)
+    legend.add_child(box)
+    _legend_label(box, "COMO VENCER A PARTIDA", 20)
+    _legend_label(box, "Complete as 3 áreas verdes.\nEm cada uma, fique 3s sem inimigos por perto.", 16)
+    current_task = _legend_label(box, "", 17)
+    for index in range(3):
+        task_labels.append(_legend_label(box, "", 17))
         var label := Label.new()
-        label.text = "%d  %s" % [i+1,L.BLOCK_NAMES[i]]
-        label.size = Vector2(180,40)
+        label.size = Vector2(230, 56)
         label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        label.add_theme_font_override("font",preload("res://assets/fonts/LilitaOne-Regular.ttf"))
-        label.add_theme_font_size_override("font_size",14)
-        label.add_theme_color_override("font_outline_color",Color(0.015,0.04,0.07))
-        label.add_theme_constant_override("outline_size",6)
+        label.add_theme_font_override("font", preload("res://assets/fonts/LilitaOne-Regular.ttf"))
+        label.add_theme_font_size_override("font_size", 18)
+        label.add_theme_color_override("font_outline_color", Color(0.015, 0.04, 0.07))
+        label.add_theme_constant_override("outline_size", 6)
         panel.add_child(label)
-        block_labels.append(label)
+        objective_labels.append(label)
+    player_label = Label.new()
+    player_label.text = "VOCÊ"
+    player_label.add_theme_font_size_override("font_size", 18)
+    player_label.add_theme_color_override("font_color", Color(0.25, 0.85, 1))
+    player_label.add_theme_color_override("font_outline_color", Color(0.01, 0.04, 0.07))
+    player_label.add_theme_constant_override("outline_size", 6)
+    panel.add_child(player_label)
     var close := Button.new()
     close_button = close
     close.text = "VOLTAR AO JOGO  [M]"
@@ -83,8 +98,18 @@ func _process(_delta: float) -> void:
         expected.make_current()
     var size := get_viewport().get_visible_rect().size
     if open:
-        for i in range(block_labels.size()):
-            block_labels[i].position = camera.unproject_position(L.BLOCK_CENTERS[i]+Vector3(0,5,6))-Vector2(90,0)
+        var missions = district.missions
+        current_task.text = "%s PARA VENCER" % missions.remaining_text()
+        for index in range(objective_labels.size()):
+            var state := "CONCLUÍDA" if index < missions.current else ("ATUAL" if index == missions.current else "PRÓXIMA")
+            var tint := Color(0.35, 1, 0.7) if index <= missions.current else Color(0.8, 0.87, 0.9)
+            task_labels[index].text = "%d  %s\n%s" % [index + 1, missions.TITLES[index], state]
+            task_labels[index].add_theme_color_override("font_color", tint)
+            objective_labels[index].text = "%d  %s\n%s" % [index + 1, missions.NAMES[index], state]
+            objective_labels[index].add_theme_color_override("font_color", tint)
+            var point := camera.unproject_position(L.OBJECTIVES[index] + Vector3.UP * 2) - Vector2(115, 0)
+            objective_labels[index].position = point.clamp(Vector2(12, 116), Vector2(size.x - 570, size.y - 110))
+        player_label.position = camera.unproject_position(district.player.global_position + Vector3.UP) + Vector2(0, 22)
     map_button.position = Vector2(size.x-86,78)
     map_button.size = Vector2(70,30)
     map_button.visible = not open and not district.ended and not get_tree().paused
@@ -120,3 +145,12 @@ func toggle() -> void:
     else:
         district.get_node("DirectionalLight3D").directional_shadow_max_distance = 48
         district.player.get_node("Camera3D").current = true
+
+func _legend_label(parent: Node, text: String, pixels: int) -> Label:
+    var label := Label.new()
+    label.text = text
+    label.add_theme_font_override("font", preload("res://assets/fonts/LilitaOne-Regular.ttf"))
+    label.add_theme_font_size_override("font_size", pixels)
+    label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    parent.add_child(label)
+    return label

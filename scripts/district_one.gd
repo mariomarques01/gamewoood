@@ -65,6 +65,9 @@ func _ready() -> void:
         player.health.heal(5)
         player.weapon.resupply(true)
         hud.notify("ONDA %d CONCLUÍDA! +%d CRÉDITOS" % [number, number * 25])
+        if number == 3 and missions.current < 3:
+            hud.notify("ONDAS CONCLUÍDAS! SIGA A SETA E CONCLUA AS MISSÕES")
+            hud.toast_time = 6.0
         print("DEADLIGHT_WAVE_CLEARED %d" % number))
     _update_wave()
     arcade.notice.connect(hud.notify)
@@ -106,6 +109,8 @@ func _update_hud() -> void:
     hud.update_status(player.health.current, player.weapon.ammo, player.weapon.reload_time > 0, score, missions)
     for index in range(3):
         district_map.objective_markers[index].visible = index == missions.current
+    if is_instance_valid(spawner):
+        _update_wave()
 
 func _finish(won: bool) -> void:
     if ended:
@@ -169,8 +174,9 @@ func _restart() -> void:
 func _update_wave() -> void:
     if not is_instance_valid(hud):
         return
-    if spawner.waves_completed == 3:
-        hud.wave_status.text = "ONDAS CONCLUÍDAS • CAPTURE OS OBJETIVOS"
+    hud.defense_complete = spawner.waves_completed == 3
+    if hud.defense_complete:
+        hud.wave_status.text = "DEFESA CONCLUÍDA • %s" % missions.remaining_text()
     elif spawner.resting:
         hud.wave_status.text = "ONDA %d/3 CONCLUÍDA • RESPIRE E RECARREGUE" % spawner.wave
     else:

@@ -19,6 +19,8 @@ var resume: Button
 var root: Control
 var damage_flash: ColorRect
 var navigation: Label
+var mission_guide
+var defense_complete := false
 var player: CharacterBody3D
 var mission: Node
 var navigation_timer := 0.0
@@ -234,9 +236,9 @@ func _ready() -> void:
     toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     toast.add_theme_color_override("font_shadow_color", Color.BLACK)
     toast.add_theme_constant_override("shadow_outline_size", 4)
-    navigation = _label("", 17, Color(0.55, 1, 0.65))
-    navigation.add_theme_color_override("font_shadow_color", Color.BLACK)
-    navigation.add_theme_constant_override("shadow_outline_size", 5)
+    mission_guide = preload("res://scripts/mission_guide.gd").new()
+    root.add_child(mission_guide)
+    navigation = mission_guide.status_label
     credit_text = _label("0", 20, Color(1, 0.85, 0.35))
     kill_popup = _label("", 38, Color(1, 0.9, 0.5))
     kill_popup.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -352,16 +354,20 @@ func _layout() -> void:
     weapon_buttons[0].position = Vector2(area.x - 196 * sx - 34, area.y - 197 - 34)
     weapon_buttons[0].size = Vector2(68, 68)
     call_deferred("_report_touch_controls")
-    wave_status.position = Vector2(area.x * 0.25, 65)
-    wave_status.size = Vector2(area.x * 0.5, 24)
+    wave_status.position = Vector2(area.x * 0.2, 65)
+    wave_status.size = Vector2(area.x * 0.6, 24)
+    var guide_width := minf(490, area.x * 0.48)
+    mission_guide.position = Vector2((area.x - guide_width) * 0.5, 94)
+    mission_guide.size = Vector2(guide_width, 124)
     overlay.position = area * 0.5 - Vector2(minf(460, area.x - 32), 440) * 0.5
     overlay.size = Vector2(minf(460, area.x - 32), 440)
-    toast.position = Vector2(20, area.y - 340)
+    toast.position = Vector2(20, maxf(mission_guide.get_rect().end.y + 10, area.y - 300))
     toast.size = Vector2(area.x - 40, 32)
-    kill_popup.position = Vector2(area.x - 280, 100)
-    kill_popup.size = Vector2(230, 100)
-    combo_meter.position = Vector2(area.x - 250, 194)
-    combo_meter.size = Vector2(200, 6)
+    kill_popup.position = Vector2(area.x - 190, 100)
+    kill_popup.size = Vector2(170, 76)
+    kill_popup.add_theme_font_size_override("font_size", 28)
+    combo_meter.position = Vector2(area.x - 175, 181)
+    combo_meter.size = Vector2(150, 6)
     rotation_panel.visible = portrait_mode
     rotation_label.position = Vector2(16, area.y * 0.5 - 160)
     rotation_label.size = Vector2(area.x - 32, 250)
@@ -423,17 +429,10 @@ func _process(delta: float) -> void:
     jump_icon.airborne = not player.is_on_floor()
     jump_button.modulate.a = 0.78 if jump_icon.airborne else 1.0
     jump_icon.queue_redraw()
-    navigation.visible = false
-    if not navigation.visible:
-        return
-    var target: Vector3 = mission.POSITIONS[mission.current] + Vector3.UP * 2.5
-    var camera := get_viewport().get_camera_3d()
-    var screen := camera.unproject_position(target)
-    var area := get_viewport().get_visible_rect().size
-    if camera.is_position_behind(target):
-        screen = area * 0.5 - (screen - area * 0.5)
-    navigation.position = screen.clamp(Vector2(24, art.mission_rect.end.y + 16), area - Vector2(120, 300))
-    navigation.text = "%dm" % int(player.global_position.distance_to(target))
+    if overlay.visible or portrait_mode or get_tree().paused:
+        mission_guide.hide()
+    else:
+        mission_guide.update_mission(mission, player, get_viewport().get_camera_3d(), defense_complete)
 
 func update_status(hp: float, ammo: int, reload_active: bool, kills: int, current_mission: Node) -> void:
     status.text = "BAIRRO 1 v%s  |  BASE DO CAPITAO" % ProjectSettings.get_setting("application/config/version")
@@ -466,6 +465,7 @@ func show_overlay(text: String, paused: bool = false) -> void:
         call_deferred("_report_audio_controls")
     resume.visible = paused
     overlay.show()
+    mission_guide.hide()
     jump_button.hide()
     for button in weapon_buttons:
         button.hide()
@@ -591,7 +591,7 @@ func show_weapon(index: int) -> void:
     weapon_buttons[0].tooltip_text = "Trocar para pistola (Q)" if index == 1 else "Trocar para metralhadora (Q)"
 
 func _hide_game_ui() -> void:
-    for node in [wave_status, xp_panel, xp_meter, xp_text, frenzy_text, art, captain, life, ammo_text, kills_text, mission_title, objective, progress, pause_button, jump_button, navigation, credit_text, kill_popup, combo_meter, toast, ammo_icon, reload_meter, controls] + weapon_buttons:
+    for node in [mission_guide, wave_status, xp_panel, xp_meter, xp_text, frenzy_text, art, captain, life, ammo_text, kills_text, mission_title, objective, progress, pause_button, jump_button, navigation, credit_text, kill_popup, combo_meter, toast, ammo_icon, reload_meter, controls] + weapon_buttons:
         node.hide()
     controls.enabled = false
     controls.reset()

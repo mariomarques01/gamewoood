@@ -183,3 +183,11 @@ Validação adicional: `tests/progression_smoke.gd` cobre migração do salvamen
 ### Correção de retorno ao menu — 0.15.1
 
 O menu restaura sua escala lógica de 1280×720 após a partida. Isso mantém Arsenal/Upgrades inteiros ao voltar do HUD de 960×540, inclusive em telas largas de celular. O teste de menu inicia explicitamente com a escala herdada do combate e verifica os limites do painel.
+
+## Missões claras após as ondas — 0.15.2
+
+O fim das ondas agora informa quantas missões faltam para vencer. O guia mostra a ação atual em ordem: **liberar o Arsenal → ativar o Heliponto → restabelecer a Comunicação**, com bússola e distância até a área verde. Ao chegar, ele explica a permanência de três segundos e mostra a captura; inimigos próximos produzem o aviso explícito de captura bloqueada. Depois da terceira onda, as instruções e a lista das três tarefas permanecem abertas. Durante o combate, longe do objetivo, o guia fica compacto.
+
+O mapa apresenta os três locais numerados, sua tarefa atual, as concluídas e a posição do jogador. A área atual também recebe anel verde e placa no cenário. As regras de captura e vitória são preservadas; nenhuma mudança de chefe ou de dificuldade está incluída nesta correção.
+
+Validação adicional: `tests/mission_guidance_smoke.gd` verifica direção, instruções, limites no celular, mapa, captura contestada, troca de objetivo, pausa e vitória. `tests/web_guidance.py` percorre esses estados no WebGL, em janelas horizontal e vertical, usando toque real nos botões do mapa. O cenário determinístico fica somente na exportação de QA, excluída do jogo publicado.

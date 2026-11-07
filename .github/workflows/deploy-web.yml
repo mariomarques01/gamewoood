@@ -41,6 +41,7 @@ jobs:
           python3 tests/web_pwa.py --directory build/web
           python3 tests/web_update.py --directory build/web
           python3 tests/web_smoke.py --directory build/web
+          python3 tests/web_guidance.py --directory build/web-render
           python3 tests/web_finale.py --directory build/web-finale
           python3 tests/web_rendering.py --directory build/web-render --browser webkit
       - uses: actions/upload-artifact@v4

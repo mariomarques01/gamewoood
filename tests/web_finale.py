@@ -43,10 +43,10 @@ try:
         bounds = game_bounds(page)
         page.touchscreen.tap(**point(bounds, info['replay']))
         for _ in range(120):
-            if sum('DEADLIGHT_READY district=1 version=0.15.1' in line for line in messages) >= 2:
+            if sum('DEADLIGHT_READY district=1 version=0.15.2' in line for line in messages) >= 2:
                 break
             page.wait_for_timeout(100)
-        assert sum('DEADLIGHT_READY district=1 version=0.15.1' in line for line in messages) >= 2, messages
+        assert sum('DEADLIGHT_READY district=1 version=0.15.2' in line for line in messages) >= 2, messages
         assert sum('DEADLIGHT_FINALE ' in line for line in messages) == 1, 'Replay reran the fixture instead of the game'
         # Return from a real earned reward to the menu, buy and persist a loadout.
         def wait_log(prefix):
@@ -63,7 +63,7 @@ try:
         page.goto(fixture_url, wait_until='networkidle', timeout=120000)
         info = json.loads(wait_log('DEADLIGHT_WEB_FINALE_FIXTURE '))
         tap(info['menu'])
-        wait_log('DEADLIGHT_MENU_READY version=0.15.1')
+        wait_log('DEADLIGHT_MENU_READY version=0.15.2')
         tap((320 / 1280, 650 / 720))
         controls = json.loads(wait_log('DEADLIGHT_PROGRESSION_CONTROLS '))
         rect = controls['panel']
