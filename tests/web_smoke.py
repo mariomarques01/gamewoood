@@ -103,7 +103,7 @@ try:
             response = page.goto(url, wait_until='networkidle', timeout=120000)
             assert response.ok, response.status
             # The supplied artwork is the actual first screen, with no hidden combat.
-            expect_log('DEADLIGHT_MENU_READY version=0.15.1', attempts=600)
+            expect_log('DEADLIGHT_MENU_READY version=0.15.2', attempts=600)
             assert not any('DEADLIGHT_READY district=1' in line for line in messages)
             bounds = game_bounds(page)
             screenshot = page.screenshot(timeout=60000)
@@ -146,7 +146,7 @@ try:
             assert levels and abs(float(levels[1]) - .31) < .03 and abs(float(levels[2]) - .59) < .03, saved
             assert not any('DEADLIGHT_READY district=1' in line for line in messages)
             tap_menu((.5, 525 / 720))
-            expect_log('DEADLIGHT_READY district=1 version=0.15.1', attempts=600)
+            expect_log('DEADLIGHT_READY district=1 version=0.15.2', attempts=600)
             expect_log('DEADLIGHT_ORIENTATION landscape')
             assert not any('DEADLIGHT_ORIENTATION portrait' in line for line in messages)
             if name == 'portrait':

@@ -40,6 +40,8 @@ run_checked build/logs/rendering.log timeout 90 "${DISPLAY_RUNNER[@]}" "$GODOT_B
 grep -q 'DEADLIGHT_RENDERING_OK' build/logs/rendering.log
 run_checked build/logs/progression.log timeout 100 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/progression_smoke.gd
 grep -q 'DEADLIGHT_PROGRESSION_OK' build/logs/progression.log
+run_checked build/logs/mission-guidance.log timeout 75 "${DISPLAY_RUNNER[@]}" "$GODOT_BIN" --rendering-method gl_compatibility --audio-driver Dummy --path . --script tests/mission_guidance_smoke.gd
+grep -q 'DEADLIGHT_MISSION_GUIDANCE_OK' build/logs/mission-guidance.log
 run_checked build/logs/camera-recovery.log timeout 15 "$GODOT_BIN" --headless --audio-driver Dummy --path . --script tests/camera_recovery_smoke.gd
 grep -q 'DEADLIGHT_CAMERA_RECOVERY_OK' build/logs/camera-recovery.log
 if [[ "${1:-}" == '--export' ]]; then

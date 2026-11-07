@@ -32,6 +32,9 @@ func _position() -> void:
     district.player.receive_damage(8)
     print("DEADLIGHT_RENDER_CASE ",index)
 func _input(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and event.keycode == KEY_G and not traveling:
+        _guidance_case()
+        return
     if event is InputEventKey and event.pressed and event.keycode == KEY_R and not traveling:
         _start_route()
     if event is InputEventKey and event.pressed and event.keycode == KEY_N and not traveling:
@@ -95,3 +98,64 @@ func _physics_process(delta: float) -> void:
         report_timer = 2.0
         assert(district.find_children("*","MultiMeshInstance3D",true,false).is_empty(),"Instancing returned to the live scene")
         print("DEADLIGHT_RENDER_ROUTE_FRAME waypoint=",route_index," seconds=",route_seconds)
+
+# Read-only snapshots and deterministic setup live only in the isolated QA export.
+# The real mission rules, map button, HUD and victory handler remain production code.
+var guidance_phase := -1
+var guidance_enemy: Node3D
+var guidance_map: CanvasLayer
+
+func _guidance_case() -> void:
+    guidance_phase += 1
+    var missions = district.missions
+    if guidance_phase == 0:
+        district.spawner.active = false
+        missions.set_physics_process(false)
+        missions.active = true
+        district.player.position = Vector3(0, 0, 1)
+        district.player.health.invulnerability = 10000
+        district.spawner.waves_completed = 3
+        for child in district.get_children():
+            if child.get_script() == preload("res://scripts/neighborhood_overview.gd"):
+                guidance_map = child
+        district.player.get_node("Camera3D")._process(1)
+    elif guidance_phase == 1:
+        assert(guidance_map.open, "Actual map touch failed")
+    elif guidance_phase == 2:
+        assert(not guidance_map.open, "Actual map close touch failed")
+        district.player.position = missions.POSITIONS[0]
+        missions._physics_process(0.3)
+        district.player.get_node("Camera3D")._process(1)
+    elif guidance_phase == 3:
+        guidance_enemy = preload("res://scripts/enemy_controller.gd").new()
+        guidance_enemy.player = district.player
+        district.add_child(guidance_enemy)
+        guidance_enemy.position = district.player.position + Vector3(1.4, 0, 0)
+        guidance_enemy.set_physics_process(false)
+        missions._physics_process(1)
+    elif guidance_phase == 4:
+        guidance_enemy.receive_damage(1000)
+        missions._physics_process(3.1)
+    elif guidance_phase == 5:
+        for objective_index in range(1, 3):
+            district.player.position = missions.POSITIONS[objective_index]
+            missions._physics_process(3.1)
+    district._update_hud()
+    district.hud._process(0.2)
+    await get_tree().process_frame
+    await RenderingServer.frame_post_draw
+    var guide = district.hud.mission_guide
+    var area := get_viewport().get_visible_rect().size
+    var bounds: Rect2 = guide.get_global_rect()
+    var map_bounds: Rect2 = guidance_map.legend.get_global_rect()
+    var map_center: Vector2 = guidance_map.map_button.get_global_rect().get_center() / area
+    var close_center: Vector2 = guidance_map.close_button.get_global_rect().get_center() / area
+    print("DEADLIGHT_GUIDANCE_CASE " + JSON.stringify({"case": guidance_phase, "heading": guide.heading.text,
+        "status": guide.status_label.text, "instruction": guide.instruction.text, "visible": guide.is_visible_in_tree(),
+        "wave": district.hud.wave_status.text, "progress": missions.progress, "map_open": guidance_map.open,
+        "checklist": [guide.checklist[0].text, guide.checklist[1].text, guide.checklist[2].text],
+        "rect": [bounds.position.x / area.x, bounds.position.y / area.y, bounds.size.x / area.x, bounds.size.y / area.y],
+        "map_rect": [map_bounds.position.x / area.x, map_bounds.position.y / area.y, map_bounds.size.x / area.x, map_bounds.size.y / area.y],
+        "map": [map_center.x, map_center.y], "close": [close_center.x, close_center.y],
+        "tasks": [guidance_map.task_labels[0].text, guidance_map.task_labels[1].text, guidance_map.task_labels[2].text],
+        "won": district.ended and district.last_result.get("won", false)}))

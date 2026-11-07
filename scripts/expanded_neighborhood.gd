@@ -75,6 +75,28 @@ static func build(m: Node3D) -> void:
         m.add_child(marker)
         marker.position = L.OBJECTIVES[i]
         m._box(marker,Vector3(0,0.16,0),Vector3(4.8,0.12,4.8),Color(0.1,0.8,0.65))
+        var ring := MeshInstance3D.new()
+        var circle := TorusMesh.new()
+        circle.inner_radius = 3.0
+        circle.outer_radius = preload("res://scripts/mission_manager.gd").CAPTURE_RADIUS
+        circle.rings = 32
+        circle.ring_segments = 6
+        ring.mesh = circle
+        ring.material_override = preload("res://scripts/visual_kit.gd").material(Color(0.2, 0.9, 0.65), true)
+        ring.position.y = 0.28
+        ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+        marker.add_child(ring)
+        var label := Label3D.new()
+        label.text = "%d  %s\nFIQUE NA ÁREA VERDE" % [i + 1, preload("res://scripts/mission_manager.gd").NAMES[i]]
+        label.font = preload("res://assets/fonts/LilitaOne-Regular.ttf")
+        label.font_size = 32
+        label.pixel_size = 0.022
+        label.position.y = 3.0
+        label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+        label.no_depth_test = true
+        label.modulate = Color(0.5, 1, 0.8)
+        label.outline_size = 10
+        marker.add_child(label)
         m.objective_markers.append(marker)
     for point in L.SERVICE_POINTS:
         m._box(m,point+Vector3(0,0.12,0),Vector3(3,0.18,3),BLUE)
